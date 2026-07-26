@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&family=Sarabun:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-heading: 'Kanit', sans-serif;
+  --font-body: 'Sarabun', sans-serif;
+  --color-brand-900: #143D32;
+  --color-brand-700: #246B50;
+  --color-brand-500: #3E8B68;
+  --color-energy-600: #D97706;
+  --color-energy-400: #F59E0B;
+  --color-ink-950: #17201C;
+  --color-ink-700: #46524C;
+  --color-ink-300: #D9E0DC;
+  --color-ink-100: #F2F5F3;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Sarabun', sans-serif;
+  color: #17201C;
+  background-color: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: 'Kanit', sans-serif;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D9E0DC; border-radius: 999px; }

@@ -1,0 +1,10 @@
+{
+  "description": "Creates customized websites based on user-provided content files, streamlining web design for individuals and businesses seeking tailored online presence.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
