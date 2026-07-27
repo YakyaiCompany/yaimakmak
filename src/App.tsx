@@ -1,100 +1,123 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import AdminPortal from './AdminPortal'
+import { NotFoundPage, PrivacyPolicyPage } from './LegalPages'
+import { COMPANY } from './config/company'
+import DownloadsPage from './pages/DownloadsPage'
+import { environment } from './config/environment'
+import { INDUSTRIES, NEWS, PRODUCTS, PROJECTS, SERVICES, WHY_US } from './data/siteContent'
+import { postJson } from './lib/api'
+import type { Article, IndustryIconName, Product, Project } from './types/content'
 
-/* ─── TYPES ───────────────────────────────── */
-interface Product {
-  id: number; name: string; subtitle: string; desc: string
-  image: string; highlights: string[]; specs: { label: string; value: string }[]; fuels: string[]
+/* ─── ROUTE TYPES ─────────────────────────── */
+type Page =
+  | { t: 'home' }
+  | { t: 'projects' }
+  | { t: 'news' }
+  | { t: 'downloads' }
+  | { t: 'project'; p: Project }
+  | { t: 'article'; a: Article }
+  | { t: 'privacy' }
+  | { t: 'admin' }
+  | { t: 'not-found' }
+
+
+
+
+
+
+
+
+
+function safeVideoUrl(value: string | undefined) {
+  if (!value) return null
+
+  try {
+    const url = new URL(value)
+    const hostname = url.hostname.toLowerCase()
+    const isSupportedHost = hostname === 'youtu.be' || hostname.endsWith('.youtube.com') || hostname === 'youtube.com' || hostname === 'player.vimeo.com'
+    return url.protocol === 'https:' && isSupportedHost ? url.toString() : null
+  } catch {
+    return null
+  }
 }
-interface Project {
-  id: number; name: string; province: string; industry: string
-  year: number; system: string; image: string
+
+const HERO_VIDEO_URL = safeVideoUrl(environment.heroVideoUrl)
+
+function normalizePathname(pathname: string) {
+  const normalized = pathname.replace(/\/+$/, '')
+  return normalized || '/'
 }
-interface Article {
-  id: number; title: string; category: string; date: string; excerpt: string; image: string
+
+function pageFromPath(pathname: string): Page {
+  const path = normalizePathname(pathname)
+  if (path === '/') return { t: 'home' }
+  if (path === '/projects') return { t: 'projects' }
+  if (path === '/news') return { t: 'news' }
+  if (path === '/downloads') return { t: 'downloads' }
+  if (path === '/privacy-policy') return { t: 'privacy' }
+  if (path === '/admin' || path.startsWith('/admin/')) return { t: 'admin' }
+
+  const projectMatch = path.match(/^\/projects\/([^/]+)$/)
+  if (projectMatch) {
+    const project = PROJECTS.find(item => item.slug === projectMatch[1])
+    return project ? { t: 'project', p: project } : { t: 'not-found' }
+  }
+
+  const articleMatch = path.match(/^\/news\/([^/]+)$/)
+  if (articleMatch) {
+    const article = NEWS.find(item => item.slug === articleMatch[1])
+    return article ? { t: 'article', a: article } : { t: 'not-found' }
+  }
+
+  return { t: 'not-found' }
 }
-type Page = { t: 'home' } | { t: 'projects' } | { t: 'news' } | { t: 'project'; p: Project } | { t: 'article'; a: Article }
 
-/* ─── DATA ───────────────────────────────── */
-const PRODUCTS: Product[] = [
-  {
-    id: 1, name: 'เตาแก๊สซิไฟเออร์ 1.5 MW', subtitle: 'สำหรับโรงงานอุตสาหกรรมขนาดใหญ่',
-    desc: 'ระบบผลิตแก๊สชีวมวลกำลังสูง ออกแบบสำหรับโรงงานที่ต้องการพลังงานความร้อนสูงอย่างต่อเนื่อง รองรับเชื้อเพลิงหลายชนิด ควบคุมอัตโนมัติด้วย PLC',
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&h=420&fit=crop&auto=format',
-    highlights: ['กำลังผลิตความร้อน 1,500 kW', 'ระบบควบคุม PLC อัตโนมัติ', 'รองรับเชื้อเพลิงหลากหลาย'],
-    specs: [{ label: 'กำลังผลิต', value: '1,500 kW' }, { label: 'ประสิทธิภาพ', value: '> 85%' }, { label: 'แรงดันแก๊ส', value: '500–2,000 Pa' }, { label: 'อุณหภูมิแก๊สออก', value: '< 60°C' }],
-    fuels: ['แกลบ', 'ไม้สับ', 'ชานอ้อย', 'กะลามะพร้าว'],
-  },
-  {
-    id: 2, name: 'เตาแก๊สซิไฟเออร์ 750 kW', subtitle: 'สำหรับ SME และโรงงานขนาดกลาง',
-    desc: 'ระบบแก๊สซิไฟเออร์ขนาดกลางสำหรับโรงงานที่ต้องการลดต้นทุนพลังงาน ติดตั้งง่าย ใช้พื้นที่น้อย และคืนทุนเร็ว',
-    image: 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=600&h=420&fit=crop&auto=format',
-    highlights: ['กำลังผลิตความร้อน 750 kW', 'ขนาดกะทัดรัด ติดตั้งง่าย', 'ลดต้นทุนพลังงาน 40–60%'],
-    specs: [{ label: 'กำลังผลิต', value: '750 kW' }, { label: 'ประสิทธิภาพ', value: '> 82%' }, { label: 'แรงดันแก๊ส', value: '300–1,500 Pa' }, { label: 'อุณหภูมิแก๊สออก', value: '< 65°C' }],
-    fuels: ['แกลบ', 'ไม้สับ', 'เศษไม้', 'วัสดุเหลือทิ้ง'],
-  },
-  {
-    id: 3, name: 'Cassava Pulp Rotary Dryer', subtitle: 'ระบบอบแห้งกากแป้งมันสำปะหลัง',
-    desc: 'ระบบอบแห้งแบบหมุนสำหรับกากมันสำปะหลัง ออกแบบใช้ร่วมกับระบบแก๊สซิไฟเออร์ ลดความชื้นสินค้าและเพิ่มมูลค่าผลิตภัณฑ์',
-    image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&h=420&fit=crop&auto=format',
-    highlights: ['ลดความชื้นจาก 80% เหลือ < 14%', 'ใช้ความร้อนจากแก๊สซิไฟเออร์ได้โดยตรง', 'กำลังการผลิต 5–20 ตัน/ชั่วโมง'],
-    specs: [{ label: 'กำลังการผลิต', value: '5–20 ตัน/ชม.' }, { label: 'ความชื้นขาออก', value: '< 14%' }, { label: 'อุณหภูมิอบ', value: '120–200°C' }, { label: 'เส้นผ่าศูนย์กลาง', value: '1.2–2.4 ม.' }],
-    fuels: ['แก๊สชีวมวล', 'LPG', 'ฟืน', 'น้ำมัน'],
-  },
-]
+function pathForPage(page: Page) {
+  switch (page.t) {
+    case 'home': return '/'
+    case 'projects': return '/projects'
+    case 'project': return `/projects/${page.p.slug}`
+    case 'news': return '/news'
+    case 'downloads': return '/downloads'
+    case 'article': return `/news/${page.a.slug}`
+    case 'privacy': return '/privacy-policy'
+    case 'admin': return '/admin'
+    case 'not-found': return '/404'
+  }
+}
 
-const PROJECTS: Project[] = [
-  { id: 1, name: 'ระบบแก๊สซิไฟเออร์ 1.5 MW โรงงานอบปุ๋ย', province: 'นครราชสีมา', industry: 'โรงงานอบปุ๋ย', year: 2023, system: 'Gasifier 1.5 MW', image: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=800&h=540&fit=crop&auto=format' },
-  { id: 2, name: 'ระบบอบแห้งกากมัน 10 ตัน/ชม.', province: 'กำแพงเพชร', industry: 'โรงงานมันสำปะหลัง', year: 2022, system: 'Rotary Dryer + Gasifier 750 kW', image: 'https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=800&h=540&fit=crop&auto=format' },
-  { id: 3, name: 'ระบบทดแทน LPG โรงงานเซรามิก', province: 'ลำปาง', industry: 'โรงงานเซรามิก', year: 2023, system: 'Gasifier 750 kW', image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=540&fit=crop&auto=format' },
-  { id: 4, name: 'ระบบผลิตความร้อนโรงงานอบแร่', province: 'เชียงราย', industry: 'โรงงานอบแร่', year: 2022, system: 'Gasifier 1.5 MW', image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=540&fit=crop&auto=format' },
-  { id: 5, name: 'ระบบอบทรายก่อสร้างขนาดกลาง', province: 'ขอนแก่น', industry: 'โรงงานอบทราย', year: 2023, system: 'Gasifier 750 kW', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=540&fit=crop&auto=format' },
-  { id: 6, name: 'ระบบอบแห้งยิปซัม โรงงานวัสดุก่อสร้าง', province: 'สระบุรี', industry: 'โรงงานยิปซัม', year: 2021, system: 'Gasifier 1.5 MW', image: 'https://images.unsplash.com/photo-1565008576549-57569a49371d?w=800&h=540&fit=crop&auto=format' },
-]
+function titleForPage(page: Page) {
+  const suffix = 'บริษัท ยักษ์ใหญ่ 2015 จำกัด'
+  switch (page.t) {
+    case 'home': return `${suffix} | ระบบพลังงานชีวมวลอุตสาหกรรม`
+    case 'projects': return `ผลงาน | ${suffix}`
+    case 'project': return `${page.p.name} | ${suffix}`
+    case 'news': return `ข่าวสารและบทความ | ${suffix}`
+    case 'article': return `${page.a.title} | ${suffix}`
+    case 'downloads': return `เอกสารดาวน์โหลด | ${suffix}`
+    case 'privacy': return `นโยบายความเป็นส่วนตัว | ${suffix}`
+    case 'admin': return `ระบบจัดการเนื้อหา | ${suffix}`
+    case 'not-found': return `ไม่พบหน้า | ${suffix}`
+  }
+}
 
-const NEWS: Article[] = [
-  { id: 1, title: 'เปรียบเทียบต้นทุน LPG กับระบบแก๊สซิไฟเออร์ชีวมวล', category: 'พลังงานชีวมวล', date: '15 กรกฎาคม 2568', excerpt: 'การเปลี่ยนจาก LPG มาใช้แก๊สชีวมวลสามารถลดต้นทุนพลังงานได้อย่างมีนัยสำคัญ บทความนี้เปรียบเทียบต้นทุนและระยะเวลาคืนทุนสำหรับโรงงานขนาดต่าง ๆ', image: 'https://images.unsplash.com/photo-1466611653911-0265b1e9046b?w=600&h=400&fit=crop&auto=format' },
-  { id: 2, title: 'ส่งมอบระบบอบแห้งกากมันสำปะหลัง จ.กำแพงเพชร', category: 'ผลงานติดตั้ง', date: '3 มิถุนายน 2568', excerpt: 'ยักษ์ใหญ่ 2015 ส่งมอบระบบอบแห้งกากมันสำปะหลัง กำลังการผลิต 10 ตัน/ชม. พร้อมทดสอบและอบรมพนักงานเรียบร้อย', image: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=600&h=400&fit=crop&auto=format' },
-  { id: 3, title: 'หลักการทำงานของเตาแก๊สซิไฟเออร์ชีวมวลแบบง่าย', category: 'ความรู้', date: '20 พฤษภาคม 2568', excerpt: 'อธิบายหลักการแปลงชีวมวลเป็นแก๊สเชื้อเพลิงด้วยกระบวนการแก๊สซิฟิเคชัน พร้อมแผนภาพขั้นตอนการทำงาน', image: 'https://images.unsplash.com/photo-1543257580-7269da773bf5?w=600&h=400&fit=crop&auto=format' },
-  { id: 4, title: 'การบำรุงรักษาระบบแก๊สซิไฟเออร์เพื่อประสิทธิภาพสูงสุด', category: 'การบำรุงรักษา', date: '5 เมษายน 2568', excerpt: 'แนะนำแผนการบำรุงรักษาระบบแก๊สซิไฟเออร์รายวัน รายเดือน และรายปี เพื่อให้ระบบทำงานได้เต็มประสิทธิภาพตลอดอายุการใช้งาน', image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&h=400&fit=crop&auto=format' },
-  { id: 5, title: 'เชื้อเพลิงชีวมวลในประเทศไทย: ชนิดและคุณสมบัติ', category: 'ความรู้', date: '18 มีนาคม 2568', excerpt: 'รวบรวมข้อมูลเชื้อเพลิงชีวมวลหลักที่ใช้ในอุตสาหกรรมไทย ได้แก่ แกลบ ไม้สับ ชานอ้อย และกะลามะพร้าว พร้อมค่าความร้อน', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&h=400&fit=crop&auto=format' },
-  { id: 6, title: 'งานออกบูธ Subcon Thailand 2025 ณ ศูนย์การประชุมไบเทค', category: 'ข่าวบริษัท', date: '2 มีนาคม 2568', excerpt: 'บริษัทยักษ์ใหญ่ 2015 ร่วมออกบูธแสดงนวัตกรรมระบบแก๊สซิไฟเออร์และระบบอบแห้งชีวมวลในงาน Subcon Thailand 2025', image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop&auto=format' },
-]
+async function submitLead(kind: 'contact' | 'quote', payload: Record<string, unknown>) {
+  if (!environment.contactEndpoint) {
+    if (environment.demoMode) {
+      await new Promise(resolve => window.setTimeout(resolve, 450))
+      return
+    }
+    throw new Error('ยังไม่ได้ตั้งค่าปลายทางรับข้อมูล กรุณาติดต่อบริษัทผ่านโทรศัพท์หรือ LINE')
+  }
 
-const DOWNLOADS = [
-  { id: 1, name: 'Company Profile', type: 'PDF', size: '2.4 MB', updated: 'มิ.ย. 2568' },
-  { id: 2, name: 'Product Catalog', type: 'PDF', size: '5.8 MB', updated: 'มิ.ย. 2568' },
-  { id: 3, name: 'Gasifier Specification Sheet', type: 'PDF', size: '1.2 MB', updated: 'เม.ย. 2568' },
-  { id: 4, name: 'Rotary Dryer Specification', type: 'PDF', size: '980 KB', updated: 'เม.ย. 2568' },
-  { id: 5, name: 'Company Brochure', type: 'PDF', size: '3.1 MB', updated: 'ม.ค. 2568' },
-]
+  const { agree, ...lead } = payload
+  const message = typeof lead.message === 'string' ? lead.message : typeof lead.detail === 'string' ? lead.detail : ''
 
-const INDUSTRIES = [
-  { name: 'โรงงานอบปุ๋ย', icon: '🌿', desc: 'ระบบความร้อนสำหรับการอบปุ๋ยอินทรีย์และเคมี' },
-  { name: 'โรงงานอบแร่', icon: '⛏️', desc: 'เตาความร้อนสำหรับการอบแร่และแปรรูปแร่' },
-  { name: 'โรงงานมันสำปะหลัง', icon: '🌾', desc: 'ระบบอบกากมันและผลิตภัณฑ์แป้ง' },
-  { name: 'โรงงานอบทราย', icon: '🏗️', desc: 'ความร้อนสำหรับอบทรายก่อสร้างและอุตสาหกรรม' },
-  { name: 'โรงงานอบยิปซัม', icon: '🔩', desc: 'ระบบควบคุมอุณหภูมิสำหรับกระบวนการยิปซัม' },
-  { name: 'แปรรูปผลผลิตเกษตร', icon: '🌽', desc: 'อบแห้งข้าว พืชผล และวัตถุดิบการเกษตร' },
-  { name: 'เปลี่ยนจาก LPG', icon: '🔥', desc: 'ทดแทน LPG หรือน้ำมันเตาด้วยชีวมวล' },
-  { name: 'ผู้ประกอบการ SME', icon: '🏭', desc: 'ระบบขนาดเล็กคุ้มค่าสำหรับโรงงานขนาดกลาง-เล็ก' },
-]
-
-const SERVICES = [
-  { step: '01', title: 'ให้คำปรึกษา', desc: 'ทีมวิศวกรให้คำแนะนำเบื้องต้นเกี่ยวกับความเป็นไปได้และแนวทางระบบ' },
-  { step: '02', title: 'สำรวจและเก็บข้อมูล', desc: 'ลงพื้นที่สำรวจโรงงาน วิเคราะห์ชนิดเชื้อเพลิงและปริมาณความร้อนที่ต้องการ' },
-  { step: '03', title: 'ออกแบบระบบ', desc: 'วิเคราะห์เชื้อเพลิง ปริมาณความร้อน พื้นที่ติดตั้ง และข้อจำกัดกระบวนการผลิต' },
-  { step: '04', title: 'ผลิตเครื่องจักร', desc: 'ผลิตด้วยมาตรฐานงานวิศวกรรมพร้อมควบคุมคุณภาพทุกขั้นตอน' },
-  { step: '05', title: 'ติดตั้ง', desc: 'ทีมช่างผู้เชี่ยวชาญติดตั้งและเดินระบบตามแบบที่ออกแบบไว้' },
-  { step: '06', title: 'ทดสอบและอบรม', desc: 'ทดสอบระบบในสภาพจริง พร้อมอบรมพนักงานให้ใช้งานได้อย่างถูกต้อง' },
-  { step: '07', title: 'บริการหลังการขาย', desc: 'ดูแลและบำรุงรักษาต่อเนื่อง พร้อมทีมซ่อมบำรุงตลอดอายุการใช้งาน' },
-]
-
-const WHY_US = [
-  { icon: '◎', title: 'ออกแบบเฉพาะโครงการ', desc: 'ทุกระบบออกแบบตามความต้องการของโรงงานนั้น ๆ ไม่ใช่รูปแบบสำเร็จรูป' },
-  { icon: '◈', title: 'ให้คำปรึกษาก่อนเริ่มงาน', desc: 'วิศวกรลงพื้นที่สำรวจและประเมินความเป็นไปได้ก่อนเสนอราคาทุกครั้ง' },
-  { icon: '◉', title: 'ติดตั้งพร้อมทดสอบจริง', desc: 'ส่งมอบพร้อมทดสอบในสภาพการผลิตจริงและแก้ไขจนระบบทำงานสมบูรณ์' },
-  { icon: '◐', title: 'ดูแลหลังการขาย', desc: 'บริการบำรุงรักษาและซ่อมแซมต่อเนื่อง พร้อมอะไหล่และทีมช่างที่พร้อมให้บริการ' },
-]
+  await postJson<{ data: { id: string; status: string } }, Record<string, unknown>>(
+    environment.contactEndpoint,
+    { kind, ...lead, message, consent: agree === true },
+  )
+}
 
 /* ─── ICON COMPONENTS ────────────────────────────── */
 const IcoCheck = () => (
@@ -139,10 +162,98 @@ const IcoChevron = ({ right = true }: { right?: boolean }) => (
   </svg>
 )
 const IcoArrowRight = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
   </svg>
 )
+const IcoPlay = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 5v14l11-7z" />
+  </svg>
+)
+const IcoLine = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20 11.5c0 4.14-3.58 7.5-8 7.5a8.9 8.9 0 01-3.6-.75L4 19l1.15-3.05A7 7 0 014 11.5C4 7.36 7.58 4 12 4s8 3.36 8 7.5z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01" />
+  </svg>
+)
+const IcoFacebook = () => (
+  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 00-2.5-.1c-2.5 0-4.2 1.5-4.2 4.3V10H7.3v3h2.8v8h3.4z" />
+  </svg>
+)
+const IcoCopy = () => (
+  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V5a2 2 0 012-2h7a2 2 0 012 2v10a2 2 0 01-2 2h-2M5 7h7a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z" />
+  </svg>
+)
+
+function IcoIndustry({ name }: { name: IndustryIconName }) {
+  const paths: Record<IndustryIconName, string> = {
+    leaf: 'M20 4C11 4 5 8.5 5 16c0 1.5.5 3 1.3 4C14 20 19 14.5 20 4zM4 20c3-4 6-6 11-8',
+    mineral: 'M12 3l7 5v8l-7 5-7-5V8l7-5zM5 8l7 5 7-5M12 13v8',
+    grain: 'M12 21V5M12 9c-3 0-5-2-5-5 3 0 5 2 5 5zm0 4c3 0 5-2 5-5-3 0-5 2-5 5zm0 4c-3 0-5-2-5-5 3 0 5 2 5 5z',
+    building: 'M4 20V9l8-5 8 5v11M9 20v-5h6v5M8 10h.01M12 10h.01M16 10h.01',
+    materials: 'M5 4h14v4H5zM5 12h14v4H5zM8 8v4m8-4v4',
+    agriculture: 'M12 21V9M12 13c-4 0-6-2-6-6 4 0 6 2 6 6zm0 3c4 0 6-2 6-6-4 0-6 2-6 6z',
+    flame: 'M13 3c1 4-3 5-3 8 0 2 1 3 3 3 3 0 4-3 3-6 3 2 4 5 4 8a8 8 0 11-16 0c0-4 2-7 5-10 0 4 4 3 4-3z',
+    factory: 'M3 20V9l6 3V8l6 3V5l6 3v12H3zM7 20v-4h3v4m4-7h.01m3 0h.01',
+  }
+  return <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d={paths[name]} /></svg>
+}
+
+
+
+function useDialogFocus(onClose: () => void) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const dialog = dialogRef.current
+    const focusable = dialog?.querySelector<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])')
+    focusable?.focus()
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+      if (event.key !== 'Tab' || !dialog) return
+      const items = Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])'))
+      if (!items.length) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+      previouslyFocused?.focus()
+    }
+  }, [onClose])
+
+  return dialogRef
+}
+
+function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
+  const dialogRef = useDialogFocus(onClose)
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="video-title" className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-black shadow-2xl">
+        <div className="flex items-center justify-between bg-ink-950 px-4 py-3 text-white"><h2 id="video-title" className="font-heading text-sm font-semibold">วิดีโอแนะนำระบบ</h2><button onClick={onClose} className="min-w-11 min-h-11 rounded-lg hover:bg-white/10 flex items-center justify-center" aria-label="ปิดวิดีโอ"><IcoX /></button></div>
+        <div className="aspect-video"><iframe src={url} title="วิดีโอแนะนำระบบของยักษ์ใหญ่ 2015" className="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div>
+      </div>
+    </div>
+  )
+}
 
 /* ─── LOGO ───────────────────────────────────────── */
 function Logo({ light = false }: { light?: boolean }) {
@@ -158,9 +269,9 @@ function Logo({ light = false }: { light?: boolean }) {
 }
 
 /* ─── HEADER ─────────────────────────────────────── */
-function Header({ scrolled, setPage, onQuote }: { scrolled: boolean; setPage: (p: Page) => void; onQuote: () => void }) {
+function Header({ scrolled, isHome, setPage, onQuote }: { scrolled: boolean; isHome: boolean; setPage: (p: Page) => void; onQuote: () => void }) {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const isLight = !scrolled
+  const isLight = isHome && !scrolled
 
   const navLinks = [
     { label: 'หน้าแรก', id: 'hero' },
@@ -177,9 +288,9 @@ function Header({ scrolled, setPage, onQuote }: { scrolled: boolean; setPage: (p
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-sm' : 'bg-transparent'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isLight ? 'bg-transparent' : 'bg-white shadow-sm'}`}>
         <div className="max-w-[1200px] mx-auto px-5 md:px-8 h-16 md:h-18 flex items-center justify-between">
-          <button onClick={() => scrollTo('hero')} className="cursor-pointer">
+          <button onClick={() => scrollTo('hero')} className="cursor-pointer rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400" aria-label="กลับสู่หน้าแรก">
             <Logo light={isLight} />
           </button>
 
@@ -199,17 +310,21 @@ function Header({ scrolled, setPage, onQuote }: { scrolled: boolean; setPage: (p
               className={`px-4 py-2 text-sm font-body rounded-lg transition-colors ${isLight ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-ink-700 hover:text-brand-900 hover:bg-ink-100'}`}>
               ข่าวสาร
             </button>
-            <button onClick={() => scrollTo('contact')}
+            <button onClick={() => setPage({ t: 'downloads' })}
               className={`px-4 py-2 text-sm font-body rounded-lg transition-colors ${isLight ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-ink-700 hover:text-brand-900 hover:bg-ink-100'}`}>
-              ติดต่อเรา
+              เอกสาร
             </button>
+            <button onClick={() => scrollTo('contact')}
+            className={`px-4 py-2 text-sm font-body rounded-lg transition-colors ${isLight ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-ink-700 hover:text-brand-900 hover:bg-ink-100'}`}>
+            ติดต่อเรา
+          </button>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 lg:ml-4">
             <button onClick={onQuote} className="hidden lg:flex items-center gap-2 bg-energy-600 hover:bg-energy-400 text-white text-sm font-body px-4 py-2.5 rounded-lg transition-colors duration-200">
               ขอใบเสนอราคา
             </button>
-            <button onClick={() => setMobileOpen(true)} className={`lg:hidden p-2 rounded-lg ${isLight ? 'text-white' : 'text-ink-950'}`}>
+            <button onClick={() => setMobileOpen(true)} className={`lg:hidden min-w-11 min-h-11 p-2 rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400 ${isLight ? 'text-white' : 'text-ink-950'}`} aria-label="เปิดเมนู">
               <IcoMenu />
             </button>
           </div>
@@ -223,7 +338,7 @@ function Header({ scrolled, setPage, onQuote }: { scrolled: boolean; setPage: (p
           <div className="relative ml-auto w-72 bg-white h-full flex flex-col shadow-2xl">
             <div className="flex items-center justify-between p-5 border-b border-ink-300">
               <Logo />
-              <button onClick={() => setMobileOpen(false)} className="p-2 text-ink-700 hover:text-ink-950"><IcoX /></button>
+              <button onClick={() => setMobileOpen(false)} className="min-w-11 min-h-11 p-2 text-ink-700 hover:text-ink-950 rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700" aria-label="ปิดเมนู"><IcoX /></button>
             </div>
             <nav className="flex-1 p-5 flex flex-col gap-1">
               {navLinks.map(l => (
@@ -231,12 +346,16 @@ function Header({ scrolled, setPage, onQuote }: { scrolled: boolean; setPage: (p
               ))}
               <button onClick={() => { setPage({ t: 'projects' }); setMobileOpen(false) }} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">ผลงาน</button>
               <button onClick={() => { setPage({ t: 'news' }); setMobileOpen(false) }} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">ข่าวสาร</button>
+              <button onClick={() => { setPage({ t: 'downloads' }); setMobileOpen(false) }} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">เอกสาร</button>
               <button onClick={() => scrollTo('contact')} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">ติดต่อเรา</button>
             </nav>
             <div className="p-5 border-t border-ink-300 flex flex-col gap-3">
               <button onClick={() => { onQuote(); setMobileOpen(false) }} className="w-full bg-energy-600 text-white py-3 rounded-lg text-sm font-body font-medium">ขอใบเสนอราคา</button>
-              <a href="tel:+66812345678" className="w-full flex items-center justify-center gap-2 border border-brand-700 text-brand-700 py-3 rounded-lg text-sm font-body font-medium hover:bg-brand-700 hover:text-white transition-colors">
+              <a href={COMPANY.phoneHref} className="w-full flex items-center justify-center gap-2 border border-brand-700 text-brand-700 py-3 rounded-lg text-sm font-body font-medium hover:bg-brand-700 hover:text-white transition-colors">
                 <IcoPhone />โทรหาเรา
+              </a>
+              <a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 border border-[#06C755] text-[#068b3f] py-3 rounded-lg text-sm font-body font-medium hover:bg-[#06C755] hover:text-white transition-colors">
+                <IcoLine />LINE
               </a>
             </div>
           </div>
@@ -247,19 +366,16 @@ function Header({ scrolled, setPage, onQuote }: { scrolled: boolean; setPage: (p
 }
 
 /* ─── HERO ───────────────────────────────────────── */
-function Hero({ onQuote, onProducts }: { onQuote: () => void; onProducts: () => void }) {
+function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProducts: () => void; onVideo?: () => void }) {
   return (
-    <section id="hero" className="relative min-h-screen flex items-center">
+    <section id="hero" className="relative flex min-h-[calc(100svh-4rem)] items-center lg:min-h-[calc(100svh-5rem)]">
       <div className="absolute inset-0 bg-brand-900">
-        <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&h=1080&fit=crop&auto=format" alt="โรงงานอุตสาหกรรม" className="w-full h-full object-cover opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-900/95 via-brand-900/80 to-brand-900/40" />
+        <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&h=1080&fit=crop&auto=format" alt="โรงงานอุตสาหกรรม" className="w-full h-full object-cover opacity-30" />
+        <div className="absolute inset-0 bg-brand-900/50" />
+        <div className="absolute inset-0 bg-linear-to-b from-brand-900/65 via-brand-900/45 to-brand-900/55 md:bg-linear-to-r" />
       </div>
       <div className="relative z-10 max-w-[1200px] mx-auto px-5 md:px-8 pt-24 pb-20 w-full">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/80 text-xs font-body px-3 py-1.5 rounded-full mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-500 inline-block" />
-            Industrial Biomass Solution
-          </div>
           <h1 className="font-heading font-bold text-white text-4xl md:text-5xl lg:text-[56px] leading-[1.2] mb-5">
             ระบบเตาแก๊สซิไฟเออร์<br />และเครื่องจักรอบแห้ง<br />
             <span className="text-brand-500">สำหรับโรงงานอุตสาหกรรม</span>
@@ -267,13 +383,16 @@ function Hero({ onQuote, onProducts }: { onQuote: () => void; onProducts: () => 
           <p className="text-white/75 text-base md:text-lg font-body leading-relaxed mb-8 max-w-lg">
             ออกแบบ ผลิต ติดตั้ง และทดสอบระบบพลังงานชีวมวล ให้เหมาะกับกระบวนการผลิตของแต่ละโรงงาน
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 mb-10">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-10">
             <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-energy-600 hover:bg-energy-400 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-all duration-200 hover:scale-[1.02]">
               ขอใบเสนอราคา <IcoArrowRight />
             </button>
             <button onClick={onProducts} className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-colors duration-200">
               ดูสินค้าและบริการ
             </button>
+            {onVideo && <button onClick={onVideo} className="flex items-center justify-center gap-2 border border-white/30 hover:bg-white/10 text-white px-5 py-3.5 rounded-lg font-body font-medium text-sm transition-colors" aria-label="เล่นวิดีโอแนะนำระบบ">
+              <IcoPlay />ดูวิดีโอ
+            </button>}
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             {['ออกแบบตามหน้างาน', 'ติดตั้งครบวงจร', 'ทดสอบก่อนส่งมอบ'].map(t => (
@@ -290,20 +409,40 @@ function Hero({ onQuote, onProducts }: { onQuote: () => void; onProducts: () => 
 
 /* ─── TRUST BAR ──────────────────────────────────── */
 function TrustBar() {
-  const items = [
-    { icon: '⚙️', label: 'ออกแบบตามความต้องการ' },
-    { icon: '🏗️', label: 'ผลิตและติดตั้งครบวงจร' },
-    { icon: '✅', label: 'ทดสอบก่อนส่งมอบ' },
-    { icon: '🔧', label: 'บริการหลังการขาย' },
-  ]
+  const trackRef = useRef<HTMLDivElement>(null)
+  const loopedServices = [...SERVICES, ...SERVICES, ...SERVICES]
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+
+    let frameId = 0
+    let lastFrame = performance.now()
+    let offset = 0
+
+    const animate = (timestamp: number) => {
+      const sequenceWidth = track.scrollWidth / 3
+      if (sequenceWidth > 0) {
+        const elapsed = Math.min(timestamp - lastFrame, 64)
+        offset = (offset + elapsed * 0.035) % sequenceWidth
+        track.style.transform = `translate3d(${-offset}px, 0, 0)`
+      }
+      lastFrame = timestamp
+      frameId = window.requestAnimationFrame(animate)
+    }
+
+    frameId = window.requestAnimationFrame(animate)
+    return () => window.cancelAnimationFrame(frameId)
+  }, [])
+
   return (
-    <section className="bg-brand-700">
-      <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-0">
-          {items.map((item, i) => (
-            <div key={i} className={`flex items-center gap-3 py-2 ${i < 3 ? 'md:border-r md:border-white/20 md:pr-8' : ''} ${i > 0 ? 'md:pl-8' : ''}`}>
-              <span className="text-xl">{item.icon}</span>
-              <span className="text-white/90 text-sm font-body font-medium">{item.label}</span>
+    <section id="services" className="overflow-hidden bg-brand-700" aria-label="บริการครบวงจรตั้งแต่เริ่มต้นจนส่งมอบ">
+      <div className="w-full overflow-hidden py-3">
+        <p className="sr-only">บริการครบวงจร: {SERVICES.map(service => service.title).join(', ')}</p>
+        <div ref={trackRef} aria-hidden="true" className="service-marquee flex w-max items-center">
+          {loopedServices.map((service, index) => (
+            <div key={`${service.step}-${index}`} className="flex shrink-0 items-center border-r border-white/20 px-5 py-1.5 md:px-7">
+              <span className="whitespace-nowrap font-body text-sm font-medium text-white/90">{service.title}</span>
             </div>
           ))}
         </div>
@@ -313,9 +452,9 @@ function TrustBar() {
 }
 
 /* ─── ABOUT ──────────────────────────────────────── */
-function About() {
+function About({ onLearnMore }: { onLearnMore: () => void }) {
   return (
-    <section id="about" className="py-20 md:py-28">
+    <section id="about" data-scroll-reveal className="bg-white py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8">
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
           <div className="relative">
@@ -323,8 +462,8 @@ function About() {
               <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=700&h=520&fit=crop&auto=format" alt="ทีมงานยักษ์ใหญ่ 2015" className="w-full h-full object-cover" />
             </div>
             <div className="absolute -bottom-4 -right-4 bg-brand-900 text-white rounded-xl p-4 shadow-xl hidden md:block">
-              <div className="font-heading font-bold text-2xl">10+</div>
-              <div className="text-white/70 text-xs font-body">ปีประสบการณ์</div>
+              <div className="font-heading font-semibold text-sm">ออกแบบเฉพาะหน้างาน</div>
+              <div className="text-white/70 text-xs font-body mt-1">ประเมินจากกระบวนการผลิตจริง</div>
             </div>
           </div>
           <div>
@@ -339,17 +478,20 @@ function About() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { n: '50+', l: 'โครงการที่เสร็จสมบูรณ์' },
-                { n: '15+', l: 'จังหวัดทั่วประเทศ' },
-                { n: '3', l: 'รุ่นผลิตภัณฑ์หลัก' },
-                { n: '24/7', l: 'บริการหลังการขาย' },
-              ].map(s => (
-                <div key={s.n} className="bg-ink-100 rounded-xl p-4">
-                  <div className="font-heading font-bold text-brand-700 text-2xl">{s.n}</div>
-                  <div className="text-ink-700 text-xs font-body mt-0.5">{s.l}</div>
+                { title: 'สำรวจหน้างาน', desc: 'วิเคราะห์พื้นที่ เชื้อเพลิง และความต้องการความร้อน' },
+                { title: 'ออกแบบเฉพาะระบบ', desc: 'วางแนวทางให้สอดคล้องกับกระบวนการผลิต' },
+                { title: 'ทดสอบก่อนส่งมอบ', desc: 'ตรวจสอบการทำงานก่อนเริ่มใช้งานจริง' },
+                { title: 'ดูแลต่อเนื่อง', desc: 'วางแผนการบำรุงรักษาหลังติดตั้ง' },
+              ].map(item => (
+                <div key={item.title} className="bg-ink-100 rounded-xl p-4">
+                  <div className="font-heading font-semibold text-brand-700 text-sm">{item.title}</div>
+                  <div className="text-ink-700 text-xs font-body mt-1 leading-relaxed">{item.desc}</div>
                 </div>
               ))}
             </div>
+            <button onClick={onLearnMore} className="mt-6 inline-flex items-center gap-2 text-brand-700 font-body text-sm font-medium hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700 rounded-lg">
+              ดูสินค้าและบริการ <IcoArrowRight />
+            </button>
           </div>
         </div>
       </div>
@@ -360,7 +502,7 @@ function About() {
 /* ─── PRODUCTS ───────────────────────────────────── */
 function Products({ onProduct, onQuote }: { onProduct: (p: Product) => void; onQuote: () => void }) {
   return (
-    <section id="products" className="py-20 md:py-28 bg-ink-100">
+    <section id="products" data-scroll-reveal className="bg-ink-100 py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8">
         <div className="text-center mb-14">
           <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">ผลิตภัณฑ์</div>
@@ -401,7 +543,7 @@ function Products({ onProduct, onQuote }: { onProduct: (p: Product) => void; onQ
 function Industries() {
   const [hovered, setHovered] = useState<number | null>(null)
   return (
-    <section className="py-20 md:py-28">
+    <section data-scroll-reveal className="bg-white py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8">
         <div className="text-center mb-14">
           <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">อุตสาหกรรมที่รองรับ</div>
@@ -410,8 +552,8 @@ function Industries() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {INDUSTRIES.map((ind, i) => (
             <div key={i} onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(null)}
-              className={`rounded-xl p-5 border transition-all duration-250 cursor-default ${hovered === i ? 'bg-brand-900 border-brand-900 -translate-y-1 shadow-lg' : 'bg-white border-ink-300/60 hover:border-ink-300'}`}>
-              <div className={`text-2xl mb-3 transition-all duration-250 ${hovered === i ? 'grayscale-0' : ''}`}>{ind.icon}</div>
+              className={`rounded-xl p-5 border transition-all duration-250 cursor-default ${hovered === i ? 'bg-brand-900 border-brand-900 -translate-y-1 shadow-lg' : 'bg-ink-100 border-ink-300/60 hover:border-brand-700/30'}`}>
+              <div className={`mb-3 transition-colors duration-250 ${hovered === i ? 'text-energy-400' : 'text-brand-700'}`}><IcoIndustry name={ind.icon} /></div>
               <h4 className={`font-heading font-semibold text-sm mb-1.5 transition-colors ${hovered === i ? 'text-white' : 'text-ink-950'}`}>{ind.name}</h4>
               <p className={`text-xs font-body leading-relaxed transition-colors ${hovered === i ? 'text-white/70' : 'text-ink-700'}`}>{ind.desc}</p>
             </div>
@@ -422,61 +564,20 @@ function Industries() {
   )
 }
 
-/* ─── SERVICES ───────────────────────────────────── */
-function Services() {
-  const [active, setActive] = useState<number | null>(null)
-  return (
-    <section id="services" className="py-20 md:py-28 bg-ink-100">
-      <div className="max-w-[1200px] mx-auto px-5 md:px-8">
-        <div className="text-center mb-14">
-          <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">กระบวนการทำงาน</div>
-          <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25]">บริการครบวงจรตั้งแต่เริ่มต้นจนส่งมอบ</h2>
-        </div>
-        {/* Desktop timeline */}
-        <div className="hidden md:block">
-          <div className="flex items-start relative">
-            <div className="absolute top-5 left-0 right-0 h-px bg-ink-300" />
-            {SERVICES.map((s, i) => (
-              <div key={i} className="flex-1 px-3 cursor-pointer group" onClick={() => setActive(active === i ? null : i)}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-heading font-semibold border-2 mb-4 transition-all duration-200 relative z-10 mx-auto ${active === i ? 'bg-brand-700 border-brand-700 text-white' : 'bg-white border-ink-300 text-ink-700 group-hover:border-brand-700 group-hover:text-brand-700'}`}>
-                  {s.step}
-                </div>
-                <h4 className={`font-heading font-semibold text-center text-sm mb-2 transition-colors ${active === i ? 'text-brand-700' : 'text-ink-950'}`}>{s.title}</h4>
-                {active === i && <p className="text-ink-700 text-xs font-body text-center leading-relaxed">{s.desc}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-        {/* Mobile timeline */}
-        <div className="md:hidden space-y-4">
-          {SERVICES.map((s, i) => (
-            <div key={i} className={`rounded-xl border transition-all duration-200 overflow-hidden ${active === i ? 'border-brand-700 bg-white' : 'border-ink-300/60 bg-white'}`}>
-              <button className="w-full flex items-center gap-4 p-4 text-left" onClick={() => setActive(active === i ? null : i)}>
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-heading font-semibold shrink-0 transition-colors ${active === i ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-700'}`}>{s.step}</div>
-                <span className={`font-heading font-semibold text-sm ${active === i ? 'text-brand-700' : 'text-ink-950'}`}>{s.title}</span>
-                <span className={`ml-auto text-ink-300 transition-transform duration-200 ${active === i ? 'rotate-90' : ''}`}><IcoChevron /></span>
-              </button>
-              {active === i && <div className="px-4 pb-4 text-sm font-body text-ink-700 leading-relaxed">{s.desc}</div>}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
+
 
 /* ─── WHY US ─────────────────────────────────────── */
 function WhyUs() {
   return (
-    <section className="py-20 md:py-28">
+    <section id="why-us" data-scroll-reveal className="bg-brand-50 py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8">
         <div className="text-center mb-14">
           <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">ทำไมต้องเลือกเรา</div>
           <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25]">จุดที่ทำให้เราแตกต่าง</h2>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
           {WHY_US.map((w, i) => (
-            <div key={i} className="group p-6 rounded-2xl border border-ink-300/60 hover:border-brand-700/30 hover:bg-brand-900/[0.02] transition-all duration-300">
+            <div key={i} className="group rounded-2xl border border-ink-300/60 bg-white p-6 hover:border-brand-700/30 hover:bg-brand-900/[0.02] transition-all duration-300">
               <div className="text-3xl text-brand-500 mb-4 group-hover:text-brand-700 transition-colors">{w.icon}</div>
               <h4 className="font-heading font-semibold text-ink-950 text-base mb-2">{w.title}</h4>
               <p className="text-ink-700 text-sm font-body leading-relaxed">{w.desc}</p>
@@ -492,21 +593,21 @@ function WhyUs() {
 function FeaturedProjects({ setPage }: { setPage: (p: Page) => void }) {
   const featured = PROJECTS.slice(0, 3)
   return (
-    <section className="py-20 md:py-28 bg-ink-100">
+    <section data-scroll-reveal className="bg-white py-16 md:py-20">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-3">
           <div>
-            <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">ผลงาน</div>
+            <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-2">ผลงาน</div>
             <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25]">ผลงานที่ผ่านมา</h2>
           </div>
           <button onClick={() => setPage({ t: 'projects' })} className="flex items-center gap-2 text-brand-700 text-sm font-body font-medium hover:text-brand-900 transition-colors self-start md:self-auto">
             ดูผลงานทั้งหมด <IcoArrowRight />
           </button>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {featured.map((p, i) => (
-            <div key={p.id} onClick={() => setPage({ t: 'project', p })}
-              className={`group cursor-pointer rounded-2xl overflow-hidden bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${i === 0 ? 'md:col-span-2 lg:col-span-1' : ''}`}>
+            <button key={p.id} type="button" onClick={() => setPage({ t: 'project', p })}
+              className={`group cursor-pointer text-left rounded-2xl overflow-hidden bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700 ${i === 0 ? 'md:col-span-2 lg:col-span-1' : ''}`}>
               <div className="aspect-[16/9] bg-ink-100 overflow-hidden">
                 <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               </div>
@@ -514,14 +615,15 @@ function FeaturedProjects({ setPage }: { setPage: (p: Page) => void }) {
                 <div className="flex gap-2 mb-2">
                   <span className="bg-brand-900/10 text-brand-700 text-xs font-body px-2.5 py-1 rounded-full">{p.industry}</span>
                 </div>
-                <h3 className="font-heading font-semibold text-ink-950 text-sm leading-snug mb-3">{p.name}</h3>
-                <div className="flex items-center justify-between text-xs font-body text-ink-700">
+                <h3 className="font-heading font-semibold text-ink-950 text-sm leading-snug mb-2">{p.name}</h3>
+                <p className="line-clamp-2 text-xs font-body leading-relaxed text-ink-700">{p.summary}</p>
+                <div className="mt-3 flex items-center justify-between text-xs font-body text-ink-700">
                   <div className="flex items-center gap-1"><IcoMapPin />{p.province}</div>
                   <div>{p.year}</div>
                 </div>
                 <div className="text-xs text-ink-700 font-body mt-1.5 pt-3 border-t border-ink-300/60">{p.system}</div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -532,7 +634,7 @@ function FeaturedProjects({ setPage }: { setPage: (p: Page) => void }) {
 /* ─── LATEST NEWS ────────────────────────────────── */
 function LatestNews({ setPage }: { setPage: (p: Page) => void }) {
   return (
-    <section className="py-20 md:py-28">
+    <section data-scroll-reveal className="py-20 md:py-28 bg-ink-100">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
           <div>
@@ -545,8 +647,8 @@ function LatestNews({ setPage }: { setPage: (p: Page) => void }) {
         </div>
         <div className="grid md:grid-cols-3 gap-5">
           {NEWS.slice(0, 3).map(a => (
-            <article key={a.id} onClick={() => setPage({ t: 'article', a })}
-              className="group cursor-pointer rounded-2xl overflow-hidden bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <button key={a.id} type="button" onClick={() => setPage({ t: 'article', a })}
+              className="group text-left cursor-pointer rounded-2xl overflow-hidden bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700">
               <div className="aspect-[16/9] bg-ink-100 overflow-hidden">
                 <img src={a.image} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               </div>
@@ -557,39 +659,9 @@ function LatestNews({ setPage }: { setPage: (p: Page) => void }) {
                 </div>
                 <h3 className="font-heading font-semibold text-ink-950 text-sm leading-snug mb-2 line-clamp-2 group-hover:text-brand-700 transition-colors">{a.title}</h3>
                 <p className="text-ink-700 text-xs font-body leading-relaxed line-clamp-2">{a.excerpt}</p>
-                <div className="flex items-center gap-1 text-brand-700 text-xs font-body font-medium mt-4">อ่านเพิ่มเติม <IcoArrowRight /></div>
+                <span className="flex items-center gap-1 text-brand-700 text-xs font-body font-medium mt-4">อ่านเพิ่มเติม <IcoArrowRight /></span>
               </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ─── DOWNLOADS ──────────────────────────────────── */
-function Downloads() {
-  return (
-    <section className="py-20 md:py-28 bg-ink-100">
-      <div className="max-w-[1200px] mx-auto px-5 md:px-8">
-        <div className="text-center mb-14">
-          <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">ดาวน์โหลด</div>
-          <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25]">เอกสารและแคตตาล็อก</h2>
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {DOWNLOADS.map(d => (
-            <div key={d.id} className="bg-white rounded-xl border border-ink-300/60 p-4 flex items-center gap-4 hover:border-brand-700/40 hover:shadow-sm transition-all duration-200">
-              <div className="w-10 h-12 bg-red-50 border border-red-100 rounded-lg flex items-center justify-center shrink-0">
-                <span className="text-red-600 text-xs font-heading font-bold">PDF</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-heading font-semibold text-ink-950 text-sm truncate">{d.name}</div>
-                <div className="text-ink-700 text-xs font-body mt-0.5">{d.size} · อัปเดต {d.updated}</div>
-              </div>
-              <button className="shrink-0 w-8 h-8 rounded-lg bg-brand-900/5 hover:bg-brand-700 hover:text-white text-brand-700 flex items-center justify-center transition-colors">
-                <IcoDownload />
-              </button>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -600,7 +672,7 @@ function Downloads() {
 /* ─── QUOTE CTA ──────────────────────────────────── */
 function QuoteCTA({ onQuote }: { onQuote: () => void }) {
   return (
-    <section className="py-20 md:py-24 bg-brand-900 relative overflow-hidden">
+    <section data-scroll-reveal className="py-20 md:py-24 bg-brand-900 relative overflow-hidden">
       <div className="absolute inset-0">
         <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&h=600&fit=crop&auto=format" alt="" className="w-full h-full object-cover opacity-10" />
       </div>
@@ -615,8 +687,11 @@ function QuoteCTA({ onQuote }: { onQuote: () => void }) {
           <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-energy-600 hover:bg-energy-400 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
             ขอใบเสนอราคา <IcoArrowRight />
           </button>
-          <a href="tel:+66812345678" className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
+          <a href={COMPANY.phoneHref} className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
             <IcoPhone />โทรปรึกษา
+          </a>
+          <a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
+            <IcoLine />LINE
           </a>
         </div>
       </div>
@@ -625,126 +700,110 @@ function QuoteCTA({ onQuote }: { onQuote: () => void }) {
 }
 
 /* ─── CONTACT ────────────────────────────────────── */
-function Contact() {
-  const [form, setForm] = useState({ name: '', company: '', phone: '', email: '', topic: '', message: '', agree: false })
+function Contact({ onPrivacy }: { onPrivacy: () => void }) {
+  const [form, setForm] = useState({ name: '', company: '', phone: '', email: '', topic: '', message: '', agree: false, website: '' })
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [requestError, setRequestError] = useState('')
+  const fieldIds: Record<string, string> = { name: 'contact-name', phone: 'contact-phone', email: 'contact-email', agree: 'agree' }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const inputClass = (field: string) => `w-full border rounded-lg px-3 py-2.5 text-sm font-body transition-colors ${errors[field] ? 'border-red-600 focus:border-red-600' : 'border-ink-300 focus:border-brand-700'}`
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const nextErrors: Record<string, string> = {}
+    if (!form.name.trim()) nextErrors.name = 'กรุณาระบุชื่อผู้ติดต่อ'
+    if (!/^[0-9+\s()\-]{8,20}$/.test(form.phone.trim())) nextErrors.phone = 'กรุณาระบุเบอร์โทรที่ติดต่อได้'
+    if (form.email && form.email.includes('@') && !/^\S+@\S+\.\S+$/.test(form.email)) nextErrors.email = 'รูปแบบอีเมลไม่ถูกต้อง'
+    if (!form.agree) nextErrors.agree = 'กรุณายอมรับนโยบายความเป็นส่วนตัว'
+    setErrors(nextErrors)
+    setRequestError('')
+
+    if (Object.keys(nextErrors).length) {
+      const firstInvalidField = Object.keys(nextErrors)[0]
+      window.setTimeout(() => document.getElementById(fieldIds[firstInvalidField] ?? firstInvalidField)?.focus(), 0)
+      return
+    }
+
+    if (form.website) return
+
     setStatus('loading')
-    setTimeout(() => setStatus('success'), 1500)
+    try {
+      await submitLead('contact', { ...form, website: undefined })
+      setStatus('success')
+    } catch (error) {
+      setStatus('error')
+      setRequestError(error instanceof Error ? error.message : 'ไม่สามารถส่งข้อมูลได้ในขณะนี้')
+    }
   }
 
   return (
-    <section id="contact" className="py-20 md:py-28">
+    <section id="contact" data-scroll-reveal className="bg-white py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8">
         <div className="grid md:grid-cols-2 gap-12 lg:gap-16">
           <div>
             <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">ติดต่อเรา</div>
-            <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25] mb-6">พร้อมให้คำปรึกษาทุกวัน</h2>
+            <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25] mb-6">พร้อมให้คำปรึกษาเกี่ยวกับโครงการ</h2>
             <div className="space-y-4 text-ink-700 font-body">
-              {[
-                { icon: <IcoMapPin />, label: 'ที่อยู่', val: '123 ถนนอุตสาหกรรม ต.เมือง อ.เมือง จ.นครราชสีมา 30000' },
-                { icon: <IcoPhone />, label: 'โทรศัพท์', val: '081-234-5678' },
-                { icon: <IcoMail />, label: 'อีเมล', val: 'info@yakyai2015.co.th' },
-              ].map((c, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-900/5 flex items-center justify-center text-brand-700 shrink-0 mt-0.5">{c.icon}</div>
-                  <div>
-                    <div className="text-xs text-ink-700/60 mb-0.5">{c.label}</div>
-                    <div className="text-sm text-ink-950">{c.val}</div>
-                  </div>
-                </div>
-              ))}
-              <div className="mt-2 text-sm">
-                <span className="text-ink-700/60 text-xs block mb-0.5">เวลาทำการ</span>
-                จันทร์–ศุกร์ 08:00–17:00 น.
-              </div>
+              <div className="flex gap-3"><div className="w-11 h-11 rounded-xl bg-brand-900/5 flex items-center justify-center text-brand-700 shrink-0"><IcoMapPin /></div><div><div className="text-xs text-ink-700/60 mb-0.5">ที่อยู่</div><div className="text-sm text-ink-950">{COMPANY.publicAddress}</div></div></div>
+              <div className="flex gap-3"><div className="w-11 h-11 rounded-xl bg-brand-900/5 flex items-center justify-center text-brand-700 shrink-0"><IcoPhone /></div><div><div className="text-xs text-ink-700/60 mb-0.5">โทรศัพท์</div><a href={COMPANY.phoneHref} className="text-sm text-ink-950 hover:text-brand-700">{COMPANY.phone}</a></div></div>
+              <div className="flex gap-3"><div className="w-11 h-11 rounded-xl bg-brand-900/5 flex items-center justify-center text-brand-700 shrink-0"><IcoMail /></div><div><div className="text-xs text-ink-700/60 mb-0.5">อีเมล</div><a href={COMPANY.emailHref} className="text-sm text-ink-950 hover:text-brand-700">{COMPANY.email}</a></div></div>
+              <div className="flex gap-3"><div className="w-11 h-11 rounded-xl bg-brand-900/5 flex items-center justify-center text-brand-700 shrink-0"><IcoLine /></div><div><div className="text-xs text-ink-700/60 mb-0.5">LINE</div><a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-ink-950 hover:text-brand-700">ติดต่อผ่าน LINE</a></div></div>
+              <div className="flex gap-3"><div className="w-11 h-11 rounded-xl bg-brand-900/5 flex items-center justify-center text-brand-700 shrink-0"><IcoFacebook /></div><div><div className="text-xs text-ink-700/60 mb-0.5">Facebook</div>{COMPANY.facebookUrl ? <a href={COMPANY.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-ink-950 hover:text-brand-700">{COMPANY.facebookLabel}</a> : <span className="text-sm text-ink-700/60">รอลิงก์ Facebook จากบริษัท</span>}</div></div>
+              <a href={COMPANY.map.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-brand-700 px-4 py-2.5 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-700 hover:text-white">
+                <IcoMapPin />เปิดใน Google Maps{COMPANY.map.isApproximate ? ' (พิกัดชั่วคราว)' : ''}
+              </a>
+              <div className="mt-2 text-sm"><span className="text-ink-700/60 text-xs block mb-0.5">เวลาทำการ</span>{COMPANY.businessHours}</div>
             </div>
           </div>
 
           <div className="bg-white border border-ink-300/60 rounded-2xl p-6 md:p-8">
             {status === 'success' ? (
-              <div className="text-center py-10">
+              <div className="text-center py-10" role="status" aria-live="polite">
                 <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 text-green-600"><IcoCheck /></div>
                 <h3 className="font-heading font-semibold text-ink-950 text-xl mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h3>
-                <p className="text-ink-700 text-sm font-body">ทีมงานจะติดต่อกลับตามช่องทางที่คุณให้ไว้ภายใน 1 วันทำการ</p>
-                <button onClick={() => setStatus('idle')} className="mt-6 text-brand-700 text-sm font-body hover:underline">ส่งข้อมูลใหม่</button>
+                <p className="text-ink-700 text-sm font-body">{environment.demoMode && !environment.contactEndpoint ? 'ทดสอบขั้นตอนส่งข้อมูลสำเร็จแล้ว โดยยังไม่มีข้อมูลถูกส่งออกจากเว็บไซต์' : 'ทีมงานจะติดต่อกลับตามช่องทางที่คุณให้ไว้ภายใน 1 วันทำการ'}</p>
+                <button onClick={() => { setStatus('idle'); setForm({ name: '', company: '', phone: '', email: '', topic: '', message: '', agree: false, website: '' }) }} className="mt-6 text-brand-700 text-sm font-body hover:underline">ส่งข้อมูลใหม่</button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-body text-ink-700 mb-1.5">ชื่อ <span className="text-red-500">*</span></label>
-                    <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors" placeholder="ชื่อของคุณ" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-body text-ink-700 mb-1.5">ชื่อบริษัท</label>
-                    <input value={form.company} onChange={e => setForm({...form, company: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors" placeholder="ชื่อบริษัท" />
-                  </div>
+              <form onSubmit={handleSubmit} noValidate className="space-y-4">
+                {status === 'error' && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-body text-red-700">{requestError}</div>}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label htmlFor="contact-name" className="block text-xs font-body text-ink-700 mb-1.5">ชื่อ <span className="text-red-500">*</span></label><input id="contact-name" autoComplete="name" maxLength={100} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'contact-name-error' : undefined} className={inputClass('name')} placeholder="ชื่อของคุณ" />{errors.name && <p id="contact-name-error" className="mt-1 text-xs text-red-600">{errors.name}</p>}</div>
+                  <div><label htmlFor="contact-company" className="block text-xs font-body text-ink-700 mb-1.5">ชื่อบริษัท</label><input id="contact-company" autoComplete="organization" maxLength={150} value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} className={inputClass('company')} placeholder="ชื่อบริษัท" /></div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-body text-ink-700 mb-1.5">เบอร์โทร <span className="text-red-500">*</span></label>
-                    <input required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors" placeholder="08X-XXX-XXXX" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-body text-ink-700 mb-1.5">Email หรือ LINE</label>
-                    <input value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors" placeholder="email@company.com" />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label htmlFor="contact-phone" className="block text-xs font-body text-ink-700 mb-1.5">เบอร์โทร <span className="text-red-500">*</span></label><input id="contact-phone" type="tel" autoComplete="tel" inputMode="tel" maxLength={20} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? 'contact-phone-error' : undefined} className={inputClass('phone')} placeholder="08X-XXX-XXXX" />{errors.phone && <p id="contact-phone-error" className="mt-1 text-xs text-red-600">{errors.phone}</p>}</div>
+                  <div><label htmlFor="contact-email" className="block text-xs font-body text-ink-700 mb-1.5">Email หรือ LINE</label><input id="contact-email" autoComplete="email" maxLength={254} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'contact-email-error' : undefined} className={inputClass('email')} placeholder="email@company.com หรือ LINE ID" />{errors.email && <p id="contact-email-error" className="mt-1 text-xs text-red-600">{errors.email}</p>}</div>
                 </div>
-                <div>
-                  <label className="block text-xs font-body text-ink-700 mb-1.5">หัวข้อที่สนใจ</label>
-                  <select value={form.topic} onChange={e => setForm({...form, topic: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors bg-white">
-                    <option value="">เลือกหัวข้อ...</option>
-                    <option>เตาแก๊สซิไฟเออร์ 1.5 MW</option>
-                    <option>เตาแก๊สซิไฟเออร์ 750 kW</option>
-                    <option>Cassava Pulp Rotary Dryer</option>
-                    <option>ขอใบเสนอราคา</option>
-                    <option>สอบถามข้อมูลทั่วไป</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-body text-ink-700 mb-1.5">ข้อความ</label>
-                  <textarea value={form.message} onChange={e => setForm({...form, message: e.target.value})} rows={3} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors resize-none" placeholder="รายละเอียดเพิ่มเติม..." />
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <input type="checkbox" id="agree" checked={form.agree} onChange={e => setForm({...form, agree: e.target.checked})} className="mt-0.5 w-4 h-4 accent-brand-700" />
-                  <label htmlFor="agree" className="text-xs font-body text-ink-700 leading-relaxed">ยอมรับ<a href="#" className="text-brand-700 underline">นโยบายความเป็นส่วนตัว</a> และยินยอมให้ติดต่อกลับ</label>
-                </div>
-                <button type="submit" disabled={status === 'loading' || !form.agree} className="w-full bg-brand-700 hover:bg-brand-900 disabled:opacity-60 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">
-                  {status === 'loading' ? 'กำลังส่ง...' : 'ส่งข้อมูล'}
-                </button>
+                <div><label htmlFor="contact-topic" className="block text-xs font-body text-ink-700 mb-1.5">หัวข้อที่สนใจ</label><select id="contact-topic" value={form.topic} onChange={e => setForm({ ...form, topic: e.target.value })} className={inputClass('topic')}><option value="">เลือกหัวข้อ...</option>{PRODUCTS.map(product => <option key={product.id}>{product.name}</option>)}<option>ขอใบเสนอราคา</option><option>สอบถามข้อมูลทั่วไป</option></select></div>
+                <div><label htmlFor="contact-message" className="block text-xs font-body text-ink-700 mb-1.5">ข้อความ</label><textarea id="contact-message" maxLength={2000} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} rows={3} className={`${inputClass('message')} resize-none`} placeholder="รายละเอียดเพิ่มเติม..." /></div>
+                <div className="absolute -left-[10000px]" aria-hidden="true"><label htmlFor="company-website">Website</label><input id="company-website" tabIndex={-1} autoComplete="off" value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} /></div>
+                <div className="flex items-start gap-2.5"><input type="checkbox" id="agree" checked={form.agree} onChange={e => setForm({ ...form, agree: e.target.checked })} aria-invalid={Boolean(errors.agree)} className="mt-0.5 w-5 h-5 accent-brand-700" /><label htmlFor="agree" className="text-xs font-body text-ink-700 leading-relaxed">ยอมรับ<a href="/privacy-policy" onClick={event => { event.preventDefault(); onPrivacy() }} className="ml-1 text-brand-700 underline">นโยบายความเป็นส่วนตัว</a> และยินยอมให้ติดต่อกลับ</label></div>
+                {errors.agree && <p className="text-xs text-red-600">{errors.agree}</p>}
+                <button type="submit" disabled={status === 'loading'} className="w-full bg-brand-700 hover:bg-brand-900 disabled:opacity-60 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">{status === 'loading' ? 'กำลังส่ง...' : 'ส่งข้อมูล'}</button>
               </form>
             )}
           </div>
         </div>
 
-        {/* Map placeholder */}
-        <div className="mt-10 rounded-2xl overflow-hidden bg-ink-100 border border-ink-300/60 h-48 flex items-center justify-center">
-          <div className="text-center text-ink-700/60">
-            <IcoMapPin />
-            <p className="text-sm font-body mt-2">นครราชสีมา ประเทศไทย</p>
-          </div>
-        </div>
       </div>
     </section>
   )
 }
 
 /* ─── FOOTER ─────────────────────────────────────── */
-function Footer({ scrollTo, setPage }: { scrollTo: (id: string) => void; setPage: (p: Page) => void }) {
+function Footer({ scrollTo, setPage, onPrivacy }: { scrollTo: (id: string) => void; setPage: (p: Page) => void; onPrivacy: () => void }) {
   return (
     <footer className="bg-brand-900 text-white">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-14">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <Logo light />
             <p className="text-white/60 text-sm font-body leading-relaxed mt-4 mb-5">ผู้เชี่ยวชาญระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม</p>
             <div className="flex gap-3">
-              {['FB', 'LINE', 'YT'].map(s => (
-                <a key={s} href="#" className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs font-heading font-bold text-white/70 hover:text-white transition-colors">{s}</a>
-              ))}
+              <a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" aria-label="ติดต่อผ่าน LINE" className="min-w-11 min-h-11 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs font-heading font-bold text-white/70 hover:text-white transition-colors">LINE</a>
+              {COMPANY.facebookUrl ? <a href={COMPANY.facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="เปิด Facebook Page" className="flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"><IcoFacebook /></a> : <span title="รอลิงก์ Facebook จากบริษัท" aria-label="Facebook รอลิงก์จากบริษัท" className="flex min-h-11 min-w-11 cursor-not-allowed items-center justify-center rounded-lg bg-white/5 text-white/30"><IcoFacebook /></span>}
             </div>
           </div>
           <div>
@@ -761,26 +820,24 @@ function Footer({ scrollTo, setPage }: { scrollTo: (id: string) => void; setPage
               <li><button onClick={() => setPage({ t: 'projects' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">ผลงาน</button></li>
               <li><button onClick={() => setPage({ t: 'news' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">ข่าวสาร</button></li>
               <li><button onClick={() => scrollTo('contact')} className="text-white/60 hover:text-white text-sm font-body transition-colors">ติดต่อเรา</button></li>
-              <li><a href="#" className="text-white/60 hover:text-white text-sm font-body transition-colors">ดาวน์โหลด</a></li>
+              <li><button onClick={() => setPage({ t: 'downloads' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">ดาวน์โหลด</button></li>
             </ul>
           </div>
-          <div>
-            <h5 className="font-heading font-semibold text-sm mb-4">ติดต่อ</h5>
-            <ul className="space-y-3 text-white/60 text-sm font-body">
-              <li className="flex gap-2 items-start"><IcoMapPin />123 ถนนอุตสาหกรรม นครราชสีมา</li>
-              <li className="flex gap-2 items-center"><IcoPhone cls="w-4 h-4 shrink-0" />081-234-5678</li>
-              <li className="flex gap-2 items-center"><IcoMail />info@yakyai2015.co.th</li>
-              <li className="text-xs pt-1">จ.–ศ. 08:00–17:00 น.</li>
-            </ul>
+
+          <div className="md:col-span-2 lg:col-span-2">
+            <h5 className="font-heading font-semibold text-sm mb-4">แผนที่</h5>
+            <div className="overflow-hidden rounded-xl border border-white/15 bg-brand-900/40">
+              <iframe title="แผนที่บริษัท ยักษ์ใหญ่ 2015" src={COMPANY.map.embedUrl} loading="lazy" referrerPolicy="no-referrer" className="h-52 w-full border-0 md:h-60" />
+            </div>
           </div>
         </div>
       </div>
       <div className="border-t border-white/10">
         <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
-          <p className="text-white/40 text-xs font-body">© 2568 บริษัท ยักษ์ใหญ่ 2015 จำกัด สงวนลิขสิทธิ์</p>
+          <p className="text-white/40 text-xs font-body">© {new Date().getFullYear() + 543} บริษัท ยักษ์ใหญ่ 2015 จำกัด สงวนลิขสิทธิ์</p>
           <div className="flex gap-4">
-            <a href="#" className="text-white/40 hover:text-white/70 text-xs font-body transition-colors">นโยบายความเป็นส่วนตัว</a>
-            <a href="#" className="text-white/40 hover:text-white/70 text-xs font-body transition-colors">Cookie Policy</a>
+            <button onClick={onPrivacy} className="text-white/40 hover:text-white/70 text-xs font-body transition-colors">นโยบายความเป็นส่วนตัว</button>
+            <button onClick={() => setPage({ t: 'admin' })} className="text-white/40 hover:text-white/70 text-xs font-body transition-colors">ผู้ดูแลระบบ</button>
           </div>
         </div>
       </div>
@@ -789,19 +846,74 @@ function Footer({ scrollTo, setPage }: { scrollTo: (id: string) => void; setPage
 }
 
 /* ─── FLOATING ACTIONS ───────────────────────────── */
-function FloatingActions({ onQuote }: { onQuote: () => void }) {
+function LineContactModal({ onClose }: { onClose: () => void }) {
+  const dialogRef = useDialogFocus(onClose)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button type="button" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label="ปิดช่องทาง LINE" />
+      <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="line-contact-title" className="relative w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl sm:p-8">
+        <button type="button" onClick={onClose} className="absolute right-3 top-3 flex min-h-11 min-w-11 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-ink-100" aria-label="ปิด"><IcoX /></button>
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#06C755] text-white"><IcoLine /></div>
+        <h2 id="line-contact-title" className="mt-5 font-heading text-2xl font-semibold text-ink-950">ติดต่อผ่าน LINE</h2>
+        <p className="mt-2 font-body text-sm leading-relaxed text-ink-700">สแกน QR Code บนคอมพิวเตอร์ หรือกดปุ่มด้านล่างเพื่อเปิด LINE บนมือถือ</p>
+
+        <div className="mx-auto mt-6 grid aspect-square w-52 place-items-center overflow-hidden rounded-2xl border border-ink-300 bg-white p-3">
+          {COMPANY.lineQrImage ? <img src={COMPANY.lineQrImage} alt="QR Code สำหรับติดต่อ LINE ยักษ์ใหญ่ 2015" className="h-full w-full object-contain" /> : <div className="grid h-full w-full place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-ink-100 p-5"><div><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#06C755] text-white"><IcoLine /></div><p className="mt-3 font-body text-xs leading-relaxed text-ink-700">พื้นที่ QR Code LINE OA<br />รอไฟล์จากบริษัท</p></div></div>}
+        </div>
+
+        <a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] px-5 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-[#05b34c]"><IcoLine />เปิด LINE อัตโนมัติ</a>
+        <p className="mt-3 font-body text-xs text-ink-700/60">เมื่อได้รับ LINE OA และ QR Code จริง สามารถเปลี่ยนได้จากข้อมูลบริษัทจุดเดียว</p>
+      </section>
+    </div>
+  )
+}
+
+function PhoneContactModal({ onClose }: { onClose: () => void }) {
+  const [copyStatus, setCopyStatus] = useState('')
+  const dialogRef = useDialogFocus(onClose)
+
+  const copyPhone = async () => {
+    try {
+      await navigator.clipboard.writeText(COMPANY.phone)
+      setCopyStatus('คัดลอกเบอร์โทรแล้ว')
+    } catch {
+      setCopyStatus('ไม่สามารถคัดลอกอัตโนมัติได้')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button type="button" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label="ปิดข้อมูลโทรศัพท์" />
+      <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="phone-contact-title" className="relative w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl sm:p-8">
+        <button type="button" onClick={onClose} className="absolute right-3 top-3 flex min-h-11 min-w-11 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-ink-100" aria-label="ปิด"><IcoX /></button>
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-700 text-white"><IcoPhone cls="h-6 w-6" /></div>
+        <h2 id="phone-contact-title" className="mt-5 font-heading text-2xl font-semibold text-ink-950">โทรปรึกษาทีมงาน</h2>
+        <p className="mt-2 font-body text-sm text-ink-700">{COMPANY.businessHours}</p>
+        <p className="mt-6 font-heading text-3xl font-bold tracking-wide text-brand-900">{COMPANY.phone}</p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <a href={COMPANY.phoneHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-brand-900"><IcoPhone />โทรออก</a>
+          <button type="button" onClick={copyPhone} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-brand-700 px-5 py-3 font-body text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white"><IcoCopy />คัดลอกเบอร์</button>
+        </div>
+        {copyStatus && <p role="status" className="mt-3 font-body text-xs text-brand-700">{copyStatus}</p>}
+      </section>
+    </div>
+  )
+}
+
+function FloatingActions({ onQuote, onPhone, onLine }: { onQuote: () => void; onPhone: () => void; onLine: () => void }) {
   return (
     <>
       {/* Desktop: bottom-right */}
-      <div className="hidden md:flex fixed bottom-6 right-6 flex-col gap-2.5 z-40">
-        <a href="https://line.me" target="_blank" rel="noopener" className="w-12 h-12 rounded-full bg-[#06C755] hover:bg-[#05b34c] text-white flex items-center justify-center shadow-lg hover:scale-110 transition-all font-heading font-bold text-xs">LINE</a>
-        <a href="tel:+66812345678" className="w-12 h-12 rounded-full bg-brand-700 hover:bg-brand-900 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-all"><IcoPhone /></a>
-        <button onClick={onQuote} className="w-12 h-12 rounded-full bg-energy-600 hover:bg-energy-400 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-all text-xs font-heading font-bold leading-tight text-center">ราคา</button>
+      <div className="fixed bottom-6 right-6 z-40 hidden flex-col gap-3 md:flex">
+        <button type="button" onClick={onLine} aria-label="เปิดช่องทางติดต่อผ่าน LINE" className="flex h-14 w-14 items-center justify-center rounded-full bg-[#06C755] font-heading text-sm font-bold text-white shadow-lg transition-all hover:scale-110 hover:bg-[#05b34c]">LINE</button>
+        <button type="button" onClick={onPhone} aria-label="แสดงเบอร์โทรศัพท์" className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-700 text-white shadow-lg transition-all hover:scale-110 hover:bg-brand-900"><IcoPhone cls="h-6 w-6" /></button>
+        <button onClick={onQuote} aria-label="ขอใบเสนอราคา" className="flex h-14 w-14 items-center justify-center rounded-full bg-energy-600 font-heading text-sm font-bold leading-tight text-white shadow-lg transition-all hover:scale-110 hover:bg-energy-400">ราคา</button>
       </div>
       {/* Mobile: sticky bottom bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-ink-300 flex">
-        <a href="tel:+66812345678" className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-brand-700 text-xs font-body"><IcoPhone cls="w-5 h-5" />โทรหาเรา</a>
-        <a href="https://line.me" target="_blank" rel="noopener" className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-[#06C755] text-xs font-body"><span className="font-bold text-sm">LINE</span>LINE</a>
+        <button type="button" onClick={onPhone} className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-brand-700 text-xs font-body"><IcoPhone cls="w-5 h-5" />โทรหาเรา</button>
+        <button type="button" onClick={onLine} className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-[#06C755] text-xs font-body"><IcoLine /><span>LINE</span></button>
         <button onClick={onQuote} className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 bg-energy-600 text-white text-xs font-body"><IcoArrowRight />ขอใบเสนอราคา</button>
       </div>
     </>
@@ -809,85 +921,63 @@ function FloatingActions({ onQuote }: { onQuote: () => void }) {
 }
 
 /* ─── QUOTE MODAL ────────────────────────────────── */
-function QuoteModal({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({ name: '', company: '', phone: '', contact: '', factory: '', system: '', detail: '' })
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle')
+function QuoteModal({ onClose, context, onPrivacy }: { onClose: () => void; context?: { product?: string; project?: string }; onPrivacy: () => void }) {
+  const [form, setForm] = useState({ name: '', company: '', phone: '', contact: '', factory: '', system: context?.product ?? '', detail: '', reference: context?.project ?? '', agree: false, website: '' })
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [requestError, setRequestError] = useState('')
+  const fieldIds: Record<string, string> = { name: 'quote-name', phone: 'quote-phone', agree: 'quote-agree' }
+  const dialogRef = useDialogFocus(onClose)
+  const inputClass = (field: string) => `w-full border rounded-lg px-3 py-2.5 text-sm font-body transition-colors ${errors[field] ? 'border-red-600 focus:border-red-600' : 'border-ink-300 focus:border-brand-700'}`
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const nextErrors: Record<string, string> = {}
+    if (!form.name.trim()) nextErrors.name = 'กรุณาระบุชื่อผู้ติดต่อ'
+    if (!/^[0-9+\s()\-]{8,20}$/.test(form.phone.trim())) nextErrors.phone = 'กรุณาระบุเบอร์โทรที่ติดต่อได้'
+    if (!form.agree) nextErrors.agree = 'กรุณายอมรับนโยบายความเป็นส่วนตัว'
+    setErrors(nextErrors)
+    setRequestError('')
+    if (Object.keys(nextErrors).length) {
+      const firstInvalidField = Object.keys(nextErrors)[0]
+      window.setTimeout(() => document.getElementById(fieldIds[firstInvalidField] ?? firstInvalidField)?.focus(), 0)
+      return
+    }
+    if (form.website) return
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
     setStatus('loading')
-    setTimeout(() => setStatus('success'), 1400)
+    try {
+      await submitLead('quote', { ...form, website: undefined })
+      setStatus('success')
+    } catch (error) {
+      setStatus('error')
+      setRequestError(error instanceof Error ? error.message : 'ไม่สามารถส่งข้อมูลได้ในขณะนี้')
+    }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="quote-title" className="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b border-ink-300 sticky top-0 bg-white rounded-t-2xl z-10">
-          <div>
-            <h3 className="font-heading font-semibold text-ink-950 text-lg">ขอใบเสนอราคา</h3>
-            <p className="text-ink-700 text-xs font-body mt-0.5">ทีมวิศวกรจะติดต่อกลับภายใน 1 วันทำการ</p>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-700 transition-colors"><IcoX /></button>
+          <div><h3 id="quote-title" className="font-heading font-semibold text-ink-950 text-lg">ขอใบเสนอราคา</h3><p className="text-ink-700 text-xs font-body mt-0.5">ทีมวิศวกรจะติดต่อกลับภายใน 1 วันทำการ</p></div>
+          <button onClick={onClose} className="min-w-11 min-h-11 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-700 transition-colors" aria-label="ปิดแบบฟอร์ม"><IcoX /></button>
         </div>
         <div className="p-5">
-          {status === 'success' ? (
-            <div className="text-center py-8">
-              <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 text-green-600 text-2xl">✓</div>
-              <h4 className="font-heading font-semibold text-ink-950 text-xl mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h4>
-              <p className="text-ink-700 text-sm font-body mb-6">ทีมงานจะติดต่อกลับโดยเร็ว</p>
-              <button onClick={onClose} className="bg-brand-700 text-white px-6 py-2.5 rounded-lg text-sm font-body">ปิด</button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-body text-ink-700 mb-1.5">ชื่อผู้ติดต่อ <span className="text-red-500">*</span></label>
-                  <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors" placeholder="ชื่อ-นามสกุล" />
-                </div>
-                <div>
-                  <label className="block text-xs font-body text-ink-700 mb-1.5">บริษัท</label>
-                  <input value={form.company} onChange={e => setForm({...form, company: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors" placeholder="ชื่อบริษัท/โรงงาน" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-body text-ink-700 mb-1.5">เบอร์โทร <span className="text-red-500">*</span></label>
-                  <input required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors" placeholder="08X-XXX-XXXX" />
-                </div>
-                <div>
-                  <label className="block text-xs font-body text-ink-700 mb-1.5">LINE หรือ Email</label>
-                  <input value={form.contact} onChange={e => setForm({...form, contact: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors" placeholder="LINE ID หรือ Email" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-body text-ink-700 mb-1.5">ประเภทโรงงาน</label>
-                <select value={form.factory} onChange={e => setForm({...form, factory: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors bg-white">
-                  <option value="">เลือกประเภทโรงงาน...</option>
-                  {INDUSTRIES.map(i => <option key={i.name}>{i.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-body text-ink-700 mb-1.5">ระบบที่สนใจ</label>
-                <select value={form.system} onChange={e => setForm({...form, system: e.target.value})} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors bg-white">
-                  <option value="">เลือกระบบ...</option>
-                  {PRODUCTS.map(p => <option key={p.id}>{p.name}</option>)}
-                  <option>ไม่แน่ใจ ขอให้แนะนำ</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-body text-ink-700 mb-1.5">รายละเอียดเบื้องต้น</label>
-                <textarea value={form.detail} onChange={e => setForm({...form, detail: e.target.value})} rows={3} className="w-full border border-ink-300 rounded-lg px-3 py-2.5 text-sm font-body focus:outline-none focus:border-brand-700 transition-colors resize-none" placeholder="เช่น ปริมาณเชื้อเพลิง พื้นที่ติดตั้ง หรือรายละเอียดอื่น ๆ" />
-              </div>
-              <button type="submit" disabled={status === 'loading'} className="w-full bg-energy-600 hover:bg-energy-400 disabled:opacity-60 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">
-                {status === 'loading' ? 'กำลังส่ง...' : 'ส่งขอใบเสนอราคา'}
-              </button>
+          {status === 'success' ? <div className="text-center py-8" role="status" aria-live="polite"><div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 text-green-600"><IcoCheck /></div><h4 className="font-heading font-semibold text-ink-950 text-xl mb-2">{environment.demoMode && !environment.contactEndpoint ? 'ทดสอบขั้นตอนสำเร็จแล้ว' : 'ส่งข้อมูลเรียบร้อยแล้ว'}</h4><p className="text-ink-700 text-sm font-body mb-6">{environment.demoMode && !environment.contactEndpoint ? 'นี่คือโหมดสาธิต ข้อมูลยังไม่ถูกส่งหรือจัดเก็บ' : 'ทีมงานจะติดต่อกลับโดยเร็ว'}</p><button onClick={onClose} className="bg-brand-700 text-white px-6 py-2.5 rounded-lg text-sm font-body">ปิด</button></div> : (
+            <form onSubmit={handleSubmit} noValidate className="space-y-4">
+              {context?.product && <div className="rounded-lg bg-brand-900/5 px-3 py-2 text-xs font-body text-brand-900">สินค้าอ้างอิง: <strong>{context.product}</strong></div>}
+              {context?.project && <div className="rounded-lg bg-brand-900/5 px-3 py-2 text-xs font-body text-brand-900">โครงการอ้างอิง: <strong>{context.project}</strong></div>}
+              {status === 'error' && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-body text-red-700">{requestError}</div>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label htmlFor="quote-name" className="block text-xs font-body text-ink-700 mb-1.5">ชื่อผู้ติดต่อ <span className="text-red-500">*</span></label><input id="quote-name" autoComplete="name" maxLength={100} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} aria-invalid={Boolean(errors.name)} className={inputClass('name')} placeholder="ชื่อ-นามสกุล" />{errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}</div><div><label htmlFor="quote-company" className="block text-xs font-body text-ink-700 mb-1.5">บริษัท</label><input id="quote-company" autoComplete="organization" maxLength={150} value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} className={inputClass('company')} placeholder="ชื่อบริษัท/โรงงาน" /></div></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label htmlFor="quote-phone" className="block text-xs font-body text-ink-700 mb-1.5">เบอร์โทร <span className="text-red-500">*</span></label><input id="quote-phone" type="tel" autoComplete="tel" inputMode="tel" maxLength={20} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} aria-invalid={Boolean(errors.phone)} className={inputClass('phone')} placeholder="08X-XXX-XXXX" />{errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone}</p>}</div><div><label htmlFor="quote-contact" className="block text-xs font-body text-ink-700 mb-1.5">LINE หรือ Email</label><input id="quote-contact" maxLength={254} value={form.contact} onChange={e => setForm({ ...form, contact: e.target.value })} className={inputClass('contact')} placeholder="LINE ID หรือ Email" /></div></div>
+              <div><label htmlFor="quote-factory" className="block text-xs font-body text-ink-700 mb-1.5">ประเภทโรงงาน</label><select id="quote-factory" value={form.factory} onChange={e => setForm({ ...form, factory: e.target.value })} className={inputClass('factory')}><option value="">เลือกประเภทโรงงาน...</option>{INDUSTRIES.map(industry => <option key={industry.name}>{industry.name}</option>)}</select></div>
+              <div><label htmlFor="quote-system" className="block text-xs font-body text-ink-700 mb-1.5">ระบบที่สนใจ</label><select id="quote-system" value={form.system} onChange={e => setForm({ ...form, system: e.target.value })} className={inputClass('system')}><option value="">เลือกระบบ...</option>{PRODUCTS.map(product => <option key={product.id}>{product.name}</option>)}<option>ไม่แน่ใจ ขอให้แนะนำ</option></select></div>
+              <div><label htmlFor="quote-detail" className="block text-xs font-body text-ink-700 mb-1.5">รายละเอียดเบื้องต้น</label><textarea id="quote-detail" maxLength={2000} value={form.detail} onChange={e => setForm({ ...form, detail: e.target.value })} rows={3} className={`${inputClass('detail')} resize-none`} placeholder="เช่น ปริมาณเชื้อเพลิง พื้นที่ติดตั้ง หรือรายละเอียดอื่น ๆ" /></div>
+              <div className="absolute -left-[10000px]" aria-hidden="true"><label htmlFor="quote-website">Website</label><input id="quote-website" tabIndex={-1} autoComplete="off" value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} /></div>
+              <div className="flex items-start gap-2.5"><input type="checkbox" id="quote-agree" checked={form.agree} onChange={e => setForm({ ...form, agree: e.target.checked })} aria-invalid={Boolean(errors.agree)} aria-describedby={errors.agree ? 'quote-agree-error' : undefined} className="mt-0.5 h-5 w-5 accent-brand-700" /><label htmlFor="quote-agree" className="text-xs font-body leading-relaxed text-ink-700">ยอมรับ<a href="/privacy-policy" onClick={event => { event.preventDefault(); onPrivacy() }} className="ml-1 text-brand-700 underline">นโยบายความเป็นส่วนตัว</a> และยินยอมให้ติดต่อกลับ</label></div>
+              {errors.agree && <p id="quote-agree-error" className="text-xs text-red-600">{errors.agree}</p>}
+              <button type="submit" disabled={status === 'loading'} className="w-full bg-energy-600 hover:bg-energy-400 disabled:opacity-60 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">{status === 'loading' ? 'กำลังส่ง...' : 'ส่งขอใบเสนอราคา'}</button>
             </form>
           )}
         </div>
@@ -898,19 +988,15 @@ function QuoteModal({ onClose }: { onClose: () => void }) {
 
 /* ─── PRODUCT MODAL ──────────────────────────────── */
 function ProductModal({ product: p, onClose, onQuote }: { product: Product; onClose: () => void; onQuote: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  const dialogRef = useDialogFocus(onClose)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="product-title" className="relative bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-ink-300 px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
-          <h3 className="font-heading font-semibold text-ink-950">{p.name}</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-700 transition-colors"><IcoX /></button>
+          <h3 id="product-title" className="font-heading font-semibold text-ink-950">{p.name}</h3>
+          <button onClick={onClose} className="min-w-11 min-h-11 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-700 transition-colors" aria-label="ปิดรายละเอียดสินค้า"><IcoX /></button>
         </div>
         <div className="p-6">
           <div className="aspect-video rounded-xl overflow-hidden bg-ink-100 mb-6">
@@ -942,16 +1028,14 @@ function ProductModal({ product: p, onClose, onQuote }: { product: Product; onCl
             </div>
           </div>
 
-          <div className="mb-8">
-            <h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">เชื้อเพลิงที่รองรับ</h4>
-            <div className="flex flex-wrap gap-2">
-              {p.fuels.map(f => <span key={f} className="bg-brand-900/5 text-brand-700 text-xs font-body px-3 py-1.5 rounded-full">{f}</span>)}
-            </div>
+          <div className="grid sm:grid-cols-2 gap-6 mb-8">
+            <div><h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">เชื้อเพลิงที่รองรับ</h4><div className="flex flex-wrap gap-2">{p.fuels.map(fuel => <span key={fuel} className="bg-brand-900/5 text-brand-700 text-xs font-body px-3 py-1.5 rounded-full">{fuel}</span>)}</div></div>
+            <div><h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">เหมาะกับ</h4><p className="text-ink-700 text-sm font-body leading-relaxed">โรงงานที่ต้องการใช้ความร้อนอย่างต่อเนื่องและต้องประเมินตามชนิดเชื้อเพลิง พื้นที่ติดตั้ง และกระบวนการผลิตจริง</p></div>
           </div>
-
-          <div className="flex gap-3 pt-4 border-t border-ink-300/60">
+          <div className="mb-8 rounded-xl bg-ink-100 p-4"><h4 className="font-heading font-semibold text-ink-950 text-sm mb-2">หลักการทำงาน</h4><p className="text-ink-700 text-sm font-body leading-relaxed">ทีมวิศวกรประเมินเชื้อเพลิง ความต้องการความร้อน และข้อจำกัดของโรงงาน เพื่อนำไปออกแบบระบบ ควบคุมการทำงาน และทดสอบก่อนส่งมอบ</p></div>
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-ink-300/60">
             <button onClick={onQuote} className="flex-1 bg-energy-600 hover:bg-energy-400 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">ขอใบเสนอราคาสำหรับสินค้านี้</button>
-            <button className="flex items-center gap-1.5 border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white px-4 py-3 rounded-lg font-body text-sm transition-colors"><IcoDownload />PDF</button>
+            <span title="รออัปโหลดเอกสารที่ผ่านการตรวจสอบ" className="inline-flex items-center justify-center gap-1.5 border border-ink-300 text-ink-700/60 px-4 py-3 rounded-lg font-body text-sm cursor-not-allowed"><IcoDownload />PDF รออัปโหลด</span>
           </div>
         </div>
       </div>
@@ -961,62 +1045,58 @@ function ProductModal({ product: p, onClose, onQuote }: { product: Product; onCl
 
 /* ─── PROJECTS PAGE ──────────────────────────────── */
 function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuote: () => void }) {
-  const [filter, setFilter] = useState('ทั้งหมด')
-  const industries = ['ทั้งหมด', ...Array.from(new Set(PROJECTS.map(p => p.industry)))]
-  const filtered = filter === 'ทั้งหมด' ? PROJECTS : PROJECTS.filter(p => p.industry === filter)
+  const [query, setQuery] = useState('')
+  const [industry, setIndustry] = useState('')
+  const [system, setSystem] = useState('')
+  const [province, setProvince] = useState('')
+  const industries = Array.from(new Set(PROJECTS.map(project => project.industry)))
+  const systems = Array.from(new Set(PROJECTS.map(project => project.system)))
+  const provinces = Array.from(new Set(PROJECTS.map(project => project.province)))
+  const filtered = PROJECTS.filter(project => {
+    const haystack = `${project.name} ${project.industry} ${project.province} ${project.system}`.toLowerCase()
+    return (!query || haystack.includes(query.trim().toLowerCase())) && (!industry || project.industry === industry) && (!system || project.system === system) && (!province || project.province === province)
+  })
+  const clearFilters = () => { setQuery(''); setIndustry(''); setSystem(''); setProvince('') }
 
   return (
-    <div className="min-h-screen pt-20">
-      <div className="bg-brand-900 py-14">
-        <div className="max-w-[1200px] mx-auto px-5 md:px-8">
-          <div className="flex items-center gap-2 text-white/50 text-xs font-body mb-3">
-            <button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button>
-            <IcoChevron /><span className="text-white/80">ผลงาน</span>
-          </div>
-          <h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ผลงานของเรา</h1>
-          <p className="text-white/70 font-body text-base mt-2">โครงการที่ออกแบบ ผลิต และติดตั้งทั่วประเทศไทย</p>
-        </div>
-      </div>
+    <main className="min-h-screen pt-20">
+      <div className="bg-brand-900 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ผลงาน</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ผลงานของเรา</h1><p className="text-white/70 font-body text-base mt-2">โครงการที่ออกแบบ ผลิต และติดตั้งทั่วประเทศไทย</p></div></div>
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
-        <div className="flex flex-wrap gap-2 mb-8">
-          {industries.map(ind => (
-            <button key={ind} onClick={() => setFilter(ind)}
-              className={`px-4 py-2 rounded-full text-sm font-body transition-colors ${filter === ind ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-700 hover:bg-ink-300/60'}`}>
-              {ind}
-            </button>
-          ))}
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map(p => (
-            <div key={p.id} onClick={() => setPage({ t: 'project', p })}
-              className="group cursor-pointer rounded-2xl overflow-hidden bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <div className="aspect-[16/9] bg-ink-100 overflow-hidden">
-                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              </div>
-              <div className="p-5">
-                <span className="bg-brand-900/10 text-brand-700 text-xs font-body px-2.5 py-1 rounded-full">{p.industry}</span>
-                <h3 className="font-heading font-semibold text-ink-950 text-sm leading-snug mt-2 mb-3 group-hover:text-brand-700 transition-colors">{p.name}</h3>
-                <div className="flex items-center justify-between text-xs font-body text-ink-700">
-                  <div className="flex items-center gap-1"><IcoMapPin />{p.province}</div>
-                  <span>{p.year}</span>
-                </div>
-                <div className="text-xs text-ink-700 font-body pt-3 mt-2 border-t border-ink-300/60">{p.system}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 bg-brand-900 rounded-2xl p-8 text-center">
-          <h3 className="font-heading font-bold text-white text-xl mb-3">สนใจระบบลักษณะเดียวกัน?</h3>
-          <p className="text-white/70 font-body text-sm mb-6">ติดต่อทีมวิศวกรเพื่อประเมินระบบที่เหมาะกับโรงงานของคุณ</p>
-          <button onClick={onQuote} className="bg-energy-600 hover:bg-energy-400 text-white px-6 py-3 rounded-lg font-body text-sm font-medium transition-colors">ขอใบเสนอราคา</button>
-        </div>
+        <section aria-label="ค้นหาและกรองผลงาน" className="rounded-2xl bg-ink-100 p-4 md:p-5 mb-8"><div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4"><div><label htmlFor="project-search" className="sr-only">ค้นหาผลงาน</label><input id="project-search" value={query} onChange={event => setQuery(event.target.value)} maxLength={120} placeholder="ค้นหาผลงาน" className="w-full rounded-lg border border-ink-300 bg-white px-3 py-2.5 text-sm font-body" /></div><div><label htmlFor="project-industry" className="sr-only">ประเภทโรงงาน</label><select id="project-industry" value={industry} onChange={event => setIndustry(event.target.value)} className="w-full rounded-lg border border-ink-300 bg-white px-3 py-2.5 text-sm font-body"><option value="">ทุกประเภทโรงงาน</option>{industries.map(item => <option key={item}>{item}</option>)}</select></div><div><label htmlFor="project-system" className="sr-only">ประเภทระบบ</label><select id="project-system" value={system} onChange={event => setSystem(event.target.value)} className="w-full rounded-lg border border-ink-300 bg-white px-3 py-2.5 text-sm font-body"><option value="">ทุกระบบ</option>{systems.map(item => <option key={item}>{item}</option>)}</select></div><div><label htmlFor="project-province" className="sr-only">จังหวัด</label><select id="project-province" value={province} onChange={event => setProvince(event.target.value)} className="w-full rounded-lg border border-ink-300 bg-white px-3 py-2.5 text-sm font-body"><option value="">ทุกจังหวัด</option>{provinces.map(item => <option key={item}>{item}</option>)}</select></div></div><div className="mt-3 flex items-center justify-between gap-3"><p className="text-xs font-body text-ink-700">พบ {filtered.length} ผลงาน</p><button onClick={clearFilters} disabled={!query && !industry && !system && !province} className="text-sm font-body text-brand-700 hover:text-brand-900 disabled:text-ink-700/40">ล้างตัวกรอง</button></div></section>
+        {filtered.length ? <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">{filtered.map(project => <button key={project.id} type="button" onClick={() => setPage({ t: 'project', p: project })} className="group text-left overflow-hidden rounded-2xl bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video bg-ink-100 overflow-hidden"><img src={project.image} alt={project.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /></div><div className="p-5"><span className="bg-brand-900/10 text-brand-700 text-xs font-body px-2.5 py-1 rounded-full">{project.industry}</span><h2 className="font-heading font-semibold text-ink-950 text-sm leading-snug mt-2 mb-2 group-hover:text-brand-700 transition-colors">{project.name}</h2><p className="line-clamp-2 text-xs font-body leading-relaxed text-ink-700">{project.summary}</p><div className="mt-3 flex items-center justify-between text-xs font-body text-ink-700"><span className="flex items-center gap-1"><IcoMapPin />{project.province}</span><span>{project.year}</span></div><div className="text-xs text-ink-700 font-body pt-3 mt-2 border-t border-ink-300/60">{project.system}</div><span className="mt-4 inline-flex items-center gap-1 text-brand-700 text-xs font-body font-medium">ดูรายละเอียด <IcoArrowRight /></span></div></button>)}</div> : <div className="rounded-2xl border border-dashed border-ink-300 p-10 text-center"><h2 className="font-heading font-semibold text-ink-950">ไม่พบผลงานที่ตรงกับเงื่อนไข</h2><p className="mt-2 text-sm font-body text-ink-700">ลองปรับคำค้นหาหรือล้างตัวกรอง</p><button onClick={clearFilters} className="mt-5 text-sm font-body font-medium text-brand-700">ล้างตัวกรอง</button></div>}
+        <section className="mt-12 bg-brand-900 rounded-2xl p-8 text-center"><h2 className="font-heading font-bold text-white text-xl mb-3">สนใจระบบลักษณะเดียวกัน?</h2><p className="text-white/70 font-body text-sm mb-6">ติดต่อทีมวิศวกรเพื่อประเมินระบบที่เหมาะกับโรงงานของคุณ</p><div className="flex flex-col sm:flex-row justify-center gap-3"><button onClick={onQuote} className="bg-energy-600 hover:bg-energy-400 text-white px-6 py-3 rounded-lg font-body text-sm font-medium transition-colors">ขอใบเสนอราคา</button><a href={COMPANY.phoneHref} className="border border-white/30 text-white px-6 py-3 rounded-lg font-body text-sm font-medium hover:bg-white/10">โทรปรึกษา</a></div></section>
+      </div>
+    </main>
+  )
+}
+
+/* ─── PROJECT DETAIL PAGE ────────────────────────── */
+function ProjectGalleryModal({ project, activeIndex, onChange, onClose }: { project: Project; activeIndex: number; onChange: (index: number) => void; onClose: () => void }) {
+  const dialogRef = useDialogFocus(onClose)
+  const previous = () => onChange((activeIndex - 1 + project.gallery.length) % project.gallery.length)
+  const next = () => onChange((activeIndex + 1) % project.gallery.length)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button type="button" onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" aria-label="ปิดแกลเลอรี" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={`แกลเลอรี ${project.name}`} className="relative w-full max-w-5xl">
+        <img src={project.gallery[activeIndex]} alt={`${project.name} ภาพประกอบ ${activeIndex + 1}`} className="mx-auto max-h-[78vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl" />
+        <button type="button" onClick={onClose} className="absolute right-2 top-2 flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80" aria-label="ปิดแกลเลอรี"><IcoX /></button>
+        {project.gallery.length > 1 && <>
+          <button type="button" onClick={previous} className="absolute left-2 top-1/2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80" aria-label="ภาพก่อนหน้า"><IcoChevron right={false} /></button>
+          <button type="button" onClick={next} className="absolute right-2 top-1/2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80" aria-label="ภาพถัดไป"><IcoChevron /></button>
+        </>}
+        <p className="mt-3 text-center font-body text-sm text-white/80">ภาพ {activeIndex + 1} จาก {project.gallery.length}</p>
       </div>
     </div>
   )
 }
 
-/* ─── PROJECT DETAIL PAGE ────────────────────────── */
 function ProjectDetailPage({ p, setPage, onQuote }: { p: Project; setPage: (page: Page) => void; onQuote: () => void }) {
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null)
+  const relatedProduct = PRODUCTS.find(product => product.id === p.relatedProductId)
+  const relatedProjects = PROJECTS.filter(project => project.id !== p.id && (project.industry === p.industry || project.relatedProductId === p.relatedProductId)).slice(0, 3)
+
   return (
     <div className="min-h-screen pt-20">
       <div className="relative h-64 md:h-80 bg-brand-900">
@@ -1034,7 +1114,7 @@ function ProjectDetailPage({ p, setPage, onQuote }: { p: Project; setPage: (page
         </div>
       </div>
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
-        <div className="grid md:grid-cols-3 gap-4 mb-10">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
           {[{ l: 'จังหวัด', v: p.province }, { l: 'ประเภทโรงงาน', v: p.industry }, { l: 'ระบบที่ติดตั้ง', v: p.system }, { l: 'ปีที่ติดตั้ง', v: String(p.year) }].map(i => (
             <div key={i.l} className="bg-ink-100 rounded-xl p-4">
               <div className="text-xs font-body text-ink-700 mb-1">{i.l}</div>
@@ -1044,70 +1124,92 @@ function ProjectDetailPage({ p, setPage, onQuote }: { p: Project; setPage: (page
         </div>
         <div className="bg-white border border-ink-300/60 rounded-2xl p-8 mb-6">
           <h2 className="font-heading font-semibold text-ink-950 text-xl mb-4">ภาพรวมโครงการ</h2>
-          <p className="text-ink-700 font-body text-sm leading-relaxed">โครงการนี้เป็นการติดตั้งระบบ {p.system} สำหรับ{p.industry} ใน{p.province} ออกแบบเฉพาะตามกระบวนการผลิตของโรงงาน โดยทีมวิศวกรของยักษ์ใหญ่ 2015 ดูแลตั้งแต่การสำรวจ ออกแบบ ผลิต ติดตั้ง จนถึงทดสอบและอบรมพนักงาน</p>
+          <p className="text-ink-700 font-body text-sm leading-relaxed">{p.summary}</p>
         </div>
+
+        <section className="mb-8 grid gap-5 md:grid-cols-2" aria-label="รายละเอียดโครงการ">
+          <article className="rounded-2xl border border-ink-300/60 bg-white p-6"><p className="font-body text-xs font-medium uppercase tracking-widest text-brand-700">โจทย์ของโครงการ</p><h2 className="mt-2 font-heading text-lg font-semibold text-ink-950">ความต้องการของหน้างาน</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{p.challenge}</p></article>
+          <article className="rounded-2xl border border-ink-300/60 bg-white p-6"><p className="font-body text-xs font-medium uppercase tracking-widest text-brand-700">แนวทางที่ออกแบบ</p><h2 className="mt-2 font-heading text-lg font-semibold text-ink-950">ระบบและการเชื่อมต่อ</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{p.solution}</p></article>
+          <article className="rounded-2xl bg-ink-100 p-6"><p className="font-body text-xs font-medium uppercase tracking-widest text-brand-700">ขอบเขตงาน</p><h2 className="mt-2 font-heading text-lg font-semibold text-ink-950">งานที่ดำเนินการ</h2><ul className="mt-4 space-y-2">{p.scope.map(item => <li key={item} className="flex items-start gap-2 font-body text-sm leading-relaxed text-ink-700"><span className="mt-0.5 text-brand-700"><IcoCheck /></span>{item}</li>)}</ul></article>
+          <article className="rounded-2xl bg-brand-900 p-6 text-white"><p className="font-body text-xs font-medium uppercase tracking-widest text-energy-400">สถานะและผลลัพธ์</p><h2 className="mt-2 font-heading text-lg font-semibold">ผลการดำเนินงาน</h2><p className="mt-3 font-body text-sm leading-relaxed text-white/75">{p.result}</p></article>
+        </section>
+
+        <section className="mb-8" aria-labelledby="project-gallery-title">
+          <div className="flex items-end justify-between gap-4 mb-4"><div><p className="text-brand-700 text-sm font-body font-medium tracking-widest">ภาพประกอบ</p><h2 id="project-gallery-title" className="font-heading font-semibold text-ink-950 text-xl">แกลเลอรีโครงการ</h2></div><p className="text-xs font-body text-ink-700">กดรูปเพื่อดูขนาดใหญ่</p></div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{p.gallery.map((image, index) => <button type="button" key={`${p.id}-${index}`} onClick={() => setGalleryIndex(index)} className="group aspect-[4/3] overflow-hidden rounded-xl bg-ink-100 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><img src={image} alt={`${p.name} ภาพประกอบ ${index + 1}`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" /></button>)}</div>
+        </section>
+
+        <section className="mb-8 grid gap-5 lg:grid-cols-2" aria-label="เนื้อหาที่เกี่ยวข้อง">
+          {relatedProduct && <article className="overflow-hidden rounded-2xl border border-ink-300/60 bg-white sm:flex"><img src={relatedProduct.image} alt={relatedProduct.name} className="aspect-video w-full object-cover sm:w-44" /><div className="p-5"><p className="font-body text-xs font-medium text-brand-700">สินค้าที่เกี่ยวข้อง</p><h2 className="mt-1 font-heading text-base font-semibold text-ink-950">{relatedProduct.name}</h2><p className="mt-2 font-body text-xs leading-relaxed text-ink-700">{relatedProduct.subtitle}</p></div></article>}
+          {relatedProjects.length > 0 && <article className="rounded-2xl border border-ink-300/60 bg-white p-5"><div className="flex items-center justify-between"><div><p className="font-body text-xs font-medium text-brand-700">โครงการที่เกี่ยวข้อง</p><h2 className="mt-1 font-heading text-base font-semibold text-ink-950">ดูผลงานลักษณะใกล้เคียง</h2></div><button type="button" onClick={() => setPage({ t: 'projects' })} className="font-body text-xs font-medium text-brand-700">ดูทั้งหมด</button></div><div className="mt-4 space-y-2">{relatedProjects.map(project => <button type="button" key={project.id} onClick={() => setPage({ t: 'project', p: project })} className="flex w-full items-center justify-between gap-3 rounded-lg bg-ink-100 px-3 py-2.5 text-left font-body text-xs text-ink-700 transition-colors hover:bg-ink-300/60 hover:text-brand-700"><span className="line-clamp-1">{project.name}</span><IcoArrowRight /></button>)}</div></article>}
+        </section>
+
         <div className="flex flex-col sm:flex-row gap-3 mt-8">
           <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-energy-600 hover:bg-energy-400 text-white px-6 py-3 rounded-lg font-body text-sm font-medium transition-colors">สนใจระบบลักษณะนี้ <IcoArrowRight /></button>
+          <a href={COMPANY.phoneHref} className="flex items-center justify-center gap-2 border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white px-6 py-3 rounded-lg font-body text-sm transition-colors"><IcoPhone />โทรปรึกษาทีมงาน</a>
           <button onClick={() => setPage({ t: 'projects' })} className="flex items-center justify-center gap-2 border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white px-6 py-3 rounded-lg font-body text-sm transition-colors"><IcoChevron right={false} />กลับผลงานทั้งหมด</button>
         </div>
       </div>
+      {galleryIndex !== null && <ProjectGalleryModal project={p} activeIndex={galleryIndex} onChange={setGalleryIndex} onClose={() => setGalleryIndex(null)} />}
     </div>
   )
 }
 
 /* ─── NEWS LIST PAGE ─────────────────────────────── */
-function NewsListPage({ setPage }: { setPage: (p: Page) => void }) {
+function NewsListPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuote: () => void }) {
   const [cat, setCat] = useState('ทั้งหมด')
-  const cats = ['ทั้งหมด', 'ความรู้', 'ผลงานติดตั้ง', 'พลังงานชีวมวล', 'ข่าวบริษัท', 'การบำรุงรักษา']
-  const filtered = cat === 'ทั้งหมด' ? NEWS : NEWS.filter(a => a.category === cat)
+  const cats = ['ทั้งหมด', ...Array.from(new Set(NEWS.map(article => article.category)))]
+  const filtered = cat === 'ทั้งหมด' ? NEWS : NEWS.filter(article => article.category === cat)
+  const featured = NEWS[0]
 
   return (
-    <div className="min-h-screen pt-20">
-      <div className="bg-brand-900 py-14">
-        <div className="max-w-[1200px] mx-auto px-5 md:px-8">
-          <div className="flex items-center gap-2 text-white/50 text-xs font-body mb-3">
-            <button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button>
-            <IcoChevron /><span className="text-white/80">ข่าวสาร</span>
-          </div>
-          <h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1>
-          <p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจากยักษ์ใหญ่ 2015</p>
-        </div>
-      </div>
+    <main className="min-h-screen pt-20"><div className="bg-brand-900 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจากยักษ์ใหญ่ 2015</p></div></div>
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
-        <div className="flex flex-wrap gap-2 mb-8">
-          {cats.map(c => (
-            <button key={c} onClick={() => setCat(c)}
-              className={`px-4 py-2 rounded-full text-sm font-body transition-colors ${cat === c ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-700 hover:bg-ink-300/60'}`}>
-              {c}
-            </button>
-          ))}
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map(a => (
-            <article key={a.id} onClick={() => setPage({ t: 'article', a })}
-              className="group cursor-pointer rounded-2xl overflow-hidden bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <div className="aspect-[16/9] bg-ink-100 overflow-hidden">
-                <img src={a.image} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="bg-brand-500/10 text-brand-700 text-xs font-body px-2.5 py-1 rounded-full">{a.category}</span>
-                  <span className="text-ink-700/60 text-xs font-body">{a.date}</span>
-                </div>
-                <h3 className="font-heading font-semibold text-ink-950 text-sm leading-snug mb-2 line-clamp-2 group-hover:text-brand-700 transition-colors">{a.title}</h3>
-                <p className="text-ink-700 text-xs font-body leading-relaxed line-clamp-3">{a.excerpt}</p>
-                <div className="flex items-center gap-1 text-brand-700 text-xs font-body font-medium mt-4">อ่านเพิ่มเติม <IcoArrowRight /></div>
-              </div>
-            </article>
-          ))}
+        <section aria-labelledby="featured-news-heading" className="mb-10"><p className="text-sm font-body font-medium tracking-widest uppercase text-brand-700">บทความแนะนำ</p><button onClick={() => setPage({ t: 'article', a: featured })} className="group mt-3 grid overflow-hidden rounded-2xl border border-ink-300/60 bg-white text-left md:grid-cols-2 hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video overflow-hidden bg-ink-100"><img src={featured.image} alt={featured.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /></div><div className="p-6 md:p-8"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-brand-900/10 px-2.5 py-1 font-body text-xs text-brand-700">{featured.category}</span><span className="font-body text-xs text-ink-700/60">{featured.date}</span></div><h2 id="featured-news-heading" className="mt-4 font-heading text-xl font-semibold leading-snug text-ink-950 group-hover:text-brand-700 md:text-2xl">{featured.title}</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{featured.excerpt}</p><span className="mt-5 inline-flex items-center gap-1 font-body text-sm font-medium text-brand-700">อ่านบทความ <IcoArrowRight /></span></div></button></section>
+        <div className="flex flex-wrap gap-2 mb-8" aria-label="กรองหมวดหมู่">{cats.map(category => <button key={category} onClick={() => setCat(category)} aria-pressed={cat === category} className={`px-4 py-2 rounded-full text-sm font-body transition-colors ${cat === category ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-700 hover:bg-ink-300/60'}`}>{category}</button>)}</div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">{filtered.map(article => <article key={article.id}><button onClick={() => setPage({ t: 'article', a: article })} className="group h-full w-full text-left rounded-2xl overflow-hidden bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video bg-ink-100 overflow-hidden"><img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /></div><div className="p-5"><div className="flex items-center gap-2 mb-3"><span className="bg-brand-500/10 text-brand-700 text-xs font-body px-2.5 py-1 rounded-full">{article.category}</span><span className="text-ink-700/60 text-xs font-body">{article.date}</span></div><h2 className="font-heading font-semibold text-ink-950 text-sm leading-snug mb-2 line-clamp-2 group-hover:text-brand-700 transition-colors">{article.title}</h2><p className="text-ink-700 text-xs font-body leading-relaxed line-clamp-3">{article.excerpt}</p><span className="flex items-center gap-1 text-brand-700 text-xs font-body font-medium mt-4">อ่านเพิ่มเติม <IcoArrowRight /></span></div></button></article>)}</div>
+        <section className="mt-12 rounded-2xl bg-ink-100 p-7 text-center"><h2 className="font-heading text-xl font-bold text-ink-950">ต้องการคำแนะนำสำหรับโรงงานของคุณ?</h2><p className="mx-auto mt-2 max-w-xl font-body text-sm text-ink-700">ส่งข้อมูลเบื้องต้นเพื่อให้ทีมวิศวกรช่วยประเมินแนวทางที่เหมาะสม</p><button onClick={onQuote} className="mt-5 rounded-lg bg-energy-600 px-6 py-3 font-body text-sm font-medium text-white hover:bg-energy-400">ขอใบเสนอราคา</button></section>
+      </div>
+    </main>
+  )
+}
+
+function ShareActions({ title }: { title: string }) {
+  const [copyStatus, setCopyStatus] = useState('')
+  const pageUrl = window.location.href
+  const encodedUrl = encodeURIComponent(pageUrl)
+  const encodedTitle = encodeURIComponent(title)
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(pageUrl)
+      setCopyStatus('คัดลอกลิงก์แล้ว')
+    } catch {
+      setCopyStatus('ไม่สามารถคัดลอกอัตโนมัติได้')
+    }
+  }
+
+  return (
+    <section className="mt-10 border-t border-ink-300 pt-6" aria-labelledby="share-article-title">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 id="share-article-title" className="font-heading text-sm font-semibold text-ink-950">แชร์บทความนี้</h2>
+        <div className="flex flex-wrap gap-2">
+          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-ink-300 px-3 py-2 text-sm font-body text-ink-700 transition-colors hover:border-brand-700 hover:text-brand-700"><IcoFacebook />Facebook</a>
+          <a href={`https://social-plugins.line.me/lineit/share?url=${encodedUrl}&text=${encodedTitle}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-ink-300 px-3 py-2 text-sm font-body text-ink-700 transition-colors hover:border-[#06C755] hover:text-[#068b3f]"><IcoLine />LINE</a>
+          <button type="button" onClick={copyLink} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-ink-300 px-3 py-2 text-sm font-body text-ink-700 transition-colors hover:border-brand-700 hover:text-brand-700"><IcoCopy />คัดลอกลิงก์</button>
         </div>
       </div>
-    </div>
+      {copyStatus && <p role="status" className="mt-2 text-right font-body text-xs text-brand-700">{copyStatus}</p>}
+    </section>
   )
 }
 
 /* ─── ARTICLE DETAIL PAGE ────────────────────────── */
-function ArticleDetailPage({ a, setPage }: { a: Article; setPage: (p: Page) => void }) {
+function ArticleDetailPage({ a, setPage, onQuote }: { a: Article; setPage: (p: Page) => void; onQuote: () => void }) {
+  const related = NEWS.filter(article => article.id !== a.id)
+    .sort((left, right) => Number(right.category === a.category) - Number(left.category === a.category))
+    .slice(0, 3)
+
   return (
     <div className="min-h-screen pt-20">
       <div className="max-w-[800px] mx-auto px-5 md:px-8 py-12">
@@ -1120,6 +1222,7 @@ function ArticleDetailPage({ a, setPage }: { a: Article; setPage: (p: Page) => v
         <div className="flex items-center gap-2 mb-4">
           <span className="bg-brand-500/10 text-brand-700 text-xs font-body px-2.5 py-1 rounded-full">{a.category}</span>
           <span className="text-ink-700/60 text-sm font-body">{a.date}</span>
+          <span className="text-ink-700/60 text-sm font-body">· {a.author}</span>
         </div>
         <h1 className="font-heading font-bold text-ink-950 text-2xl md:text-3xl leading-snug mb-6">{a.title}</h1>
         <div className="rounded-xl overflow-hidden aspect-video mb-8 bg-ink-100">
@@ -1127,9 +1230,26 @@ function ArticleDetailPage({ a, setPage }: { a: Article; setPage: (p: Page) => v
         </div>
         <div className="prose prose-sm max-w-none font-body text-ink-700 leading-relaxed space-y-4">
           <p className="text-base">{a.excerpt}</p>
-          <p>ระบบแก๊สซิไฟเออร์ชีวมวลเป็นเทคโนโลยีที่ได้รับการพิสูจน์แล้วในระดับอุตสาหกรรม โดยแปลงชีวมวลแข็ง เช่น แกลบ ไม้สับ หรือชานอ้อย ให้กลายเป็นแก๊สเชื้อเพลิงที่สามารถนำมาใช้ผลิตความร้อนหรือไฟฟ้าได้</p>
-          <p>การลงทุนในระบบแก๊สซิไฟเออร์โดยทั่วไปมีระยะเวลาคืนทุน 2–4 ปี ขึ้นอยู่กับขนาดระบบ ราคาเชื้อเพลิงชีวมวลในพื้นที่ และปริมาณการใช้งาน</p>
+          {a.body.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
         </div>
+        <ShareActions title={a.title} />
+
+        <section className="mt-12" aria-labelledby="related-articles-title">
+          <div className="flex items-center justify-between gap-4">
+            <h2 id="related-articles-title" className="font-heading text-xl font-semibold text-ink-950">บทความที่เกี่ยวข้อง</h2>
+            <button type="button" onClick={() => setPage({ t: 'news' })} className="font-body text-sm font-medium text-brand-700 hover:text-brand-900">ดูทั้งหมด</button>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {related.map(article => <button key={article.id} type="button" onClick={() => setPage({ t: 'article', a: article })} className="rounded-xl border border-ink-300/70 bg-white p-4 text-left transition-all hover:-translate-y-0.5 hover:border-brand-700/40 hover:shadow-md"><span className="font-body text-xs text-brand-700">{article.category}</span><h3 className="mt-2 line-clamp-3 font-heading text-sm font-semibold leading-snug text-ink-950">{article.title}</h3></button>)}
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-2xl bg-brand-900 p-6 text-center text-white sm:p-8">
+          <h2 className="font-heading text-xl font-semibold">ต้องการประเมินระบบสำหรับโรงงานของคุณ?</h2>
+          <p className="mx-auto mt-2 max-w-xl font-body text-sm leading-relaxed text-white/70">ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยแนะนำแนวทางที่เหมาะกับหน้างาน</p>
+          <button type="button" onClick={onQuote} className="mt-5 rounded-lg bg-energy-600 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-energy-400">ขอใบเสนอราคา</button>
+        </section>
+
         <div className="flex gap-3 mt-10 pt-8 border-t border-ink-300">
           <button onClick={() => setPage({ t: 'news' })} className="flex items-center gap-1.5 border border-ink-300 text-ink-700 hover:border-brand-700 hover:text-brand-700 px-4 py-2.5 rounded-lg font-body text-sm transition-colors">
             <IcoChevron right={false} />บทความทั้งหมด
@@ -1144,67 +1264,107 @@ function ArticleDetailPage({ a, setPage }: { a: Article; setPage: (p: Page) => v
 export default function App() {
   const [scrolled, setScrolled] = useState(false)
   const [quoteOpen, setQuoteOpen] = useState(false)
+  const [quoteContext, setQuoteContext] = useState<{ product?: string; project?: string }>()
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [page, setPage] = useState<Page>({ t: 'home' })
+  const [videoOpen, setVideoOpen] = useState(false)
+  const [contactPopup, setContactPopup] = useState<'line' | 'phone' | null>(null)
+  const [page, setPage] = useState<Page>(() => pageFromPath(window.location.pathname))
+
+  const navigate = useCallback((next: Page) => {
+    const nextPath = pathForPage(next)
+    if (normalizePathname(window.location.pathname) !== nextPath) window.history.pushState({}, '', nextPath)
+    setPage(next)
+  }, [])
+
+  const openQuote = useCallback((context?: { product?: string; project?: string }) => {
+    setQuoteContext(context)
+    setQuoteOpen(true)
+  }, [])
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 50)
-    window.addEventListener('scroll', handler, { passive: true })
-    return () => window.removeEventListener('scroll', handler)
+    const handleScroll = () => setScrolled(window.scrollY > 50)
+    const handlePopState = () => setPage(pageFromPath(window.location.pathname))
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('popstate', handlePopState)
+    }
   }, [])
 
   useEffect(() => {
     window.scrollTo(0, 0)
+    setScrolled(false)
+    document.title = titleForPage(page)
+  }, [page])
+
+  useEffect(() => {
+    if (page.t !== 'home') return
+
+    const sections = Array.from(document.querySelectorAll<HTMLElement>('[data-scroll-reveal]'))
+    if (!sections.length) return
+
+    const reveal = (element: HTMLElement) => element.classList.add('is-revealed')
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (reduceMotion) {
+      sections.forEach((element) => {
+        element.classList.add('scroll-reveal')
+        reveal(element)
+      })
+      return
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        reveal(entry.target as HTMLElement)
+        observer.unobserve(entry.target)
+      })
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' })
+
+    sections.forEach((element) => {
+      element.classList.add('scroll-reveal')
+      observer.observe(element)
+    })
+
+    return () => observer.disconnect()
   }, [page.t])
 
-  const scrollTo = (id: string) => {
+  const scrollTo = useCallback((id: string) => {
     if (page.t !== 'home') {
-      setPage({ t: 'home' })
-      setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 80)
+      navigate({ t: 'home' })
+      window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 80)
     } else {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
     }
-  }
+  }, [navigate, page.t])
 
+  if (page.t === 'privacy') return <PrivacyPolicyPage onHome={() => navigate({ t: 'home' })} />
+  if (page.t === 'not-found') return <NotFoundPage onHome={() => navigate({ t: 'home' })} />
+  if (page.t === 'admin') return <AdminPortal onExit={() => navigate({ t: 'home' })} />
+
+  const isHome = page.t === 'home'
   return (
     <div className="min-h-screen">
-      <Header scrolled={scrolled} setPage={setPage} onQuote={() => setQuoteOpen(true)} />
-
-      {page.t === 'home' && (
-        <>
-          <Hero onQuote={() => setQuoteOpen(true)} onProducts={() => scrollTo('products')} />
-          <TrustBar />
-          <About />
-          <Products onProduct={setSelectedProduct} onQuote={() => setQuoteOpen(true)} />
-          <Industries />
-          <Services />
-          <WhyUs />
-          <FeaturedProjects setPage={setPage} />
-          <LatestNews setPage={setPage} />
-          <Downloads />
-          <QuoteCTA onQuote={() => setQuoteOpen(true)} />
-          <Contact />
-          <Footer scrollTo={scrollTo} setPage={setPage} />
-        </>
-      )}
-
-      {page.t === 'projects' && <ProjectsPage setPage={setPage} onQuote={() => setQuoteOpen(true)} />}
-      {page.t === 'project' && <ProjectDetailPage p={(page as { t: 'project'; p: Project }).p} setPage={setPage} onQuote={() => setQuoteOpen(true)} />}
-      {page.t === 'news' && <NewsListPage setPage={setPage} />}
-      {page.t === 'article' && <ArticleDetailPage a={(page as { t: 'article'; a: Article }).a} setPage={setPage} />}
-
-      {page.t !== 'home' && (
-        <footer className="bg-brand-900 py-6 text-center">
-          <p className="text-white/40 text-xs font-body">© 2568 บริษัท ยักษ์ใหญ่ 2015 จำกัด</p>
-        </footer>
-      )}
-
-      <div className="pb-14 md:pb-0">
-        <FloatingActions onQuote={() => setQuoteOpen(true)} />
-      </div>
-
-      {quoteOpen && <QuoteModal onClose={() => setQuoteOpen(false)} />}
-      {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onQuote={() => { setSelectedProduct(null); setQuoteOpen(true) }} />}
+      <Header scrolled={scrolled} isHome={isHome} setPage={navigate} onQuote={() => openQuote()} />
+      {page.t === 'home' && <>
+        <Hero onQuote={() => openQuote()} onProducts={() => scrollTo('products')} onVideo={HERO_VIDEO_URL ? () => setVideoOpen(true) : undefined} />
+        <TrustBar /><About onLearnMore={() => scrollTo('products')} /><Products onProduct={setSelectedProduct} onQuote={() => openQuote()} /><Industries /><WhyUs /><FeaturedProjects setPage={navigate} /><LatestNews setPage={navigate} /><QuoteCTA onQuote={() => openQuote()} /><Contact onPrivacy={() => navigate({ t: 'privacy' })} />
+      </>}
+      {page.t === 'projects' && <ProjectsPage setPage={navigate} onQuote={() => openQuote()} />}
+      {page.t === 'project' && <ProjectDetailPage p={page.p} setPage={navigate} onQuote={() => openQuote({ project: page.p.name })} />}
+      {page.t === 'news' && <NewsListPage setPage={navigate} onQuote={() => openQuote()} />}
+      {page.t === 'downloads' && <DownloadsPage onHome={() => navigate({ t: 'home' })} onQuote={() => openQuote()} />}
+      {page.t === 'article' && <ArticleDetailPage a={page.a} setPage={navigate} onQuote={() => openQuote()} />}
+      <Footer scrollTo={scrollTo} setPage={navigate} onPrivacy={() => navigate({ t: 'privacy' })} />
+      <div className="pb-14 md:pb-0"><FloatingActions onQuote={() => openQuote()} onPhone={() => setContactPopup('phone')} onLine={() => setContactPopup('line')} /></div>
+      {quoteOpen && <QuoteModal context={quoteContext} onClose={() => { setQuoteOpen(false); setQuoteContext(undefined) }} onPrivacy={() => navigate({ t: 'privacy' })} />}
+      {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onQuote={() => { setSelectedProduct(null); openQuote({ product: selectedProduct.name }) }} />}
+      {videoOpen && HERO_VIDEO_URL && <VideoModal url={HERO_VIDEO_URL} onClose={() => setVideoOpen(false)} />}
+      {contactPopup === 'line' && <LineContactModal onClose={() => setContactPopup(null)} />}
+      {contactPopup === 'phone' && <PhoneContactModal onClose={() => setContactPopup(null)} />}
     </div>
   )
 }

@@ -1,0 +1,23 @@
+export const COMPANY = {
+  name: "บริษัท ยักษ์ใหญ่ 2015 จำกัด",
+  shortName: "ยักษ์ใหญ่ 2015",
+  publicAddress: "199 หมู่ 3 อ.โชคชัย จ.นครราชสีมา 30190",
+  phone: "081-234-5678",
+  phoneHref: "tel:+66812345678",
+  email: "info@yakyai2015.co.th",
+  emailHref: "mailto:info@yakyai2015.co.th",
+  lineUrl: "https://line.me",
+  lineQrImage: undefined as string | undefined,
+  facebookUrl: undefined as string | undefined,
+  facebookLabel: "Facebook",
+  businessHours: "จันทร์–ศุกร์ 08:00–17:00 น.",
+  map: {
+    latitude: "14.7312450",
+    longitude: "102.1680339",
+    embedUrl: "https://www.openstreetmap.org/export/embed.html?bbox=102.1480339%2C14.7112450%2C102.1880339%2C14.7512450&layer=mapnik&marker=14.7312450%2C102.1680339",
+    externalUrl: "https://www.openstreetmap.org/?mlat=14.7312450&mlon=102.1680339#map=14/14.7312450/102.1680339",
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=14.7312450%2C102.1680339",
+    isApproximate: true,
+    source: "Public business listing and OpenStreetMap town-centre geocoding. Confirm the exact pin with the company before publishing.",
+  },
+} as const

@@ -1,12 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&family=Sarabun:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @theme {
-  --font-heading: 'Kanit', sans-serif;
-  --font-body: 'Sarabun', sans-serif;
+  --font-sans: 'Noto Sans Thai', sans-serif;
+  --font-heading: 'Noto Sans Thai', sans-serif;
+  --font-body: 'Noto Sans Thai', sans-serif;
   --color-brand-900: #143D32;
   --color-brand-700: #246B50;
   --color-brand-500: #3E8B68;
+  --color-brand-50: #E8F0EC;
   --color-energy-600: #D97706;
   --color-energy-400: #F59E0B;
   --color-ink-950: #17201C;
@@ -17,19 +19,61 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid #D97706;
+  outline-offset: 3px;
+}
+
+.service-marquee {
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-reveal {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+    transition: opacity 360ms ease-out, transform 360ms ease-out;
+  }
+
+  .scroll-reveal:not(.is-revealed) {
+    will-change: opacity, transform;
+  }
+
+  .scroll-reveal.is-revealed {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
 }
 
 body {
-  font-family: 'Sarabun', sans-serif;
+  font-family: 'Noto Sans Thai', sans-serif;
   color: #17201C;
   background-color: #fff;
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, h5 {
-  font-family: 'Kanit', sans-serif;
+  font-family: 'Noto Sans Thai', sans-serif;
 }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #D9E0DC; border-radius: 999px; }
+
+::selection {
+  background: #D97706;
+  color: #fff;
+}
