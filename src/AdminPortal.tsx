@@ -1,14 +1,20 @@
 import { useMemo, useState } from "react";
-import { COMPANY } from "./config/company";
 import { PRODUCTS } from "./data/siteContent";
 
 type AdminPortalProps = {
   onExit: () => void;
 };
 
-type Screen = "dashboard" | "portfolio" | "news" | "products" | "messages" | "downloads" | "settings";
+type Screen = "dashboard" | "portfolio" | "news" | "products" | "messages" | "downloads";
 type ContentType = "portfolio" | "news" | "products";
 type ContentStatus = "ร่าง" | "กำหนดเผยแพร่" | "เผยแพร่";
+type ContentBlockKind = "ข้อความ" | "รายการ" | "รูปภาพ" | "วิดีโอ" | "ปุ่ม/ลิงก์";
+type ContentBlock = {
+  id: string;
+  kind: ContentBlockKind;
+  title: string;
+  content: string;
+};
 type ContentItem = {
   id: string;
   title: string;
@@ -37,6 +43,11 @@ type ContentItem = {
   publishDate?: string;
   scheduledAt?: string;
   featured?: boolean;
+  tags?: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  documentUrl?: string;
+  contentBlocks?: ContentBlock[];
 };
 type MessageStatus = "ใหม่" | "กำลังดำเนินการ" | "ติดต่อแล้ว" | "ปิดงาน" | "สแปม";
 type DemoMessage = {
@@ -51,6 +62,14 @@ type DemoMessage = {
   interest: string;
   source: string;
   status: MessageStatus;
+  factoryLocation: string;
+  projectStage: string;
+  budgetRange: string;
+  desiredTimeline: string;
+  preferredContact: string;
+  assignedTo: string;
+  followUpAt: string;
+  internalNote: string;
 };
 type DownloadItem = {
   id: string;
@@ -59,18 +78,6 @@ type DownloadItem = {
   updatedAt: string;
   status: ContentStatus;
 };
-type WebsiteSettingsState = {
-  companyName: string;
-  address: string;
-  phone: string;
-  email: string;
-  lineUrl: string;
-  lineQrImage: string;
-  facebookUrl: string;
-  googleMapsUrl: string;
-  businessHours: string;
-};
-
 const focusRing = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700";
 const demoEmail = "admin@yakyai2015.co.th";
 const demoPassword = "admin2015";
@@ -82,7 +89,6 @@ const navItems: Array<{ id: Screen; label: string }> = [
   { id: "products", label: "สินค้า" },
   { id: "messages", label: "ข้อความติดต่อ" },
   { id: "downloads", label: "เอกสารดาวน์โหลด" },
-  { id: "settings", label: "ตั้งค่าเว็บไซต์" },
 ];
 
 const initialPortfolio: ContentItem[] = [
@@ -105,6 +111,11 @@ const initialPortfolio: ContentItem[] = [
     solution: "ออกแบบระบบให้สอดคล้องกับพื้นที่ เชื้อเพลิง และเครื่องจักรเดิม",
     scope: "สำรวจหน้างาน\nออกแบบและผลิต\nติดตั้งและเชื่อมต่อ\nทดสอบและอบรม",
     result: "ติดตั้งและทดสอบตามขอบเขตโครงการ ข้อมูลสมรรถนะรอการยืนยันก่อนเผยแพร่",
+    tags: "Gasifier, 1.5 MW, โรงงานอบปุ๋ย, ชีวมวล",
+    contentBlocks: [
+      { id: "portfolio-1-block-1", kind: "ข้อความ", title: "ข้อมูลหน้างานเพิ่มเติม", content: "ทีมงานสำรวจจุดติดตั้ง แนวทางลำเลียงเชื้อเพลิง และจุดเชื่อมต่อกับเครื่องอบเดิมก่อนเริ่มออกแบบรายละเอียด" },
+      { id: "portfolio-1-block-2", kind: "รายการ", title: "รายการส่งมอบ", content: "ชุดเตาแก๊สซิไฟเออร์\nระบบควบคุม\nอุปกรณ์ประกอบ\nคู่มือและการอบรม" },
+    ],
   },
   {
     id: "portfolio-2",
@@ -125,6 +136,10 @@ const initialPortfolio: ContentItem[] = [
     solution: "ออกแบบระบบอบแบบหมุนทำงานร่วมกับระบบผลิตความร้อนชีวมวล",
     scope: "เก็บข้อมูลวัตถุดิบ\nออกแบบและผลิต\nติดตั้งระบบ\nเดินระบบและอบรม",
     result: "ติดตั้งและทดสอบระบบตามข้อมูลโครงการ",
+    tags: "Rotary Dryer, มันสำปะหลัง, ระบบอบแห้ง",
+    contentBlocks: [
+      { id: "portfolio-2-block-1", kind: "ข้อความ", title: "แนวทางการออกแบบ", content: "ข้อมูลความชื้นเริ่มต้น ปริมาณวัตถุดิบ และเวลาทำงานต่อวันถูกนำมาใช้ประกอบการกำหนดขนาดระบบอบและระบบผลิตความร้อน" },
+    ],
   },
   {
     id: "portfolio-3",
@@ -145,6 +160,10 @@ const initialPortfolio: ContentItem[] = [
     solution: "วางระบบผลิตความร้อนชีวมวลให้เหมาะกับพื้นที่และจุดเชื่อมต่อ",
     scope: "สำรวจระบบเดิม\nออกแบบ\nผลิตและติดตั้ง\nทดสอบ",
     result: "อยู่ระหว่างตรวจสอบข้อมูลก่อนเผยแพร่",
+    tags: "Gasifier, 750 kW, ทดแทน LPG, เซรามิก",
+    contentBlocks: [
+      { id: "portfolio-3-block-1", kind: "ข้อความ", title: "สถานะโครงการ", content: "ข้อมูลตัวอย่างสำหรับเตรียมโครงสร้างหน้าโครงการ ก่อนนำภาพและผลการใช้งานจริงมาอัปเดตภายหลัง" },
+    ],
   },
 ];
 
@@ -160,6 +179,10 @@ const initialNews: ContentItem[] = [
     status: "เผยแพร่",
     updatedAt: "15 ก.ค. 2568",
     author: "ผู้ดูแลระบบ",
+    tags: "LPG, ชีวมวล, ต้นทุนพลังงาน",
+    contentBlocks: [
+      { id: "news-1-block-1", kind: "รายการ", title: "ข้อมูลที่ควรเตรียมก่อนเปรียบเทียบ", content: "ปริมาณ LPG ที่ใช้ต่อเดือน\nชั่วโมงการทำงาน\nชนิดชีวมวลที่หาได้\nพื้นที่สำหรับติดตั้ง" },
+    ],
   },
   {
     id: "news-2",
@@ -172,6 +195,10 @@ const initialNews: ContentItem[] = [
     status: "เผยแพร่",
     updatedAt: "3 มิ.ย. 2568",
     author: "ผู้ดูแลระบบ",
+    tags: "ส่งมอบงาน, Rotary Dryer, กำแพงเพชร",
+    contentBlocks: [
+      { id: "news-2-block-1", kind: "ข้อความ", title: "ขอบเขตการส่งมอบ", content: "ติดตั้งระบบ ทดสอบการทำงานร่วมกัน และอบรมขั้นตอนเริ่ม–หยุดเครื่องให้กับผู้ปฏิบัติงานของโรงงาน" },
+    ],
   },
   {
     id: "news-3",
@@ -184,13 +211,15 @@ const initialNews: ContentItem[] = [
     status: "ร่าง",
     updatedAt: "20 พ.ค. 2568",
     author: "ผู้ดูแลระบบ",
+    tags: "Gasifier, ความรู้, พลังงานชีวมวล",
+    contentBlocks: [],
   },
 ];
 
 const initialProducts: ContentItem[] = PRODUCTS.map((product) => ({
   id: `product-${product.id}`,
   title: product.name,
-  category: "สินค้า",
+  category: product.category,
   summary: product.desc,
   body: product.highlights.join("\n"),
   seoTitle: `${product.name} | ยักษ์ใหญ่ 2015`,
@@ -203,12 +232,17 @@ const initialProducts: ContentItem[] = PRODUCTS.map((product) => ({
   specifications: product.specs.map((item) => `${item.label}: ${item.value}`).join("\n"),
   fuelTypes: product.fuels.join(", "),
   coverImage: product.image,
+  tags: `${product.category}, ${product.fuels.join(", ")}`,
+  contentBlocks: [
+    { id: `product-${product.id}-block-1`, kind: "รายการ", title: "จุดเด่นของระบบ", content: product.highlights.join("\n") },
+    { id: `product-${product.id}-block-2`, kind: "ข้อความ", title: "การประเมินก่อนติดตั้ง", content: "ทีมวิศวกรจะพิจารณาความต้องการความร้อน ชนิดเชื้อเพลิง พื้นที่ และจุดเชื่อมต่อก่อนสรุปแบบระบบ" },
+  ],
 }));
 
 const initialMessages: DemoMessage[] = [
-  { id: "message-1", sender: "สมชาย ใจดี", company: "โรงงานตัวอย่าง", subject: "สอบถามระบบแก๊สซิไฟเออร์", detail: "สนใจประเมินระบบผลิตความร้อนสำหรับโรงงาน รบกวนทีมงานติดต่อกลับเพื่อขอข้อมูลเบื้องต้น", receivedAt: "วันนี้ 10:24", phone: "081-111-1111", contact: "somchai@example.com", interest: "เตาแก๊สซิไฟเออร์ 1.5 MW", source: "แบบฟอร์มติดต่อหน้าแรก", status: "ใหม่" },
-  { id: "message-2", sender: "วราภรณ์ พัฒนา", company: "บริษัทตัวอย่าง จำกัด", subject: "ขอรายละเอียดสินค้า", detail: "ต้องการข้อมูลระบบอบแห้งและ specification เพื่อประกอบการวางแผนโครงการ", receivedAt: "เมื่อวาน 15:40", phone: "082-222-2222", contact: "LINE: demo-contact", interest: "Cassava Pulp Rotary Dryer", source: "แบบฟอร์มขอใบเสนอราคา", status: "กำลังดำเนินการ" },
-  { id: "message-3", sender: "นรินทร์ วิศวกรรม", company: "โรงงานตัวอย่าง", subject: "ขอเอกสาร Company Profile", detail: "ต้องการ Company Profile และตัวอย่างผลงานติดตั้งสำหรับนำเสนอฝ่ายบริหาร", receivedAt: "12 มิ.ย. 2568", phone: "083-333-3333", contact: "narin@example.com", interest: "Company Profile", source: "หน้าดาวน์โหลด", status: "ปิดงาน" },
+  { id: "message-1", sender: "สมชาย ใจดี", company: "โรงงานตัวอย่าง", subject: "สอบถามระบบแก๊สซิไฟเออร์", detail: "สนใจประเมินระบบผลิตความร้อนสำหรับโรงงาน ปัจจุบันใช้ LPG ในกระบวนการอบวันละประมาณ 10 ชั่วโมง ต้องการให้ทีมงานติดต่อกลับเพื่อขอข้อมูลที่ใช้ประเมินเบื้องต้น", receivedAt: "วันนี้ 10:24", phone: "081-111-1111", contact: "somchai@example.com", interest: "เตาแก๊สซิไฟเออร์ 1.5 MW", source: "แบบฟอร์มติดต่อหน้าแรก", status: "ใหม่", factoryLocation: "นครราชสีมา", projectStage: "กำลังศึกษาความเป็นไปได้", budgetRange: "รอประเมิน", desiredTimeline: "ภายใน 6 เดือน", preferredContact: "โทรศัพท์ ช่วง 09:00–11:00", assignedTo: "ยังไม่มอบหมาย", followUpAt: "", internalNote: "" },
+  { id: "message-2", sender: "วราภรณ์ พัฒนา", company: "บริษัทตัวอย่าง จำกัด", subject: "ขอรายละเอียดสินค้า", detail: "ต้องการข้อมูลระบบอบแห้งและ specification เพื่อประกอบการวางแผนโครงการ มีพื้นที่ติดตั้งเดิมและต้องการเชื่อมต่อกับระบบลำเลียงที่ใช้งานอยู่", receivedAt: "เมื่อวาน 15:40", phone: "082-222-2222", contact: "LINE: demo-contact", interest: "Cassava Pulp Rotary Dryer", source: "แบบฟอร์มขอใบเสนอราคา", status: "กำลังดำเนินการ", factoryLocation: "กำแพงเพชร", projectStage: "จัดทำงบประมาณ", budgetRange: "3–5 ล้านบาท (ข้อมูลตัวอย่าง)", desiredTimeline: "ไตรมาส 4", preferredContact: "LINE", assignedTo: "ฝ่ายขายโครงการ", followUpAt: "2026-07-30T10:00", internalNote: "ขอข้อมูลความชื้นวัตถุดิบและกำลังการผลิตต่อวันเพิ่มเติม" },
+  { id: "message-3", sender: "นรินทร์ วิศวกรรม", company: "โรงงานตัวอย่าง", subject: "ขอเอกสาร Company Profile", detail: "ต้องการ Company Profile และตัวอย่างผลงานติดตั้งสำหรับนำเสนอฝ่ายบริหาร ก่อนนัดประชุมเก็บข้อมูลหน้างาน", receivedAt: "12 มิ.ย. 2568", phone: "083-333-3333", contact: "narin@example.com", interest: "Company Profile", source: "หน้าดาวน์โหลด", status: "ปิดงาน", factoryLocation: "สระบุรี", projectStage: "รวบรวมข้อมูลภายใน", budgetRange: "ยังไม่ระบุ", desiredTimeline: "ยังไม่กำหนด", preferredContact: "อีเมล", assignedTo: "ฝ่ายประสานงาน", followUpAt: "", internalNote: "ส่งเอกสารแนะนำบริษัทแล้ว" },
 ];
 
 const initialDownloads: DownloadItem[] = [
@@ -392,6 +426,13 @@ function emptyContent(type: ContentType): ContentItem {
     publishDate: "",
     scheduledAt: "",
     featured: false,
+    tags: "",
+    ctaLabel: "",
+    ctaUrl: "",
+    documentUrl: "",
+    contentBlocks: [
+      { id: `block-${Date.now()}`, kind: "ข้อความ", title: "หัวข้อเนื้อหา", content: "" },
+    ],
   };
 }
 
@@ -484,6 +525,18 @@ function ContentManager({ type, items, onSave, onDelete }: { type: ContentType; 
 
 function ContentEditor({ type, item, onChange, onBack, onSaveDraft, onSchedule, onPreview }: { type: ContentType; item: ContentItem; onChange: (patch: Partial<ContentItem>) => void; onBack: () => void; onSaveDraft: () => void; onSchedule: () => void; onPreview: () => void }) {
   const title = `แก้ไข${contentTypeLabel(type)}`;
+  const contentBlocks = item.contentBlocks ?? [];
+  const addBlock = () => onChange({ contentBlocks: [...contentBlocks, { id: `block-${Date.now()}`, kind: "ข้อความ", title: "", content: "" }] });
+  const updateBlock = (id: string, patch: Partial<ContentBlock>) => onChange({ contentBlocks: contentBlocks.map((block) => block.id === id ? { ...block, ...patch } : block) });
+  const removeBlock = (id: string) => onChange({ contentBlocks: contentBlocks.filter((block) => block.id !== id) });
+  const moveBlock = (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= contentBlocks.length) return;
+    const nextBlocks = [...contentBlocks];
+    [nextBlocks[index], nextBlocks[targetIndex]] = [nextBlocks[targetIndex], nextBlocks[index]];
+    onChange({ contentBlocks: nextBlocks });
+  };
+
   return (
     <section aria-labelledby="editor-title" className="space-y-6">
       <PageHeading eyebrow="จัดการเนื้อหา" title={title}>
@@ -503,7 +556,27 @@ function ContentEditor({ type, item, onChange, onBack, onSaveDraft, onSchedule, 
             {type === "news" && <div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-semibold text-slate-700">ผู้เขียน</span><input value={item.author} onChange={(event) => onChange({ author: event.target.value })} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-semibold text-slate-700">วันที่เผยแพร่</span><input value={item.publishDate ?? ""} onChange={(event) => onChange({ publishDate: event.target.value })} placeholder="เช่น 20 กรกฎาคม 2568" className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label></div>}
             <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">รายละเอียดโดยย่อ</span><textarea rows={3} value={item.summary} onChange={(event) => onChange({ summary: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-800 ${focusRing}`} /></label>
             <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">เนื้อหาหลัก</span><textarea rows={9} value={item.body} onChange={(event) => onChange({ body: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-800 ${focusRing}`} /></label>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"><h3 className="text-sm font-semibold text-slate-800">รูปภาพและสื่อ</h3><p className="mt-1 text-xs text-slate-500">เตรียมช่องไว้สำหรับเชื่อมระบบอัปโหลดเมื่อได้รับไฟล์จริง</p><div className="mt-4 grid gap-4"><label><span className="mb-2 block text-sm font-medium text-slate-700">ภาพหน้าปก URL</span><input value={item.coverImage ?? ""} onChange={(event) => onChange({ coverImage: event.target.value })} placeholder="https://..." className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label>{type !== "products" && <><label><span className="mb-2 block text-sm font-medium text-slate-700">Gallery URLs (1 บรรทัดต่อภาพ)</span><textarea rows={4} value={item.gallery ?? ""} onChange={(event) => onChange({ gallery: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">Video URL</span><input value={item.videoUrl ?? ""} onChange={(event) => onChange({ videoUrl: event.target.value })} placeholder="YouTube หรือ Vimeo" className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label></>}</div></div>
+            <section className="rounded-2xl border border-brand-700/15 bg-brand-900/5 p-4 sm:p-5" aria-labelledby="flexible-content-heading">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div><h3 id="flexible-content-heading" className="text-sm font-semibold text-brand-900">บล็อกเนื้อหาแบบยืดหยุ่น</h3><p className="mt-1 text-xs leading-5 text-slate-500">เพิ่มและเรียงส่วนข้อความ รายการ รูป วิดีโอ หรือลิงก์ได้ตามรูปแบบของแต่ละหน้า</p></div>
+                <button type="button" onClick={addBlock} className={`shrink-0 rounded-xl border border-brand-700 px-3 py-2 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white ${focusRing}`}>+ เพิ่มบล็อก</button>
+              </div>
+              <div className="mt-4 space-y-3">
+                {contentBlocks.map((block, index) => (
+                  <article key={block.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <label className="sm:w-40"><span className="mb-1.5 block text-xs font-medium text-slate-600">รูปแบบ</span><select value={block.kind} onChange={(event) => updateBlock(block.id, { kind: event.target.value as ContentBlockKind })} className={`w-full rounded-lg border border-slate-200 px-3 py-2 text-sm ${focusRing}`}><option>ข้อความ</option><option>รายการ</option><option>รูปภาพ</option><option>วิดีโอ</option><option>ปุ่ม/ลิงก์</option></select></label>
+                      <label className="min-w-0 flex-1"><span className="mb-1.5 block text-xs font-medium text-slate-600">หัวข้อของส่วน</span><input value={block.title} onChange={(event) => updateBlock(block.id, { title: event.target.value })} placeholder="ไม่ใส่ก็ได้" className={`w-full rounded-lg border border-slate-200 px-3 py-2 text-sm ${focusRing}`} /></label>
+                    </div>
+                    <label className="mt-3 block"><span className="mb-1.5 block text-xs font-medium text-slate-600">{block.kind === "รูปภาพ" || block.kind === "วิดีโอ" || block.kind === "ปุ่ม/ลิงก์" ? "URL หรือรายละเอียด" : block.kind === "รายการ" ? "รายการ (1 บรรทัดต่อข้อ)" : "เนื้อหา"}</span><textarea rows={block.kind === "ข้อความ" ? 4 : 3} value={block.content} onChange={(event) => updateBlock(block.id, { content: event.target.value })} placeholder={block.kind === "รูปภาพ" ? "URL รูปภาพ" : block.kind === "วิดีโอ" ? "YouTube หรือ Vimeo URL" : block.kind === "ปุ่ม/ลิงก์" ? "ข้อความปุ่ม | URL" : "กรอกเนื้อหาส่วนนี้"} className={`w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm leading-6 ${focusRing}`} /></label>
+                    <div className="mt-3 flex flex-wrap justify-end gap-2"><button type="button" onClick={() => moveBlock(index, -1)} disabled={index === 0} className={`rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-30 ${focusRing}`}>เลื่อนขึ้น</button><button type="button" onClick={() => moveBlock(index, 1)} disabled={index === contentBlocks.length - 1} className={`rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-30 ${focusRing}`}>เลื่อนลง</button><button type="button" onClick={() => removeBlock(block.id)} className={`rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 ${focusRing}`}>ลบบล็อก</button></div>
+                  </article>
+                ))}
+                {!contentBlocks.length && <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">ยังไม่มีบล็อกเพิ่มเติม กด “เพิ่มบล็อก” เพื่อจัดรูปแบบเนื้อหา</div>}
+              </div>
+            </section>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"><h3 className="text-sm font-semibold text-slate-800">รูปภาพ เอกสาร และสื่อ</h3><p className="mt-1 text-xs text-slate-500">รองรับสื่อได้ทุกประเภทเนื้อหา และเตรียมไว้สำหรับเชื่อมระบบอัปโหลดจริง</p><div className="mt-4 grid gap-4"><label><span className="mb-2 block text-sm font-medium text-slate-700">ภาพหน้าปก URL</span><input value={item.coverImage ?? ""} onChange={(event) => onChange({ coverImage: event.target.value })} placeholder="https://..." className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">Gallery URLs (1 บรรทัดต่อภาพ)</span><textarea rows={4} value={item.gallery ?? ""} onChange={(event) => onChange({ gallery: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label><div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-medium text-slate-700">Video URL</span><input value={item.videoUrl ?? ""} onChange={(event) => onChange({ videoUrl: event.target.value })} placeholder="YouTube หรือ Vimeo" className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">เอกสารแนบ URL</span><input value={item.documentUrl ?? ""} onChange={(event) => onChange({ documentUrl: event.target.value })} placeholder="PDF หรือเอกสารประกอบ" className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label></div></div></div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"><h3 className="text-sm font-semibold text-slate-800">ข้อมูลช่วยจัดหมวดและปุ่มปลายทาง</h3><div className="mt-4 grid gap-4"><label><span className="mb-2 block text-sm font-medium text-slate-700">แท็ก (คั่นด้วยเครื่องหมายจุลภาค)</span><input value={item.tags ?? ""} onChange={(event) => onChange({ tags: event.target.value })} placeholder="เช่น Gasifier, ชีวมวล, 1.5 MW" className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-medium text-slate-700">ข้อความบนปุ่ม</span><input value={item.ctaLabel ?? ""} onChange={(event) => onChange({ ctaLabel: event.target.value })} placeholder="เช่น ขอใบเสนอราคา" className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">ลิงก์ของปุ่ม</span><input value={item.ctaUrl ?? ""} onChange={(event) => onChange({ ctaUrl: event.target.value })} placeholder="/contact หรือ https://..." className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label></div></div></div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"><h3 className="text-sm font-semibold text-slate-800">การแสดงผลบน Google</h3><div className="mt-4 grid gap-4"><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">ชื่อสำหรับการค้นหา</span><input value={item.seoTitle} onChange={(event) => onChange({ seoTitle: event.target.value })} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 ${focusRing}`} /></label><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">คำอธิบายสำหรับการค้นหา</span><textarea rows={3} value={item.seoDescription} onChange={(event) => onChange({ seoDescription: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 ${focusRing}`} /></label></div></div>
           </div>
           <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-4"><h3 className="text-sm font-semibold text-slate-800">ขั้นตอนเผยแพร่</h3><dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-500">สถานะ</dt><dd className="font-medium text-slate-700">{item.status}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">ผู้แก้ไข</dt><dd className="font-medium text-slate-700">ผู้ดูแลระบบ</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">แก้ไขล่าสุด</dt><dd className="font-medium text-slate-700">{item.updatedAt}</dd></div></dl><label className="mt-5 block"><span className="mb-2 block text-xs font-medium text-slate-600">วันและเวลาที่ต้องการเผยแพร่</span><input type="datetime-local" value={item.scheduledAt ?? ""} onChange={(event) => onChange({ scheduledAt: event.target.value })} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><label className="mt-4 flex items-start gap-2.5"><input type="checkbox" checked={item.featured ?? false} onChange={(event) => onChange({ featured: event.target.checked })} className="mt-0.5 h-4 w-4 accent-brand-700" /><span className="text-xs leading-5 text-slate-600">แสดงเป็นรายการเด่นบนหน้าแรก</span></label><div className="mt-6 space-y-2"><button type="button" onClick={onPreview} className={`w-full rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white ${focusRing}`}>ดูตัวอย่างก่อนเผยแพร่</button><button type="button" onClick={onSchedule} disabled={!item.scheduledAt} className={`w-full rounded-xl border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}>กำหนดเวลาเผยแพร่</button><button type="submit" className={`w-full rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-900 ${focusRing}`}>บันทึกเป็นร่าง</button></div></aside>
@@ -513,6 +586,31 @@ function ContentEditor({ type, item, onChange, onBack, onSaveDraft, onSchedule, 
   );
 }
 
+function FlexibleBlockPreview({ block }: { block: ContentBlock }) {
+  const lines = block.content.split("\n").map((line) => line.trim()).filter(Boolean);
+  const safeUrl = block.content.trim().startsWith("https://") || block.content.trim().startsWith("/") ? block.content.trim() : "";
+
+  if (block.kind === "รูปภาพ") {
+    return <section>{block.title && <h2 className="mb-3 text-xl font-semibold text-slate-900">{block.title}</h2>}{safeUrl ? <img src={safeUrl} alt={block.title || "ภาพประกอบ"} className="w-full rounded-2xl object-cover" /> : <div className="grid min-h-44 place-items-center rounded-2xl bg-slate-100 text-sm text-slate-500">รอ URL รูปภาพที่ถูกต้อง</div>}</section>;
+  }
+
+  if (block.kind === "วิดีโอ") {
+    return <section className="rounded-2xl border border-slate-200 p-5">{block.title && <h2 className="text-xl font-semibold text-slate-900">{block.title}</h2>}<p className="mt-2 text-sm text-slate-600">{safeUrl ? "มีวิดีโอแนบพร้อมเปิดในหน้าจริง" : "รอ URL วิดีโอที่ถูกต้อง"}</p>{safeUrl && <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white">เปิดวิดีโอ</a>}</section>;
+  }
+
+  if (block.kind === "ปุ่ม/ลิงก์") {
+    const [label = "ดูข้อมูลเพิ่มเติม", rawUrl = ""] = block.content.split("|").map((value) => value.trim());
+    const linkUrl = rawUrl.startsWith("https://") || rawUrl.startsWith("/") ? rawUrl : "";
+    return <section>{block.title && <h2 className="mb-3 text-xl font-semibold text-slate-900">{block.title}</h2>}<span className={`inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold ${linkUrl ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-400"}`}>{label}</span></section>;
+  }
+
+  if (block.kind === "รายการ") {
+    return <section>{block.title && <h2 className="mb-3 text-xl font-semibold text-slate-900">{block.title}</h2>}<ul className="space-y-2">{lines.map((line, index) => <li key={`${block.id}-${index}`} className="flex gap-2 text-sm leading-6 text-slate-700"><span className="text-brand-700">✓</span>{line}</li>)}</ul></section>;
+  }
+
+  return <section>{block.title && <h2 className="mb-3 text-xl font-semibold text-slate-900">{block.title}</h2>}<div className="space-y-3">{block.content.split("\n\n").filter(Boolean).map((paragraph, index) => <p key={`${block.id}-${index}`} className="text-sm leading-7 text-slate-700">{paragraph}</p>)}</div></section>;
+}
+
 function ContentPreview({ type, item, onClose, onPublish }: { type: ContentType; item: ContentItem; onClose: () => void; onPublish: () => void }) {
   const contentLabel = contentTypeLabel(type);
   return (
@@ -520,15 +618,15 @@ function ContentPreview({ type, item, onClose, onPublish }: { type: ContentType;
       <button type="button" onClick={onClose} className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" aria-label="ปิดตัวอย่าง" />
       <section className="relative max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-7"><div><p className="text-xs font-bold tracking-[0.14em] text-brand-700 uppercase">ตัวอย่างก่อนเผยแพร่</p><h2 className="mt-0.5 font-semibold text-slate-900">มุมมองหน้าเว็บไซต์</h2></div><button type="button" onClick={onClose} className={`rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 ${focusRing}`}>กลับไปแก้ไข</button></div>
-        <article className="mx-auto max-w-3xl px-5 py-8 sm:px-10 sm:py-12"><p className="text-sm font-medium text-brand-700">{item.category}</p><h1 className="mt-3 font-heading text-3xl font-bold leading-tight text-ink-950 sm:text-4xl">{item.title}</h1><p className="mt-4 text-sm text-slate-500">{contentLabel} · อัปเดต {item.updatedAt}</p>{item.coverImage ? <img src={item.coverImage} alt="" className="mt-7 aspect-[16/8] w-full rounded-2xl object-cover" /> : <div className="mt-7 grid aspect-[16/8] place-items-center rounded-2xl bg-brand-900/10 text-sm text-brand-700">พื้นที่ภาพหน้าปก</div>}{type === "portfolio" && <dl className="mt-6 grid gap-3 rounded-2xl bg-ink-100 p-5 text-sm sm:grid-cols-3"><div><dt className="text-slate-500">จังหวัด</dt><dd className="mt-1 font-semibold text-slate-800">{item.province || "ยังไม่ระบุ"}</dd></div><div><dt className="text-slate-500">ปีที่ติดตั้ง</dt><dd className="mt-1 font-semibold text-slate-800">{item.installedYear || "ยังไม่ระบุ"}</dd></div><div><dt className="text-slate-500">ระบบ</dt><dd className="mt-1 font-semibold text-slate-800">{item.system || "ยังไม่ระบุ"}</dd></div></dl>}<p className="mt-8 text-lg leading-8 text-slate-700">{item.summary}</p><div className="mt-6 space-y-4 text-base leading-8 text-slate-700">{item.body.split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>{type === "portfolio" && <div className="mt-8 grid gap-4 sm:grid-cols-2"><section className="rounded-2xl border border-slate-200 p-5"><h2 className="font-semibold text-slate-900">โจทย์ของโครงการ</h2><p className="mt-2 text-sm leading-6 text-slate-600">{item.challenge || "รอกรอกข้อมูล"}</p></section><section className="rounded-2xl border border-slate-200 p-5"><h2 className="font-semibold text-slate-900">แนวทางที่ออกแบบ</h2><p className="mt-2 text-sm leading-6 text-slate-600">{item.solution || "รอกรอกข้อมูล"}</p></section></div>}<section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5"><p className="text-xs font-bold tracking-[0.14em] text-slate-500 uppercase">ตัวอย่าง SEO</p><p className="mt-3 text-lg font-medium text-brand-700">{item.seoTitle}</p><p className="mt-1 text-sm leading-6 text-slate-600">{item.seoDescription}</p></section></article>
+        <article className="mx-auto max-w-3xl px-5 py-8 sm:px-10 sm:py-12"><p className="text-sm font-medium text-brand-700">{item.category}</p><h1 className="mt-3 font-heading text-3xl font-bold leading-tight text-ink-950 sm:text-4xl">{item.title}</h1><p className="mt-4 text-sm text-slate-500">{contentLabel} · อัปเดต {item.updatedAt}</p>{item.coverImage ? <img src={item.coverImage} alt="" className="mt-7 aspect-[16/8] w-full rounded-2xl object-cover" /> : <div className="mt-7 grid aspect-[16/8] place-items-center rounded-2xl bg-brand-900/10 text-sm text-brand-700">พื้นที่ภาพหน้าปก</div>}{type === "portfolio" && <dl className="mt-6 grid gap-3 rounded-2xl bg-ink-100 p-5 text-sm sm:grid-cols-3"><div><dt className="text-slate-500">จังหวัด</dt><dd className="mt-1 font-semibold text-slate-800">{item.province || "ยังไม่ระบุ"}</dd></div><div><dt className="text-slate-500">ปีที่ติดตั้ง</dt><dd className="mt-1 font-semibold text-slate-800">{item.installedYear || "ยังไม่ระบุ"}</dd></div><div><dt className="text-slate-500">ระบบ</dt><dd className="mt-1 font-semibold text-slate-800">{item.system || "ยังไม่ระบุ"}</dd></div></dl>}<p className="mt-8 text-lg leading-8 text-slate-700">{item.summary}</p><div className="mt-6 space-y-4 text-base leading-8 text-slate-700">{item.body.split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>{type === "portfolio" && <div className="mt-8 grid gap-4 sm:grid-cols-2"><section className="rounded-2xl border border-slate-200 p-5"><h2 className="font-semibold text-slate-900">โจทย์ของโครงการ</h2><p className="mt-2 text-sm leading-6 text-slate-600">{item.challenge || "รอกรอกข้อมูล"}</p></section><section className="rounded-2xl border border-slate-200 p-5"><h2 className="font-semibold text-slate-900">แนวทางที่ออกแบบ</h2><p className="mt-2 text-sm leading-6 text-slate-600">{item.solution || "รอกรอกข้อมูล"}</p></section></div>}{item.contentBlocks && item.contentBlocks.length > 0 && <div className="mt-9 space-y-8 border-t border-slate-200 pt-8">{item.contentBlocks.map((block) => <FlexibleBlockPreview key={block.id} block={block} />)}</div>}<section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5"><p className="text-xs font-bold tracking-[0.14em] text-slate-500 uppercase">ตัวอย่าง SEO</p><p className="mt-3 text-lg font-medium text-brand-700">{item.seoTitle}</p><p className="mt-1 text-sm leading-6 text-slate-600">{item.seoDescription}</p></section></article>
         <div className="sticky bottom-0 flex flex-col gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-7"><button type="button" onClick={onClose} className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 ${focusRing}`}>แก้ไขต่อ</button><button type="button" onClick={onPublish} className={`rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-900 ${focusRing}`}>{item.status === "เผยแพร่" ? "อัปเดตและเผยแพร่" : "เผยแพร่เนื้อหา"}</button></div>
       </section>
     </div>
   );
 }
 
-function Messages({ messages, onOpenMessage, onStatusChange }: { messages: DemoMessage[]; onOpenMessage: (id: string) => void; onStatusChange: (id: string, status: MessageStatus) => void }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+function Messages({ messages, onOpenMessage, onStatusChange, onUpdateMessage }: { messages: DemoMessage[]; onOpenMessage: (id: string) => void; onStatusChange: (id: string, status: MessageStatus) => void; onUpdateMessage: (id: string, patch: Partial<DemoMessage>) => void }) {
+  const [selectedId, setSelectedId] = useState<string | null>(messages[0]?.id ?? null);
   const [replySent, setReplySent] = useState(false);
   const selected = messages.find((message) => message.id === selectedId) ?? null;
 
@@ -547,9 +645,45 @@ function Messages({ messages, onOpenMessage, onStatusChange }: { messages: DemoM
   return (
     <div className="space-y-6">
       <PageHeading eyebrow="การสื่อสาร" title="ข้อความติดต่อ"><PrototypeLabel /></PageHeading>
-      <div className="grid gap-6 xl:grid-cols-5">
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm xl:col-span-3"><div className="divide-y divide-slate-100">{messages.map((message) => <article key={message.id} className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center sm:px-6"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="text-sm font-semibold text-slate-800">{message.sender}</h2><StatusBadge status={message.status} /></div><p className="mt-1 text-sm text-slate-600">{message.subject}</p><p className="mt-1 text-xs text-slate-500">{message.company} · {message.receivedAt}</p></div><button type="button" onClick={() => openMessage(message.id)} className={`self-start rounded-lg px-3 py-2 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-900/5 sm:self-auto ${focusRing}`}>เปิดอ่าน</button></article>)}</div></section>
-        <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2"><h2 className="font-semibold text-slate-900">รายละเอียดข้อความ</h2>{selected ? <div className="mt-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-sm font-semibold text-slate-800">{selected.subject}</p><p className="mt-1 text-sm text-slate-500">จาก {selected.sender} · {selected.company}</p></div><StatusBadge status={selected.status} /></div><dl className="mt-5 grid gap-3 rounded-xl bg-slate-50 p-4 text-sm"><div><dt className="text-xs text-slate-500">เบอร์โทร</dt><dd className="mt-1 font-medium text-slate-800">{selected.phone}</dd></div><div><dt className="text-xs text-slate-500">Email / LINE</dt><dd className="mt-1 font-medium text-slate-800">{selected.contact}</dd></div><div><dt className="text-xs text-slate-500">สนใจ</dt><dd className="mt-1 font-medium text-slate-800">{selected.interest}</dd></div><div><dt className="text-xs text-slate-500">แหล่งที่มา</dt><dd className="mt-1 font-medium text-slate-800">{selected.source}</dd></div></dl><p className="mt-5 text-sm leading-7 text-slate-700">{selected.detail}</p><label className="mt-5 block"><span className="mb-2 block text-sm font-medium text-slate-700">สถานะการติดตาม</span><select value={selected.status} onChange={(event) => onStatusChange(selected.id, event.target.value as MessageStatus)} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`}><option>ใหม่</option><option>กำลังดำเนินการ</option><option>ติดต่อแล้ว</option><option>ปิดงาน</option><option>สแปม</option></select></label><button type="button" onClick={simulateReply} className={`mt-4 w-full rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white ${focusRing}`}>จำลองการตอบกลับ</button>{replySent && <p role="status" className="mt-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">บันทึกสถานะ “ติดต่อแล้ว” (ข้อมูลจำลอง)</p>}</div> : <p className="mt-4 text-sm leading-6 text-slate-500">เลือกข้อความจากรายการเพื่อดูข้อมูลติดต่อ ความสนใจ แหล่งที่มา และสถานะติดตาม</p>}</aside>
+      <p className="-mt-3 text-sm text-slate-500">เก็บข้อมูลจากแบบฟอร์ม พร้อมรายละเอียดโครงการ ผู้รับผิดชอบ นัดติดตาม และบันทึกภายในในรายการเดียว</p>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-4 sm:px-6"><h2 className="font-semibold text-slate-900">กล่องข้อความ</h2><p className="mt-1 text-xs text-slate-500">{messages.length} รายการ</p></div>
+          <div className="divide-y divide-slate-100">
+            {messages.map((message) => (
+              <article key={message.id} className={`flex flex-col gap-3 px-5 py-4 transition-colors sm:flex-row sm:items-center sm:px-6 ${selectedId === message.id ? "bg-brand-900/5" : "hover:bg-slate-50"}`}>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2"><h3 className="text-sm font-semibold text-slate-800">{message.sender}</h3><StatusBadge status={message.status} /></div>
+                  <p className="mt-1 text-sm text-slate-600">{message.subject}</p>
+                  <p className="mt-1 text-xs text-slate-500">{message.company} · {message.receivedAt}</p>
+                  <p className="mt-2 line-clamp-1 text-xs text-slate-500">{message.interest} · {message.factoryLocation}</p>
+                </div>
+                <button type="button" onClick={() => openMessage(message.id)} className={`self-start rounded-lg px-3 py-2 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-900/5 sm:self-auto ${focusRing}`}>เปิดอ่าน</button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-6">
+          <h2 className="font-semibold text-slate-900">รายละเอียดและการติดตาม</h2>
+          {selected ? (
+            <div className="mt-5">
+              <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-sm font-semibold text-slate-800">{selected.subject}</p><p className="mt-1 text-sm text-slate-500">จาก {selected.sender} · {selected.company}</p></div><StatusBadge status={selected.status} /></div>
+              <dl className="mt-5 grid gap-3 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                {[["เบอร์โทร", selected.phone], ["Email / LINE", selected.contact], ["สนใจ", selected.interest], ["พื้นที่โรงงาน", selected.factoryLocation], ["ขั้นตอนโครงการ", selected.projectStage], ["งบประมาณ", selected.budgetRange], ["ระยะเวลาที่ต้องการ", selected.desiredTimeline], ["ช่องทางที่สะดวก", selected.preferredContact], ["แหล่งที่มา", selected.source]].map(([label, value]) => <div key={label}><dt className="text-xs text-slate-500">{label}</dt><dd className="mt-1 font-medium leading-5 text-slate-800">{value}</dd></div>)}
+              </dl>
+              <section className="mt-5"><h3 className="text-xs font-semibold text-slate-500">ข้อความจากลูกค้า</h3><p className="mt-2 text-sm leading-7 text-slate-700">{selected.detail}</p></section>
+              <div className="mt-5 grid gap-4">
+                <label><span className="mb-2 block text-sm font-medium text-slate-700">สถานะการติดตาม</span><select value={selected.status} onChange={(event) => onStatusChange(selected.id, event.target.value as MessageStatus)} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`}><option>ใหม่</option><option>กำลังดำเนินการ</option><option>ติดต่อแล้ว</option><option>ปิดงาน</option><option>สแปม</option></select></label>
+                <label><span className="mb-2 block text-sm font-medium text-slate-700">ผู้รับผิดชอบ</span><input value={selected.assignedTo} onChange={(event) => onUpdateMessage(selected.id, { assignedTo: event.target.value })} placeholder="ชื่อหรือทีมที่รับผิดชอบ" className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
+                <label><span className="mb-2 block text-sm font-medium text-slate-700">วันและเวลาติดตามครั้งถัดไป</span><input type="datetime-local" value={selected.followUpAt} onChange={(event) => onUpdateMessage(selected.id, { followUpAt: event.target.value })} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
+                <label><span className="mb-2 block text-sm font-medium text-slate-700">บันทึกภายใน</span><textarea rows={4} value={selected.internalNote} onChange={(event) => onUpdateMessage(selected.id, { internalNote: event.target.value })} placeholder="บันทึกข้อมูลที่ต้องขอเพิ่ม ผลการโทร หรือขั้นตอนถัดไป" className={`w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label>
+              </div>
+              <button type="button" onClick={simulateReply} className={`mt-4 w-full rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white ${focusRing}`}>จำลองบันทึกว่าติดต่อแล้ว</button>
+              {replySent && <p role="status" className="mt-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">อัปเดตสถานะเป็น “ติดต่อแล้ว”</p>}
+            </div>
+          ) : <p className="mt-4 text-sm leading-6 text-slate-500">เลือกข้อความเพื่อดูข้อมูลลูกค้าและบันทึกการติดตาม</p>}
+        </aside>
       </div>
     </div>
   );
@@ -577,34 +711,6 @@ function Downloads({ documents, onAddDocument, onToggleStatus }: { documents: Do
   );
 }
 
-function WebsiteSettings({ settings, onSave }: { settings: WebsiteSettingsState; onSave: (settings: WebsiteSettingsState) => void }) {
-  const [draft, setDraft] = useState(settings);
-  const [notice, setNotice] = useState("");
-  const update = (field: keyof WebsiteSettingsState, value: string) => setDraft((current) => ({ ...current, [field]: value }));
-
-  return (
-    <div className="space-y-6">
-      <PageHeading eyebrow="ข้อมูลเว็บไซต์" title="ตั้งค่าเว็บไซต์"><PrototypeLabel /></PageHeading>
-      <p className="-mt-3 text-sm text-slate-500">รวบรวมข้อมูลบริษัทและช่องทางติดต่อไว้จุดเดียว เพื่อเตรียมเชื่อม CMS จริงภายหลัง</p>
-      {notice && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{notice}</p>}
-      <form onSubmit={(event) => { event.preventDefault(); onSave(draft); setNotice("บันทึกการตั้งค่าตัวอย่างแล้ว"); }} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="grid gap-5 lg:grid-cols-2">
-          <label className="block lg:col-span-2"><span className="mb-2 block text-sm font-semibold text-slate-700">ชื่อบริษัท</span><input value={draft.companyName} onChange={(event) => update("companyName", event.target.value)} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
-          <label className="block lg:col-span-2"><span className="mb-2 block text-sm font-semibold text-slate-700">ที่อยู่</span><textarea rows={3} value={draft.address} onChange={(event) => update("address", event.target.value)} className={`w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label>
-          <label><span className="mb-2 block text-sm font-semibold text-slate-700">เบอร์โทร</span><input value={draft.phone} onChange={(event) => update("phone", event.target.value)} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
-          <label><span className="mb-2 block text-sm font-semibold text-slate-700">อีเมล</span><input value={draft.email} onChange={(event) => update("email", event.target.value)} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
-          <label><span className="mb-2 block text-sm font-semibold text-slate-700">LINE URL</span><input value={draft.lineUrl} onChange={(event) => update("lineUrl", event.target.value)} placeholder="https://line.me/..." className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
-          <label><span className="mb-2 block text-sm font-semibold text-slate-700">LINE QR Code URL</span><input value={draft.lineQrImage} onChange={(event) => update("lineQrImage", event.target.value)} placeholder="รอไฟล์ QR Code จากบริษัท" className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
-          <label><span className="mb-2 block text-sm font-semibold text-slate-700">Facebook URL</span><input value={draft.facebookUrl} onChange={(event) => update("facebookUrl", event.target.value)} placeholder="รอลิงก์จากบริษัท" className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
-          <label><span className="mb-2 block text-sm font-semibold text-slate-700">Google Maps URL</span><input value={draft.googleMapsUrl} onChange={(event) => update("googleMapsUrl", event.target.value)} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
-          <label><span className="mb-2 block text-sm font-semibold text-slate-700">เวลาทำการ</span><input value={draft.businessHours} onChange={(event) => update("businessHours", event.target.value)} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label>
-        </div>
-        <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-5 text-slate-500">การบันทึกใน prototype ยังไม่เปลี่ยนข้อมูลหน้า public และจะกลับค่าเดิมเมื่อรีเฟรช</p><button type="submit" className={`shrink-0 rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-900 ${focusRing}`}>บันทึกการตั้งค่า</button></div>
-      </form>
-    </div>
-  );
-}
-
 export default function AdminPortal({ onExit }: AdminPortalProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [screen, setScreen] = useState<Screen>("dashboard");
@@ -614,17 +720,6 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
   const [products, setProducts] = useState(initialProducts);
   const [messages, setMessages] = useState(initialMessages);
   const [documents, setDocuments] = useState(initialDownloads);
-  const [settings, setSettings] = useState<WebsiteSettingsState>({
-    companyName: COMPANY.name,
-    address: COMPANY.publicAddress,
-    phone: COMPANY.phone,
-    email: COMPANY.email,
-    lineUrl: COMPANY.lineUrl,
-    lineQrImage: COMPANY.lineQrImage ?? "",
-    facebookUrl: COMPANY.facebookUrl ?? "",
-    googleMapsUrl: COMPANY.map.googleMapsUrl,
-    businessHours: COMPANY.businessHours,
-  });
 
   const selectScreen = (nextScreen: Screen) => {
     setScreen(nextScreen);
@@ -649,6 +744,10 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
     setMessages((current) => current.map((message) => message.id === id ? { ...message, status } : message));
   };
 
+  const updateMessage = (id: string, patch: Partial<DemoMessage>) => {
+    setMessages((current) => current.map((message) => message.id === id ? { ...message, ...patch } : message));
+  };
+
   const addDocument = () => {
     setDocuments((current) => [{ id: `download-${Date.now()}`, name: "เอกสารใหม่ (ตัวอย่าง).pdf", category: "เอกสารประกอบ", updatedAt: "เมื่อสักครู่", status: "ร่าง" }, ...current]);
   };
@@ -670,10 +769,8 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
         : screen === "products"
           ? <ContentManager type="products" items={products} onSave={(item) => saveContent("products", item)} onDelete={(id) => deleteContent("products", id)} />
           : screen === "messages"
-            ? <Messages messages={messages} onOpenMessage={openMessage} onStatusChange={changeMessageStatus} />
-            : screen === "downloads"
-              ? <Downloads documents={documents} onAddDocument={addDocument} onToggleStatus={toggleDocumentStatus} />
-              : <WebsiteSettings settings={settings} onSave={setSettings} />;
+            ? <Messages messages={messages} onOpenMessage={openMessage} onStatusChange={changeMessageStatus} onUpdateMessage={updateMessage} />
+            : <Downloads documents={documents} onAddDocument={addDocument} onToggleStatus={toggleDocumentStatus} />;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">

@@ -11,6 +11,7 @@ import type { Article, IndustryIconName, Product, Project } from './types/conten
 /* ─── ROUTE TYPES ─────────────────────────── */
 type Page =
   | { t: 'home' }
+  | { t: 'products' }
   | { t: 'projects' }
   | { t: 'news' }
   | { t: 'downloads' }
@@ -51,6 +52,7 @@ function normalizePathname(pathname: string) {
 function pageFromPath(pathname: string): Page {
   const path = normalizePathname(pathname)
   if (path === '/') return { t: 'home' }
+  if (path === '/products') return { t: 'products' }
   if (path === '/projects') return { t: 'projects' }
   if (path === '/news') return { t: 'news' }
   if (path === '/downloads') return { t: 'downloads' }
@@ -75,6 +77,7 @@ function pageFromPath(pathname: string): Page {
 function pathForPage(page: Page) {
   switch (page.t) {
     case 'home': return '/'
+    case 'products': return '/products'
     case 'projects': return '/projects'
     case 'project': return `/projects/${page.p.slug}`
     case 'news': return '/news'
@@ -90,6 +93,7 @@ function titleForPage(page: Page) {
   const suffix = 'บริษัท ยักษ์ใหญ่ 2015 จำกัด'
   switch (page.t) {
     case 'home': return `${suffix} | ระบบพลังงานชีวมวลอุตสาหกรรม`
+    case 'products': return `ผลิตภัณฑ์ | ${suffix}`
     case 'projects': return `ผลงาน | ${suffix}`
     case 'project': return `${page.p.name} | ${suffix}`
     case 'news': return `ข่าวสารและบทความ | ${suffix}`
@@ -273,12 +277,21 @@ function Header({ scrolled, isHome, setPage, onQuote }: { scrolled: boolean; isH
   const [mobileOpen, setMobileOpen] = useState(false)
   const isLight = isHome && !scrolled
 
-  const navLinks = [
+  const navLinks: Array<{ label: string; id?: string; page?: Page }> = [
     { label: 'หน้าแรก', id: 'hero' },
     { label: 'เกี่ยวกับเรา', id: 'about' },
-    { label: 'สินค้า', id: 'products' },
+    { label: 'สินค้า', page: { t: 'products' } },
     { label: 'บริการ', id: 'services' },
   ]
+
+  const openNavItem = (item: { id?: string; page?: Page }) => {
+    if (item.page) {
+      setPage(item.page)
+      setMobileOpen(false)
+      return
+    }
+    if (item.id) scrollTo(item.id)
+  }
 
   const scrollTo = (id: string) => {
     setPage({ t: 'home' })
@@ -297,7 +310,7 @@ function Header({ scrolled, isHome, setPage, onQuote }: { scrolled: boolean; isH
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map(l => (
-              <button key={l.id} onClick={() => scrollTo(l.id)}
+              <button key={l.label} onClick={() => openNavItem(l)}
                 className={`px-4 py-2 text-sm font-body rounded-lg transition-colors ${isLight ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-ink-700 hover:text-brand-900 hover:bg-ink-100'}`}>
                 {l.label}
               </button>
@@ -342,7 +355,7 @@ function Header({ scrolled, isHome, setPage, onQuote }: { scrolled: boolean; isH
             </div>
             <nav className="flex-1 p-5 flex flex-col gap-1">
               {navLinks.map(l => (
-                <button key={l.id} onClick={() => scrollTo(l.id)} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">{l.label}</button>
+                <button key={l.label} onClick={() => openNavItem(l)} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">{l.label}</button>
               ))}
               <button onClick={() => { setPage({ t: 'projects' }); setMobileOpen(false) }} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">ผลงาน</button>
               <button onClick={() => { setPage({ t: 'news' }); setMobileOpen(false) }} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">ข่าวสาร</button>
@@ -500,7 +513,7 @@ function About({ onLearnMore }: { onLearnMore: () => void }) {
 }
 
 /* ─── PRODUCTS ───────────────────────────────────── */
-function Products({ onProduct, onQuote }: { onProduct: (p: Product) => void; onQuote: () => void }) {
+function Products({ onProduct, onQuote, onViewAll }: { onProduct: (p: Product) => void; onQuote: () => void; onViewAll: () => void }) {
   return (
     <section id="products" data-scroll-reveal className="bg-ink-100 py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8">
@@ -533,6 +546,11 @@ function Products({ onProduct, onQuote }: { onProduct: (p: Product) => void; onQ
               </div>
             </div>
           ))}
+        </div>
+        <div className="mt-10 flex justify-center">
+          <button onClick={onViewAll} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-brand-700 px-6 py-3 font-body text-sm font-medium text-brand-700 transition-colors hover:bg-brand-700 hover:text-white">
+            ดูผลิตภัณฑ์ทั้งหมด <IcoArrowRight />
+          </button>
         </div>
       </div>
     </section>
@@ -621,7 +639,7 @@ function FeaturedProjects({ setPage }: { setPage: (p: Page) => void }) {
                   <div className="flex items-center gap-1"><IcoMapPin />{p.province}</div>
                   <div>{p.year}</div>
                 </div>
-                <div className="text-xs text-ink-700 font-body mt-1.5 pt-3 border-t border-ink-300/60">{p.system}</div>
+                <span className="mt-3 flex items-center gap-1 border-t border-ink-300/60 pt-3 font-body text-xs font-medium text-brand-700">อ่านเพิ่มเติม <IcoArrowRight /></span>
               </div>
             </button>
           ))}
@@ -750,9 +768,6 @@ function Contact({ onPrivacy }: { onPrivacy: () => void }) {
               <div className="flex gap-3"><div className="w-11 h-11 rounded-xl bg-brand-900/5 flex items-center justify-center text-brand-700 shrink-0"><IcoMail /></div><div><div className="text-xs text-ink-700/60 mb-0.5">อีเมล</div><a href={COMPANY.emailHref} className="text-sm text-ink-950 hover:text-brand-700">{COMPANY.email}</a></div></div>
               <div className="flex gap-3"><div className="w-11 h-11 rounded-xl bg-brand-900/5 flex items-center justify-center text-brand-700 shrink-0"><IcoLine /></div><div><div className="text-xs text-ink-700/60 mb-0.5">LINE</div><a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-ink-950 hover:text-brand-700">ติดต่อผ่าน LINE</a></div></div>
               <div className="flex gap-3"><div className="w-11 h-11 rounded-xl bg-brand-900/5 flex items-center justify-center text-brand-700 shrink-0"><IcoFacebook /></div><div><div className="text-xs text-ink-700/60 mb-0.5">Facebook</div>{COMPANY.facebookUrl ? <a href={COMPANY.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-ink-950 hover:text-brand-700">{COMPANY.facebookLabel}</a> : <span className="text-sm text-ink-700/60">รอลิงก์ Facebook จากบริษัท</span>}</div></div>
-              <a href={COMPANY.map.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-brand-700 px-4 py-2.5 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-700 hover:text-white">
-                <IcoMapPin />เปิดใน Google Maps{COMPANY.map.isApproximate ? ' (พิกัดชั่วคราว)' : ''}
-              </a>
               <div className="mt-2 text-sm"><span className="text-ink-700/60 text-xs block mb-0.5">เวลาทำการ</span>{COMPANY.businessHours}</div>
             </div>
           </div>
@@ -809,9 +824,10 @@ function Footer({ scrollTo, setPage, onPrivacy }: { scrollTo: (id: string) => vo
           <div>
             <h5 className="font-heading font-semibold text-sm mb-4">เมนูหลัก</h5>
             <ul className="space-y-2.5">
-              {[['หน้าแรก', 'hero'], ['เกี่ยวกับเรา', 'about'], ['สินค้า', 'products'], ['บริการ', 'services']].map(([l, id]) => (
+              {[['หน้าแรก', 'hero'], ['เกี่ยวกับเรา', 'about'], ['บริการ', 'services']].map(([l, id]) => (
                 <li key={l}><button onClick={() => scrollTo(id)} className="text-white/60 hover:text-white text-sm font-body transition-colors">{l}</button></li>
               ))}
+              <li><button onClick={() => setPage({ t: 'products' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">สินค้า</button></li>
             </ul>
           </div>
           <div>
@@ -902,10 +918,33 @@ function PhoneContactModal({ onClose }: { onClose: () => void }) {
 }
 
 function FloatingActions({ onQuote, onPhone, onLine }: { onQuote: () => void; onPhone: () => void; onLine: () => void }) {
+  const facebookAction = COMPANY.facebookUrl ? (
+    <a
+      href={COMPANY.facebookUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="เปิด Facebook Page"
+      className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-lg transition-all hover:scale-110 hover:bg-[#0f69db]"
+    >
+      <IcoFacebook />
+    </a>
+  ) : (
+    <button
+      type="button"
+      disabled
+      title="รอลิงก์ Facebook จากบริษัท"
+      aria-label="Facebook รอลิงก์จากบริษัท"
+      className="flex h-14 w-14 cursor-not-allowed items-center justify-center rounded-full bg-[#1877F2]/45 text-white shadow-lg"
+    >
+      <IcoFacebook />
+    </button>
+  )
+
   return (
     <>
       {/* Desktop: bottom-right */}
       <div className="fixed bottom-6 right-6 z-40 hidden flex-col gap-3 md:flex">
+        {facebookAction}
         <button type="button" onClick={onLine} aria-label="เปิดช่องทางติดต่อผ่าน LINE" className="flex h-14 w-14 items-center justify-center rounded-full bg-[#06C755] font-heading text-sm font-bold text-white shadow-lg transition-all hover:scale-110 hover:bg-[#05b34c]">LINE</button>
         <button type="button" onClick={onPhone} aria-label="แสดงเบอร์โทรศัพท์" className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-700 text-white shadow-lg transition-all hover:scale-110 hover:bg-brand-900"><IcoPhone cls="h-6 w-6" /></button>
         <button onClick={onQuote} aria-label="ขอใบเสนอราคา" className="flex h-14 w-14 items-center justify-center rounded-full bg-energy-600 font-heading text-sm font-bold leading-tight text-white shadow-lg transition-all hover:scale-110 hover:bg-energy-400">ราคา</button>
@@ -914,6 +953,11 @@ function FloatingActions({ onQuote, onPhone, onLine }: { onQuote: () => void; on
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-ink-300 flex">
         <button type="button" onClick={onPhone} className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-brand-700 text-xs font-body"><IcoPhone cls="w-5 h-5" />โทรหาเรา</button>
         <button type="button" onClick={onLine} className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-[#06C755] text-xs font-body"><IcoLine /><span>LINE</span></button>
+        {COMPANY.facebookUrl ? (
+          <a href={COMPANY.facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="เปิด Facebook Page" className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5 font-body text-xs text-[#1877F2]"><IcoFacebook /><span>Facebook</span></a>
+        ) : (
+          <button type="button" disabled title="รอลิงก์ Facebook จากบริษัท" aria-label="Facebook รอลิงก์จากบริษัท" className="flex flex-1 cursor-not-allowed flex-col items-center justify-center gap-1 py-2.5 font-body text-xs text-[#1877F2]/45"><IcoFacebook /><span>Facebook</span></button>
+        )}
         <button onClick={onQuote} className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 bg-energy-600 text-white text-xs font-body"><IcoArrowRight />ขอใบเสนอราคา</button>
       </div>
     </>
@@ -1043,29 +1087,225 @@ function ProductModal({ product: p, onClose, onQuote }: { product: Product; onCl
   )
 }
 
-/* ─── PROJECTS PAGE ──────────────────────────────── */
-function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuote: () => void }) {
+/* ─── PRODUCTS PAGE ──────────────────────────────── */
+function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => void; onProduct: (p: Product) => void; onQuote: (product?: Product) => void }) {
   const [query, setQuery] = useState('')
-  const [industry, setIndustry] = useState('')
-  const [system, setSystem] = useState('')
-  const [province, setProvince] = useState('')
-  const industries = Array.from(new Set(PROJECTS.map(project => project.industry)))
-  const systems = Array.from(new Set(PROJECTS.map(project => project.system)))
-  const provinces = Array.from(new Set(PROJECTS.map(project => project.province)))
-  const filtered = PROJECTS.filter(project => {
-    const haystack = `${project.name} ${project.industry} ${project.province} ${project.system}`.toLowerCase()
-    return (!query || haystack.includes(query.trim().toLowerCase())) && (!industry || project.industry === industry) && (!system || project.system === system) && (!province || project.province === province)
-  })
-  const clearFilters = () => { setQuery(''); setIndustry(''); setSystem(''); setProvince('') }
+  const [category, setCategory] = useState('ทั้งหมด')
+  const [sort, setSort] = useState<'recommended' | 'name-asc' | 'name-desc'>('recommended')
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 9
+  const categories = ['ทั้งหมด', ...Array.from(new Set(PRODUCTS.map(product => product.category)))]
+  const normalizedQuery = query.trim().toLocaleLowerCase('th')
+  const filteredProducts = PRODUCTS
+    .filter(product => {
+      const searchable = `${product.name} ${product.subtitle} ${product.desc} ${product.category} ${product.fuels.join(' ')} ${product.highlights.join(' ')}`.toLocaleLowerCase('th')
+      return (category === 'ทั้งหมด' || product.category === category) && (!normalizedQuery || searchable.includes(normalizedQuery))
+    })
+    .sort((a, b) => {
+      if (sort === 'name-asc') return a.name.localeCompare(b.name, 'th')
+      if (sort === 'name-desc') return b.name.localeCompare(a.name, 'th')
+      return a.id - b.id
+    })
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize))
+  const visibleProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const updateQuery = (value: string) => {
+    setQuery(value)
+    setCurrentPage(1)
+  }
+
+  const updateCategory = (value: string) => {
+    setCategory(value)
+    setCurrentPage(1)
+  }
+
+  const updateSort = (value: 'recommended' | 'name-asc' | 'name-desc') => {
+    setSort(value)
+    setCurrentPage(1)
+  }
+
+  const clearFilters = () => {
+    setQuery('')
+    setCategory('ทั้งหมด')
+    setSort('recommended')
+    setCurrentPage(1)
+  }
 
   return (
-    <main className="min-h-screen pt-20">
-      <div className="bg-brand-900 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ผลงาน</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ผลงานของเรา</h1><p className="text-white/70 font-body text-base mt-2">โครงการที่ออกแบบ ผลิต และติดตั้งทั่วประเทศไทย</p></div></div>
-      <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
-        <section aria-label="ค้นหาและกรองผลงาน" className="rounded-2xl bg-ink-100 p-4 md:p-5 mb-8"><div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4"><div><label htmlFor="project-search" className="sr-only">ค้นหาผลงาน</label><input id="project-search" value={query} onChange={event => setQuery(event.target.value)} maxLength={120} placeholder="ค้นหาผลงาน" className="w-full rounded-lg border border-ink-300 bg-white px-3 py-2.5 text-sm font-body" /></div><div><label htmlFor="project-industry" className="sr-only">ประเภทโรงงาน</label><select id="project-industry" value={industry} onChange={event => setIndustry(event.target.value)} className="w-full rounded-lg border border-ink-300 bg-white px-3 py-2.5 text-sm font-body"><option value="">ทุกประเภทโรงงาน</option>{industries.map(item => <option key={item}>{item}</option>)}</select></div><div><label htmlFor="project-system" className="sr-only">ประเภทระบบ</label><select id="project-system" value={system} onChange={event => setSystem(event.target.value)} className="w-full rounded-lg border border-ink-300 bg-white px-3 py-2.5 text-sm font-body"><option value="">ทุกระบบ</option>{systems.map(item => <option key={item}>{item}</option>)}</select></div><div><label htmlFor="project-province" className="sr-only">จังหวัด</label><select id="project-province" value={province} onChange={event => setProvince(event.target.value)} className="w-full rounded-lg border border-ink-300 bg-white px-3 py-2.5 text-sm font-body"><option value="">ทุกจังหวัด</option>{provinces.map(item => <option key={item}>{item}</option>)}</select></div></div><div className="mt-3 flex items-center justify-between gap-3"><p className="text-xs font-body text-ink-700">พบ {filtered.length} ผลงาน</p><button onClick={clearFilters} disabled={!query && !industry && !system && !province} className="text-sm font-body text-brand-700 hover:text-brand-900 disabled:text-ink-700/40">ล้างตัวกรอง</button></div></section>
-        {filtered.length ? <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">{filtered.map(project => <button key={project.id} type="button" onClick={() => setPage({ t: 'project', p: project })} className="group text-left overflow-hidden rounded-2xl bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video bg-ink-100 overflow-hidden"><img src={project.image} alt={project.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /></div><div className="p-5"><span className="bg-brand-900/10 text-brand-700 text-xs font-body px-2.5 py-1 rounded-full">{project.industry}</span><h2 className="font-heading font-semibold text-ink-950 text-sm leading-snug mt-2 mb-2 group-hover:text-brand-700 transition-colors">{project.name}</h2><p className="line-clamp-2 text-xs font-body leading-relaxed text-ink-700">{project.summary}</p><div className="mt-3 flex items-center justify-between text-xs font-body text-ink-700"><span className="flex items-center gap-1"><IcoMapPin />{project.province}</span><span>{project.year}</span></div><div className="text-xs text-ink-700 font-body pt-3 mt-2 border-t border-ink-300/60">{project.system}</div><span className="mt-4 inline-flex items-center gap-1 text-brand-700 text-xs font-body font-medium">ดูรายละเอียด <IcoArrowRight /></span></div></button>)}</div> : <div className="rounded-2xl border border-dashed border-ink-300 p-10 text-center"><h2 className="font-heading font-semibold text-ink-950">ไม่พบผลงานที่ตรงกับเงื่อนไข</h2><p className="mt-2 text-sm font-body text-ink-700">ลองปรับคำค้นหาหรือล้างตัวกรอง</p><button onClick={clearFilters} className="mt-5 text-sm font-body font-medium text-brand-700">ล้างตัวกรอง</button></div>}
-        <section className="mt-12 bg-brand-900 rounded-2xl p-8 text-center"><h2 className="font-heading font-bold text-white text-xl mb-3">สนใจระบบลักษณะเดียวกัน?</h2><p className="text-white/70 font-body text-sm mb-6">ติดต่อทีมวิศวกรเพื่อประเมินระบบที่เหมาะกับโรงงานของคุณ</p><div className="flex flex-col sm:flex-row justify-center gap-3"><button onClick={onQuote} className="bg-energy-600 hover:bg-energy-400 text-white px-6 py-3 rounded-lg font-body text-sm font-medium transition-colors">ขอใบเสนอราคา</button><a href={COMPANY.phoneHref} className="border border-white/30 text-white px-6 py-3 rounded-lg font-body text-sm font-medium hover:bg-white/10">โทรปรึกษา</a></div></section>
-      </div>
+    <main className="min-h-screen bg-white pt-20">
+      <section className="bg-brand-900 py-14 md:py-18">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 font-body text-xs text-white/50">
+            <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
+            <IcoChevron />
+            <span className="text-white/80">ผลิตภัณฑ์</span>
+          </nav>
+          <div className="grid items-end gap-6 md:grid-cols-[1fr_auto]">
+            <div>
+              <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">ระบบและเครื่องจักรอุตสาหกรรม</h1>
+              <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-white/70">ค้นหาและเปรียบเทียบเตาแก๊สซิไฟเออร์ ระบบอบแห้ง และเครื่องจักรสำหรับโรงงาน พร้อมรองรับการเพิ่มรุ่นสินค้าในอนาคต</p>
+            </div>
+            <button onClick={() => onQuote()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-energy-600 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-energy-400">
+              ขอให้ช่วยเลือกระบบ <IcoArrowRight />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-brand-50 py-10 md:py-14">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <div className="grid gap-8 lg:grid-cols-[290px_minmax(0,1fr)] lg:items-start">
+            <aside aria-label="ค้นหาและกรองผลิตภัณฑ์" className="rounded-2xl border border-ink-300/60 bg-white p-4 shadow-sm md:p-5 lg:sticky lg:top-24">
+              <h2 className="font-heading text-base font-semibold text-ink-950">ค้นหาผลิตภัณฑ์</h2>
+              <div className="mt-4">
+                <label htmlFor="product-search" className="sr-only">ค้นหาผลิตภัณฑ์</label>
+                <div className="relative">
+                  <svg aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-700/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="11" cy="11" r="7" />
+                    <path strokeLinecap="round" d="m20 20-3.5-3.5" />
+                  </svg>
+                  <input id="product-search" value={query} onChange={event => updateQuery(event.target.value)} maxLength={120} placeholder="ชื่อสินค้า รุ่น หรือเชื้อเพลิง" className="min-h-12 w-full rounded-xl border border-ink-300 bg-ink-100/50 py-3 pl-11 pr-3 font-body text-sm text-ink-950 outline-none transition-colors placeholder:text-ink-700/50 focus:border-brand-700 focus:bg-white" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <label htmlFor="product-sort" className="sr-only">เรียงผลิตภัณฑ์</label>
+                <select id="product-sort" value={sort} onChange={event => updateSort(event.target.value as 'recommended' | 'name-asc' | 'name-desc')} className="min-h-12 w-full rounded-xl border border-ink-300 bg-white px-3 py-3 font-body text-sm text-ink-700 outline-none focus:border-brand-700">
+                  <option value="recommended">เรียงตามรายการแนะนำ</option>
+                  <option value="name-asc">ชื่อสินค้า ก–ฮ / A–Z</option>
+                  <option value="name-desc">ชื่อสินค้า ฮ–ก / Z–A</option>
+                </select>
+              </div>
+              <div className="mt-5 border-t border-ink-300/60 pt-5">
+                <p className="mb-3 font-body text-xs font-medium text-ink-950">หมวดหมู่</p>
+                <div className="flex flex-wrap gap-2 lg:flex-col" aria-label="กรองหมวดหมู่">
+                  {categories.map(item => {
+                    const count = item === 'ทั้งหมด' ? PRODUCTS.length : PRODUCTS.filter(product => product.category === item).length
+                    return <button key={item} onClick={() => updateCategory(item)} aria-pressed={category === item} className={`flex min-h-10 items-center justify-between rounded-xl px-4 py-2 text-left font-body text-xs font-medium transition-colors ${category === item ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-700 hover:bg-ink-300/60 hover:text-brand-700'}`}><span>{item}</span><span className={category === item ? 'text-white/65' : 'text-ink-700/50'}>{count}</span></button>
+                  })}
+                </div>
+              </div>
+              <p aria-live="polite" className="mt-5 border-t border-ink-300/60 pt-4 font-body text-xs text-ink-700">พบ <strong className="text-ink-950">{filteredProducts.length}</strong> รายการ</p>
+            </aside>
+
+            <div className="min-w-0">
+          {visibleProducts.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {visibleProducts.map(product => (
+                <article key={product.id} className="group flex min-h-full flex-col overflow-hidden rounded-2xl border border-ink-300/60 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-brand-700/25 hover:shadow-lg">
+                  <button onClick={() => onProduct(product)} className="relative aspect-[3/2] overflow-hidden bg-ink-100 text-left focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-700" aria-label={`ดูรายละเอียด ${product.name}`}>
+                    <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <span className="absolute left-4 top-4 rounded-full bg-brand-900/90 px-3 py-1.5 font-body text-xs font-medium text-white backdrop-blur-sm">{product.category}</span>
+                  </button>
+                  <div className="flex flex-1 flex-col p-5">
+                    <div>
+                      <h2 className="font-heading text-lg font-semibold leading-snug text-ink-950">{product.name}</h2>
+                      <p className="mt-1 font-body text-sm text-brand-700">{product.subtitle}</p>
+                      <p className="mt-3 line-clamp-3 font-body text-xs leading-relaxed text-ink-700">{product.desc}</p>
+                    </div>
+
+                    <div className="mt-auto pt-5">
+                      <div className="mb-4 flex items-center justify-between border-t border-ink-300/60 pt-4">
+                        <p className="font-body text-[11px] text-ink-700/60">รองรับเชื้อเพลิง {product.fuels.length} ประเภท</p>
+                        <button onClick={() => onProduct(product)} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-2 font-body text-xs font-medium text-brand-700 hover:bg-brand-50">ดูรายละเอียด <IcoArrowRight /></button>
+                      </div>
+                      <button onClick={() => onQuote(product)} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-energy-600 px-5 py-2.5 font-body text-sm font-medium text-white transition-colors hover:bg-energy-400">ขอใบเสนอราคา</button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8 rounded-2xl border border-dashed border-ink-300 bg-white p-10 text-center">
+              <h2 className="font-heading text-lg font-semibold text-ink-950">ไม่พบผลิตภัณฑ์ที่ตรงกับคำค้นหา</h2>
+              <p className="mt-2 font-body text-sm text-ink-700">ลองเปลี่ยนคำค้นหาหรือเลือกดูทุกหมวดหมู่</p>
+              <button onClick={clearFilters} className="mt-5 min-h-11 rounded-lg border border-brand-700 px-5 py-2.5 font-body text-sm font-medium text-brand-700 transition-colors hover:bg-brand-700 hover:text-white">ล้างตัวกรอง</button>
+            </div>
+          )}
+
+          {pageCount > 1 && (
+            <nav aria-label="หน้าผลิตภัณฑ์" className="mt-10 flex items-center justify-center gap-2">
+              <button onClick={() => setCurrentPage(page => Math.max(1, page - 1))} disabled={currentPage === 1} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-ink-300 bg-white px-4 font-body text-sm text-ink-700 transition-colors hover:border-brand-700 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40"><IcoChevron right={false} />ก่อนหน้า</button>
+              <span aria-current="page" className="inline-flex min-h-11 items-center rounded-lg bg-brand-700 px-4 font-body text-sm font-medium text-white">หน้า {currentPage} จาก {pageCount}</span>
+              <button onClick={() => setCurrentPage(page => Math.min(pageCount, page + 1))} disabled={currentPage === pageCount} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-ink-300 bg-white px-4 font-body text-sm text-ink-700 transition-colors hover:border-brand-700 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40">ถัดไป<IcoChevron /></button>
+            </nav>
+          )}
+            </div>
+          </div>
+
+          <section className="mt-12 rounded-2xl bg-brand-900 p-7 text-center md:p-10">
+            <p className="font-body text-xs font-medium uppercase tracking-widest text-energy-400">Engineering Consultation</p>
+            <h2 className="mt-2 font-heading text-2xl font-bold text-white">ยังไม่แน่ใจว่าระบบไหนเหมาะกับโรงงาน?</h2>
+            <p className="mx-auto mt-3 max-w-2xl font-body text-sm leading-relaxed text-white/70">กำลังการผลิต ชนิดเชื้อเพลิง พื้นที่ติดตั้ง และกระบวนการเดิมมีผลต่อการเลือกระบบ ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยประเมินได้</p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+              <button onClick={() => onQuote()} className="rounded-lg bg-energy-600 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-energy-400">ปรึกษาและขอใบเสนอราคา</button>
+              <a href={COMPANY.phoneHref} className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-white/10"><IcoPhone />โทรปรึกษาทีมงาน</a>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  )
+}
+
+/* ─── PROJECTS PAGE ──────────────────────────────── */
+function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuote: () => void }) {
+  return (
+    <main className="min-h-screen bg-white pt-20">
+      <section className="bg-brand-900 py-12 md:py-16">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 font-body text-xs text-white/50">
+            <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
+            <IcoChevron />
+            <span className="text-white/80">ผลงาน</span>
+          </nav>
+          <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">ผลงานของเรา</h1>
+          <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-white/70">ตัวอย่างงานออกแบบ ผลิต และติดตั้งระบบพลังงานชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม</p>
+        </div>
+      </section>
+
+      <section className="bg-ink-100 py-12 md:py-16" aria-labelledby="project-gallery-heading">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <div className="mb-7 flex items-end justify-between gap-4">
+            <h2 id="project-gallery-heading" className="font-heading text-2xl font-bold text-ink-950">ผลงานติดตั้งบางส่วน</h2>
+            <p className="hidden font-body text-xs text-ink-700 sm:block">กดภาพเพื่อดูรายละเอียดโครงการ</p>
+          </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            {PROJECTS.map(project => (
+              <button key={project.id} type="button" onClick={() => setPage({ t: 'project', p: project })} className="group relative min-h-72 overflow-hidden rounded-2xl bg-brand-900 text-left shadow-sm focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700 md:min-h-[350px]">
+                <img src={project.image} alt={project.name} className="absolute inset-0 h-full w-full object-cover opacity-85 transition-all duration-500 group-hover:scale-105 group-hover:opacity-70" />
+                <div className="absolute inset-0 bg-linear-to-t from-ink-950 via-ink-950/10 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
+                  <div className="mb-2 flex flex-wrap items-center gap-2 font-body text-xs text-white/70">
+                    <span className="rounded-full bg-white/15 px-2.5 py-1 backdrop-blur-sm">{project.industry}</span>
+                    <span className="inline-flex items-center gap-1"><IcoMapPin />{project.province}</span>
+                    <span>{project.year}</span>
+                  </div>
+                  <h3 className="font-heading text-lg font-semibold leading-snug text-white md:text-xl">{project.name}</h3>
+                  <div className="mt-2 flex items-center justify-between gap-4">
+                    <p className="line-clamp-1 font-body text-xs text-white/60">{project.system}</p>
+                    <span className="inline-flex shrink-0 items-center gap-1 font-body text-xs font-medium text-white">ดูรายละเอียด <IcoArrowRight /></span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-10 md:py-12">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <div className="flex flex-col items-center justify-between gap-5 rounded-2xl bg-brand-900 px-6 py-8 text-center md:flex-row md:px-8 md:text-left">
+            <div>
+              <h2 className="font-heading text-xl font-bold text-white">มีโครงการที่ต้องการให้ช่วยประเมิน?</h2>
+              <p className="mt-2 font-body text-sm text-white/65">ส่งข้อมูลเบื้องต้นให้ทีมวิศวกรแนะนำแนวทางที่เหมาะกับหน้างาน</p>
+            </div>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <button onClick={onQuote} className="min-h-11 rounded-lg bg-energy-600 px-6 py-2.5 font-body text-sm font-medium text-white transition-colors hover:bg-energy-400">ขอประเมินโครงการ</button>
+              <a href={COMPANY.phoneHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 px-5 py-2.5 font-body text-sm font-medium text-white transition-colors hover:bg-white/10"><IcoPhone />โทรปรึกษา</a>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   )
 }
@@ -1350,9 +1590,10 @@ export default function App() {
     <div className="min-h-screen">
       <Header scrolled={scrolled} isHome={isHome} setPage={navigate} onQuote={() => openQuote()} />
       {page.t === 'home' && <>
-        <Hero onQuote={() => openQuote()} onProducts={() => scrollTo('products')} onVideo={HERO_VIDEO_URL ? () => setVideoOpen(true) : undefined} />
-        <TrustBar /><About onLearnMore={() => scrollTo('products')} /><Products onProduct={setSelectedProduct} onQuote={() => openQuote()} /><Industries /><WhyUs /><FeaturedProjects setPage={navigate} /><LatestNews setPage={navigate} /><QuoteCTA onQuote={() => openQuote()} /><Contact onPrivacy={() => navigate({ t: 'privacy' })} />
+        <Hero onQuote={() => openQuote()} onProducts={() => navigate({ t: 'products' })} onVideo={HERO_VIDEO_URL ? () => setVideoOpen(true) : undefined} />
+        <TrustBar /><About onLearnMore={() => navigate({ t: 'products' })} /><Products onProduct={setSelectedProduct} onQuote={() => openQuote()} onViewAll={() => navigate({ t: 'products' })} /><Industries /><WhyUs /><FeaturedProjects setPage={navigate} /><LatestNews setPage={navigate} /><QuoteCTA onQuote={() => openQuote()} /><Contact onPrivacy={() => navigate({ t: 'privacy' })} />
       </>}
+      {page.t === 'products' && <ProductsPage setPage={navigate} onProduct={setSelectedProduct} onQuote={product => openQuote(product ? { product: product.name } : undefined)} />}
       {page.t === 'projects' && <ProjectsPage setPage={navigate} onQuote={() => openQuote()} />}
       {page.t === 'project' && <ProjectDetailPage p={page.p} setPage={navigate} onQuote={() => openQuote({ project: page.p.name })} />}
       {page.t === 'news' && <NewsListPage setPage={navigate} onQuote={() => openQuote()} />}
