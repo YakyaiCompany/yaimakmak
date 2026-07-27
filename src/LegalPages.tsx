@@ -10,7 +10,6 @@ function BrandMark() {
       </span>
       <span>
         <span className="block font-heading text-sm font-semibold leading-tight text-brand-900">ยักษ์ใหญ่ 2015</span>
-        <span className="block text-[10px] leading-tight tracking-wide text-ink-700">Industrial Biomass Engineering</span>
       </span>
     </div>
   )

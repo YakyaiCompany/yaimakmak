@@ -266,7 +266,6 @@ function Logo({ light = false }: { light?: boolean }) {
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-heading font-bold ${light ? 'bg-white/20 text-white' : 'bg-brand-900 text-white'}`}>YY</div>
       <div>
         <div className={`font-heading font-semibold text-sm leading-tight ${light ? 'text-white' : 'text-brand-900'}`}>ยักษ์ใหญ่ 2015</div>
-        <div className={`text-[10px] leading-tight tracking-wide ${light ? 'text-white/60' : 'text-ink-700'}`}>Industrial Biomass Engineering</div>
       </div>
     </div>
   )
