@@ -1,13 +1,27 @@
 import { useMemo, useState } from "react";
-import { PRODUCTS } from "./data/siteContent";
+import { COMPANY } from "./config/company";
+import { NEWS, PRODUCTS, PROJECTS } from "./data/siteContent";
 
 type AdminPortalProps = {
   onExit: () => void;
 };
 
-type Screen = "dashboard" | "portfolio" | "news" | "products" | "messages" | "downloads" | "discovery";
+type Screen = "dashboard" | "activity" | "portfolio" | "news" | "products" | "messages" | "downloads" | "discovery";
 type ContentType = "portfolio" | "news" | "products";
 type ContentStatus = "ร่าง" | "กำหนดเผยแพร่" | "เผยแพร่";
+type ActivityAction = "เพิ่ม" | "แก้ไข" | "เผยแพร่" | "กำหนดเผยแพร่" | "ยกเลิกเผยแพร่" | "ลบ";
+type ActivityContentType = "ผลงาน" | "ข่าวสาร" | "สินค้า" | "เอกสาร";
+type ContentActivity = {
+  id: string;
+  contentId: string;
+  action: ActivityAction;
+  contentType: ActivityContentType;
+  title: string;
+  at: string;
+  actor: string;
+  createdAt: number;
+  screen: Screen;
+};
 type ContentBlockKind = "ข้อความ" | "รายการ" | "รูปภาพ" | "วิดีโอ" | "ปุ่ม/ลิงก์";
 type ContentBlock = {
   id: string;
@@ -94,6 +108,7 @@ const demoPassword = "admin2015";
 
 const navItems: Array<{ id: Screen; label: string }> = [
   { id: "dashboard", label: "ภาพรวม" },
+  { id: "activity", label: "ประวัติการเปลี่ยนแปลง" },
   { id: "portfolio", label: "ผลงาน" },
   { id: "news", label: "ข่าวสาร" },
   { id: "products", label: "สินค้า" },
@@ -103,140 +118,58 @@ const navItems: Array<{ id: Screen; label: string }> = [
 ];
 
 const initialDiscoverySettings: DiscoverySettings = {
-  siteTitle: "บริษัท ยักษ์ใหญ่ 2015 จำกัด | ระบบพลังงานชีวมวลอุตสาหกรรม",
+  siteTitle: `${COMPANY.legalNameEn} | ระบบพลังงานชีวมวลอุตสาหกรรม`,
   siteDescription: "ออกแบบ ผลิต ติดตั้ง และดูแลระบบเตาแก๊สซิไฟเออร์และเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม",
   siteUrl: "https://www.yakyai2015.co.th",
-  shareTitle: "ยักษ์ใหญ่ 2015 — ระบบพลังงานชีวมวลสำหรับโรงงาน",
+  shareTitle: `${COMPANY.shortName} — ระบบพลังงานชีวมวลสำหรับโรงงาน`,
   shareDescription: "ระบบผลิตความร้อนชีวมวลและเครื่องจักรอบแห้ง ออกแบบให้เหมาะกับการใช้งานจริงของแต่ละโรงงาน",
   shareImage: "",
   googleVerification: "",
   allowIndexing: true,
 };
 
-const initialPortfolio: ContentItem[] = [
-  {
-    id: "portfolio-1",
-    title: "ระบบแก๊สซิไฟเออร์ 1.5 MW โรงงานอบปุ๋ย",
-    category: "โรงงานอบปุ๋ย",
-    summary: "ออกแบบและติดตั้งระบบผลิตความร้อนสำหรับกระบวนการอบปุ๋ย พร้อมทดสอบก่อนส่งมอบ",
-    body: "ระบบผลิตความร้อนถูกออกแบบจากข้อมูลการใช้พลังงาน พื้นที่ติดตั้ง และจุดเชื่อมต่อกับเครื่องอบเดิมของโรงงาน\n\nทีมงานรับผิดชอบตั้งแต่สำรวจหน้างาน ผลิตอุปกรณ์ ติดตั้งระบบควบคุม ไปจนถึงทดสอบและอบรมก่อนส่งมอบ",
-    seoTitle: "ระบบแก๊สซิไฟเออร์ 1.5 MW โรงงานอบปุ๋ย | ยักษ์ใหญ่ 2015",
-    seoDescription: "ผลงานติดตั้งระบบแก๊สซิไฟเออร์สำหรับโรงงานอบปุ๋ย",
-    status: "เผยแพร่",
-    updatedAt: "16 มิ.ย. 2568",
-    author: "ผู้ดูแลระบบ",
-    slug: "gasifier-15mw-fertilizer",
-    province: "นครราชสีมา",
-    installedYear: "2566",
-    system: "Gasifier 1.5 MW",
-    challenge: "ต้องการระบบความร้อนต่อเนื่องสำหรับกระบวนการอบปุ๋ย",
-    solution: "ออกแบบระบบให้สอดคล้องกับพื้นที่ เชื้อเพลิง และเครื่องจักรเดิม",
-    scope: "สำรวจหน้างาน\nออกแบบและผลิต\nติดตั้งและเชื่อมต่อ\nทดสอบและอบรม",
-    result: "ติดตั้งและทดสอบตามขอบเขตโครงการ ข้อมูลสมรรถนะรอการยืนยันก่อนเผยแพร่",
-    tags: "Gasifier, 1.5 MW, โรงงานอบปุ๋ย, ชีวมวล",
-    contentBlocks: [
-      { id: "portfolio-1-block-1", kind: "ข้อความ", title: "ข้อมูลหน้างานเพิ่มเติม", content: "ทีมงานสำรวจจุดติดตั้ง แนวทางลำเลียงเชื้อเพลิง และจุดเชื่อมต่อกับเครื่องอบเดิมก่อนเริ่มออกแบบรายละเอียด" },
-      { id: "portfolio-1-block-2", kind: "รายการ", title: "รายการส่งมอบ", content: "ชุดเตาแก๊สซิไฟเออร์\nระบบควบคุม\nอุปกรณ์ประกอบ\nคู่มือและการอบรม" },
-    ],
-  },
-  {
-    id: "portfolio-2",
-    title: "ระบบอบแห้งกากมัน 10 ตัน/ชม.",
-    category: "โรงงานมันสำปะหลัง",
-    summary: "ระบบอบแห้งแบบหมุนที่ออกแบบให้เหมาะกับกำลังการผลิตและพื้นที่หน้างาน",
-    body: "ระบบอบแห้งแบบหมุนทำงานร่วมกับชุดผลิตความร้อนชีวมวล โดยกำหนดขนาดจากความชื้นเริ่มต้น ปริมาณวัตถุดิบต่อวัน และเวลาการทำงานของโรงงาน\n\nผังระบบคำนึงถึงพื้นที่ปฏิบัติงานเดิม แนวลำเลียงวัตถุดิบ และความสะดวกในการตรวจเช็กอุปกรณ์",
-    seoTitle: "ระบบอบแห้งกากมัน 10 ตัน/ชม. | ยักษ์ใหญ่ 2015",
-    seoDescription: "ผลงานระบบอบแห้งกากมันสำปะหลัง",
-    status: "เผยแพร่",
-    updatedAt: "12 มิ.ย. 2568",
-    author: "ผู้ดูแลระบบ",
-    slug: "cassava-dryer-kamphaeng-phet",
-    province: "กำแพงเพชร",
-    installedYear: "2565",
-    system: "Rotary Dryer + Gasifier 750 kW",
-    challenge: "ต้องการระบบอบกากมันที่รองรับกำลังการผลิตของหน้างาน",
-    solution: "ออกแบบระบบอบแบบหมุนทำงานร่วมกับระบบผลิตความร้อนชีวมวล",
-    scope: "เก็บข้อมูลวัตถุดิบ\nออกแบบและผลิต\nติดตั้งระบบ\nเดินระบบและอบรม",
-    result: "ติดตั้งและทดสอบระบบตามข้อมูลโครงการ",
-    tags: "Rotary Dryer, มันสำปะหลัง, ระบบอบแห้ง",
-    contentBlocks: [
-      { id: "portfolio-2-block-1", kind: "ข้อความ", title: "แนวทางการออกแบบ", content: "ข้อมูลความชื้นเริ่มต้น ปริมาณวัตถุดิบ และเวลาทำงานต่อวันถูกนำมาใช้ประกอบการกำหนดขนาดระบบอบและระบบผลิตความร้อน" },
-    ],
-  },
-  {
-    id: "portfolio-3",
-    title: "ระบบทดแทน LPG โรงงานเซรามิก",
-    category: "โรงงานเซรามิก",
-    summary: "ร่างข้อมูลโครงการสำหรับตรวจสอบรายละเอียดก่อนเผยแพร่บนเว็บไซต์",
-    body: "โครงการอยู่ระหว่างรวบรวมข้อมูลการใช้ LPG ชั่วโมงการทำงาน และพื้นที่สำหรับติดตั้งระบบชีวมวล\n\nเมื่อข้อมูลหน้างานครบ ทีมวิศวกรจะสรุปกำลังความร้อนและแนวทางเชื่อมต่อที่เหมาะสมกับกระบวนการเดิม",
-    seoTitle: "ระบบทดแทน LPG โรงงานเซรามิก",
-    seoDescription: "ร่างผลงานระบบทดแทน LPG",
-    status: "ร่าง",
-    updatedAt: "10 มิ.ย. 2568",
-    author: "ผู้ดูแลระบบ",
-    slug: "lpg-replacement-ceramic",
-    province: "ลำปาง",
-    installedYear: "2566",
-    system: "Gasifier 750 kW",
-    challenge: "ประเมินแนวทางทดแทน LPG ในกระบวนการเดิม",
-    solution: "วางระบบผลิตความร้อนชีวมวลให้เหมาะกับพื้นที่และจุดเชื่อมต่อ",
-    scope: "สำรวจระบบเดิม\nออกแบบ\nผลิตและติดตั้ง\nทดสอบ",
-    result: "อยู่ระหว่างตรวจสอบข้อมูลก่อนเผยแพร่",
-    tags: "Gasifier, 750 kW, ทดแทน LPG, เซรามิก",
-    contentBlocks: [
-      { id: "portfolio-3-block-1", kind: "ข้อความ", title: "สถานะโครงการ", content: "อยู่ระหว่างตรวจสอบข้อมูลการใช้เชื้อเพลิงและเงื่อนไขพื้นที่ ก่อนสรุปแนวทางออกแบบและแผนการติดตั้ง" },
-    ],
-  },
-];
+const initialPortfolio: ContentItem[] = PROJECTS.map((project) => ({
+  id: `portfolio-${project.id}`,
+  title: project.name,
+  category: project.industry,
+  summary: project.summary,
+  body: `${project.summary}\n\n${project.solution}`,
+  seoTitle: `${project.name} | ${COMPANY.shortName}`,
+  seoDescription: `${project.system} จังหวัด${project.province}`,
+  status: "เผยแพร่",
+  updatedAt: "อัปเดตจากข้อมูลบริษัท",
+  author: "ผู้ดูแลระบบ",
+  slug: project.slug,
+  province: project.province,
+  installedYear: project.year ? String(project.year) : "",
+  system: project.system,
+  challenge: project.challenge,
+  solution: project.solution,
+  scope: project.scope.join("\n"),
+  result: project.result,
+  coverImage: project.image,
+  gallery: project.gallery.join("\n"),
+  tags: `${project.industry}, ${project.system}, ${project.province}`,
+  contentBlocks: [],
+}));
 
-const initialNews: ContentItem[] = [
-  {
-    id: "news-1",
-    title: "เปรียบเทียบต้นทุน LPG กับระบบแก๊สซิไฟเออร์ชีวมวล",
-    category: "พลังงานชีวมวล",
-    summary: "แนวทางประเมินต้นทุนพลังงานและความคุ้มค่าของการเปลี่ยนมาใช้เชื้อเพลิงชีวมวลในโรงงาน",
-    body: "การเปรียบเทียบต้นทุนไม่ควรดูเฉพาะราคาต่อหน่วยของเชื้อเพลิง แต่ควรรวมประสิทธิภาพระบบ ชั่วโมงการทำงาน ค่าเตรียมเชื้อเพลิง และค่าใช้จ่ายในการดูแลรักษา\n\nข้อมูลการใช้พลังงานจริงของโรงงานจะช่วยให้ประเมินขนาดระบบและระยะเวลาคืนทุนได้ใกล้เคียงการใช้งานมากขึ้น",
-    seoTitle: "เปรียบเทียบต้นทุน LPG กับแก๊สซิไฟเออร์ชีวมวล",
-    seoDescription: "บทความเปรียบเทียบต้นทุนพลังงาน LPG และระบบแก๊สซิไฟเออร์ชีวมวล",
-    status: "เผยแพร่",
-    updatedAt: "15 ก.ค. 2568",
-    author: "ผู้ดูแลระบบ",
-    tags: "LPG, ชีวมวล, ต้นทุนพลังงาน",
-    contentBlocks: [
-      { id: "news-1-block-1", kind: "รายการ", title: "ข้อมูลที่ควรเตรียมก่อนเปรียบเทียบ", content: "ปริมาณ LPG ที่ใช้ต่อเดือน\nชั่วโมงการทำงาน\nชนิดชีวมวลที่หาได้\nพื้นที่สำหรับติดตั้ง" },
-    ],
-  },
-  {
-    id: "news-2",
-    title: "ส่งมอบระบบอบแห้งกากมันสำปะหลัง จ.กำแพงเพชร",
-    category: "ผลงานติดตั้ง",
-    summary: "ส่งมอบระบบอบแห้งพร้อมทดสอบและอบรมผู้ใช้งานที่หน้างาน",
-    body: "ทีมงานดำเนินการติดตั้งระบบอบแห้ง เชื่อมต่ออุปกรณ์ประกอบ และทดสอบการทำงานร่วมกันที่หน้างาน\n\nก่อนส่งมอบมีการอบรมขั้นตอนเริ่ม–หยุดเครื่อง จุดตรวจสอบประจำวัน และแนวทางดูแลอุปกรณ์ให้กับผู้ปฏิบัติงานของโรงงาน",
-    seoTitle: "ส่งมอบระบบอบแห้งกากมันสำปะหลัง",
-    seoDescription: "ข่าวส่งมอบระบบอบแห้งกากมันสำปะหลัง จังหวัดกำแพงเพชร",
-    status: "เผยแพร่",
-    updatedAt: "3 มิ.ย. 2568",
-    author: "ผู้ดูแลระบบ",
-    tags: "ส่งมอบงาน, Rotary Dryer, กำแพงเพชร",
-    contentBlocks: [
-      { id: "news-2-block-1", kind: "ข้อความ", title: "ขอบเขตการส่งมอบ", content: "ติดตั้งระบบ ทดสอบการทำงานร่วมกัน และอบรมขั้นตอนเริ่ม–หยุดเครื่องให้กับผู้ปฏิบัติงานของโรงงาน" },
-    ],
-  },
-  {
-    id: "news-3",
-    title: "หลักการทำงานของเตาแก๊สซิไฟเออร์ชีวมวลแบบง่าย",
-    category: "ความรู้",
-    summary: "ร่างบทความอธิบายภาพรวมของกระบวนการแปลงชีวมวลเป็นแก๊สเชื้อเพลิง",
-    body: "เตาแก๊สซิไฟเออร์เปลี่ยนเชื้อเพลิงชีวมวลให้เป็นแก๊สเชื้อเพลิงด้วยกระบวนการควบคุมอากาศและอุณหภูมิภายในเตา\n\nแก๊สที่ได้สามารถนำไปใช้เป็นแหล่งความร้อนในกระบวนการอบแห้ง โดยการออกแบบต้องพิจารณาชนิดเชื้อเพลิง ความชื้น และความต้องการความร้อนของโรงงาน",
-    seoTitle: "หลักการทำงานของเตาแก๊สซิไฟเออร์ชีวมวล",
-    seoDescription: "บทความความรู้เกี่ยวกับระบบแก๊สซิไฟเออร์ชีวมวล",
-    status: "ร่าง",
-    updatedAt: "20 พ.ค. 2568",
-    author: "ผู้ดูแลระบบ",
-    tags: "Gasifier, ความรู้, พลังงานชีวมวล",
-    contentBlocks: [],
-  },
-];
+const initialNews: ContentItem[] = NEWS.map((article) => ({
+  id: `news-${article.id}`,
+  title: article.title,
+  category: article.category,
+  summary: article.excerpt,
+  body: article.body.join("\n\n"),
+  seoTitle: `${article.title} | ${COMPANY.shortName}`,
+  seoDescription: article.excerpt,
+  status: "เผยแพร่",
+  updatedAt: article.date,
+  author: article.author,
+  slug: article.slug,
+  publishDate: article.date,
+  coverImage: article.image,
+  tags: article.category,
+  contentBlocks: [],
+}));
 
 const initialProducts: ContentItem[] = PRODUCTS.map((product) => ({
   id: `product-${product.id}`,
@@ -244,7 +177,7 @@ const initialProducts: ContentItem[] = PRODUCTS.map((product) => ({
   category: product.category,
   summary: product.desc,
   body: product.highlights.join("\n"),
-  seoTitle: `${product.name} | ยักษ์ใหญ่ 2015`,
+  seoTitle: `${product.name} | ${COMPANY.shortName}`,
   seoDescription: product.subtitle,
   status: "เผยแพร่",
   updatedAt: "16 มิ.ย. 2568",
@@ -252,9 +185,9 @@ const initialProducts: ContentItem[] = PRODUCTS.map((product) => ({
   slug: product.name.toLowerCase().replace(/\s+/g, "-"),
   subtitle: product.subtitle,
   specifications: product.specs.map((item) => `${item.label}: ${item.value}`).join("\n"),
-  fuelTypes: product.fuels.join(", "),
+  fuelTypes: product.supportItems.join(", "),
   coverImage: product.image,
-  tags: `${product.category}, ${product.fuels.join(", ")}`,
+  tags: `${product.category}, ${product.supportItems.join(", ")}`,
   contentBlocks: [
     { id: `product-${product.id}-block-1`, kind: "รายการ", title: "จุดเด่นของระบบ", content: product.highlights.join("\n") },
     { id: `product-${product.id}-block-2`, kind: "ข้อความ", title: "การประเมินก่อนติดตั้ง", content: "ทีมวิศวกรจะพิจารณาความต้องการความร้อน ชนิดเชื้อเพลิง พื้นที่ และจุดเชื่อมต่อก่อนสรุปแบบระบบ" },
@@ -273,6 +206,53 @@ const initialDownloads: DownloadItem[] = [
   { id: "download-3", name: "Gasifier Specification Sheet.pdf", category: "เอกสารเทคนิค", updatedAt: "12 มิ.ย. 2568", status: "ร่าง" },
 ];
 
+const initialActivities: ContentActivity[] = [
+  { id: "activity-1", contentId: "news-1", action: "เผยแพร่", contentType: "ข่าวสาร", title: NEWS[0]?.title ?? "บทความใหม่", at: "วันนี้ 11:42", actor: "ผู้ดูแลระบบ", createdAt: 9, screen: "news" },
+  { id: "activity-2", contentId: "portfolio-1", action: "แก้ไข", contentType: "ผลงาน", title: PROJECTS[0]?.name ?? "ผลงานติดตั้ง", at: "วันนี้ 10:18", actor: "ผู้ดูแลระบบ", createdAt: 8, screen: "portfolio" },
+  { id: "activity-3", contentId: "product-1", action: "แก้ไข", contentType: "สินค้า", title: PRODUCTS[0]?.name ?? "เตาแก๊สซิไฟเออร์ 1.5 MW", at: "เมื่อวาน 16:05", actor: "ผู้ดูแลระบบ", createdAt: 7, screen: "products" },
+  { id: "activity-4", contentId: "download-3", action: "เพิ่ม", contentType: "เอกสาร", title: "Gasifier Specification Sheet.pdf", at: "เมื่อวาน 14:26", actor: "ผู้ดูแลระบบ", createdAt: 6, screen: "downloads" },
+  { id: "activity-5", contentId: "news-2", action: "เพิ่ม", contentType: "ข่าวสาร", title: NEWS[1]?.title ?? "บทความพลังงานชีวมวล", at: "26 ก.ค. 2569 09:34", actor: "ผู้ดูแลระบบ", createdAt: 5, screen: "news" },
+  { id: "activity-6", contentId: "portfolio-2", action: "เผยแพร่", contentType: "ผลงาน", title: PROJECTS[1]?.name ?? "โครงการติดตั้งระบบ", at: "25 ก.ค. 2569 15:12", actor: "ผู้ดูแลระบบ", createdAt: 4, screen: "portfolio" },
+  { id: "activity-7", contentId: "product-2", action: "กำหนดเผยแพร่", contentType: "สินค้า", title: PRODUCTS[1]?.name ?? "เตาแก๊สซิไฟเออร์ 750 kW", at: "24 ก.ค. 2569 13:48", actor: "ผู้ดูแลระบบ", createdAt: 3, screen: "products" },
+  { id: "activity-8", contentId: "news-removed", action: "ลบ", contentType: "ข่าวสาร", title: "ประกาศกำหนดการเดิม", at: "23 ก.ค. 2569 17:20", actor: "ผู้ดูแลระบบ", createdAt: 2, screen: "news" },
+];
+
+const analyticsRanges = {
+  "7": {
+    visitors: "742",
+    sessions: "918",
+    views: "1,864",
+    leads: "38",
+    visitorsDelta: "+12.8%",
+    sessionsDelta: "+9.4%",
+    viewsDelta: "+16.1%",
+    leadsDelta: "+18.7%",
+    chart: [36, 48, 42, 61, 58, 74, 82, 67, 91, 88, 104, 97, 116, 123],
+  },
+  "28": {
+    visitors: "2,847",
+    sessions: "3,286",
+    views: "6,924",
+    leads: "126",
+    visitorsDelta: "+18.6%",
+    sessionsDelta: "+14.2%",
+    viewsDelta: "+22.4%",
+    leadsDelta: "+21.8%",
+    chart: [48, 61, 54, 72, 68, 83, 76, 94, 89, 101, 96, 112, 108, 127],
+  },
+  "90": {
+    visitors: "8,096",
+    sessions: "9,417",
+    views: "19,388",
+    leads: "354",
+    visitorsDelta: "+24.1%",
+    sessionsDelta: "+19.3%",
+    viewsDelta: "+27.8%",
+    leadsDelta: "+26.5%",
+    chart: [43, 52, 58, 64, 61, 73, 79, 86, 92, 88, 101, 109, 117, 132],
+  },
+} as const;
+
 function StatusBadge({ status }: { status: ContentStatus | MessageStatus }) {
   const style = status === "เผยแพร่" || status === "ติดต่อแล้ว" || status === "ปิดงาน"
     ? "bg-emerald-50 text-emerald-700 ring-emerald-600/15"
@@ -287,6 +267,22 @@ function StatusBadge({ status }: { status: ContentStatus | MessageStatus }) {
             : "bg-slate-100 text-slate-600 ring-slate-500/15";
 
   return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${style}`}>{status}</span>;
+}
+
+function ActivityBadge({ action }: { action: ActivityAction }) {
+  const style = action === "เพิ่ม"
+    ? "bg-blue-50 text-blue-700 ring-blue-600/15"
+    : action === "แก้ไข"
+      ? "bg-amber-50 text-amber-700 ring-amber-600/15"
+      : action === "เผยแพร่"
+        ? "bg-emerald-50 text-emerald-700 ring-emerald-600/15"
+        : action === "กำหนดเผยแพร่"
+          ? "bg-violet-50 text-violet-700 ring-violet-600/15"
+          : action === "ยกเลิกเผยแพร่"
+            ? "bg-slate-100 text-slate-700 ring-slate-500/15"
+            : "bg-rose-50 text-rose-700 ring-rose-600/15";
+
+  return <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${style}`}>{action}</span>;
 }
 
 function PageHeading({ eyebrow, title, children }: { eyebrow: string; title: string; children?: React.ReactNode }) {
@@ -319,7 +315,7 @@ function MockLogin({ onLogin, onExit }: { onLogin: () => void; onExit: () => voi
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 font-sans text-slate-800 sm:grid sm:place-items-center">
       <section className="mx-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5 sm:p-8">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-700 text-sm font-bold text-white">YY</div>
+        <img src={COMPANY.logoPath} alt="" width="48" height="48" className="h-11 w-11 rounded-full object-cover ring-2 ring-brand-700/10" />
         <p className="mt-6 text-xs font-bold tracking-[0.16em] text-brand-700 uppercase">ระบบจัดการเนื้อหา</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">เข้าสู่ระบบผู้ดูแล</h1>
         <p className="mt-2 text-sm leading-6 text-slate-500">เข้าสู่ระบบเพื่อจัดการผลงาน ข่าวสาร สินค้า เอกสาร และข้อความจากลูกค้า</p>
@@ -348,59 +344,190 @@ function MockLogin({ onLogin, onExit }: { onLogin: () => void; onExit: () => voi
   );
 }
 
-function Dashboard({ portfolio, news, products, messages, documents, onNavigate }: { portfolio: ContentItem[]; news: ContentItem[]; products: ContentItem[]; messages: DemoMessage[]; documents: DownloadItem[]; onNavigate: (screen: Screen) => void }) {
+function Dashboard({ portfolio, news, products, messages, documents, activities, onNavigate }: { portfolio: ContentItem[]; news: ContentItem[]; products: ContentItem[]; messages: DemoMessage[]; documents: DownloadItem[]; activities: ContentActivity[]; onNavigate: (screen: Screen) => void }) {
+  const [range, setRange] = useState<keyof typeof analyticsRanges>("28");
+  const [chartMetric, setChartMetric] = useState<"visitors" | "views">("visitors");
+  const analytics = analyticsRanges[range];
+  const chartValues = chartMetric === "visitors" ? analytics.chart : analytics.chart.map((value) => Math.round(value * 2.18));
+  const chartMax = Math.max(...chartValues);
   const publishedCount = [...portfolio, ...news, ...products].filter((item) => item.status === "เผยแพร่").length;
   const draftsCount = [...portfolio, ...news, ...products].filter((item) => item.status !== "เผยแพร่").length;
   const unreadCount = messages.filter((message) => message.status === "ใหม่").length;
   const publishedDocuments = documents.filter((document) => document.status === "เผยแพร่").length;
-  const recentItems = [
-    ...news.slice(0, 2).map((item) => ({ ...item, type: "ข่าวสาร" })),
-    ...portfolio.slice(0, 2).map((item) => ({ ...item, type: "ผลงาน" })),
-    ...products.slice(0, 1).map((item) => ({ ...item, type: "สินค้า" })),
+  const topPages = [
+    { title: "หน้าแรก", path: "/", views: "2,421", engagement: "72.4%" },
+    { title: "ผลิตภัณฑ์", path: "/products", views: "1,506", engagement: "68.1%" },
+    { title: "เกี่ยวกับเรา", path: "/about", views: "968", engagement: "65.7%" },
+    { title: "ผลงาน", path: "/projects", views: "882", engagement: "74.8%" },
+    { title: "ข่าวสารและบทความ", path: "/news", views: "674", engagement: "61.3%" },
+  ];
+  const trafficSources = [
+    { label: "Google Search", value: 42, color: "bg-brand-700" },
+    { label: "เข้าชมโดยตรง", value: 25, color: "bg-blue-500" },
+    { label: "Facebook", value: 17, color: "bg-[#1877F2]" },
+    { label: "LINE", value: 10, color: "bg-[#06C755]" },
+    { label: "เว็บไซต์อ้างอิง", value: 6, color: "bg-violet-500" },
+  ];
+  const conversionEvents = [
+    { label: "ขอใบเสนอราคา", value: 56, percent: 100 },
+    { label: "กดเปิด LINE", value: 41, percent: 73 },
+    { label: "กดดูเบอร์โทร", value: 29, percent: 52 },
+    { label: "กดเปิด Facebook", value: 18, percent: 32 },
   ];
 
   return (
-    <div className="space-y-6">
-      <PageHeading eyebrow="ภาพรวมระบบ" title="ภาพรวมเว็บไซต์" />
-      <p className="-mt-3 text-sm text-slate-500">ติดตามเนื้อหาที่เผยแพร่ รายการที่รอตรวจ ข้อความใหม่ และเอกสารจากหน้าเดียว</p>
+    <div className="space-y-7">
+      <PageHeading eyebrow="Website analytics" title="ภาพรวมเว็บไซต์">
+        <label className="flex items-center gap-3">
+          <span className="text-sm font-medium text-slate-500">ช่วงเวลา</span>
+          <select value={range} onChange={(event) => setRange(event.target.value as keyof typeof analyticsRanges)} className={`rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ${focusRing}`}>
+            <option value="7">7 วันล่าสุด</option>
+            <option value="28">28 วันล่าสุด</option>
+            <option value="90">90 วันล่าสุด</option>
+          </select>
+        </label>
+      </PageHeading>
+      <div className="-mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+        <span>ติดตามผู้เข้าชม แหล่งที่มา และการติดต่อจากเว็บไซต์</span>
+        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-600/15">ข้อมูลตัวอย่างสำหรับวาง UX/UI</span>
+      </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="สรุปเนื้อหา">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="สถิติการเข้าชมเว็บไซต์">
         {[
-          { label: "เนื้อหาที่เผยแพร่", value: publishedCount, action: "ดูเนื้อหา", screen: "news" as Screen },
-          { label: "ร่างที่ต้องตรวจ", value: draftsCount, action: "จัดการร่าง", screen: "news" as Screen },
-          { label: "ข้อความใหม่", value: unreadCount, action: "เปิดข้อความ", screen: "messages" as Screen },
-          { label: "เอกสารพร้อมใช้งาน", value: publishedDocuments, action: "ดูเอกสาร", screen: "downloads" as Screen },
+          { label: "ผู้เข้าชม", value: analytics.visitors, delta: analytics.visitorsDelta, note: "เทียบช่วงก่อนหน้า" },
+          { label: "เซสชัน", value: analytics.sessions, delta: analytics.sessionsDelta, note: "เฉลี่ย 1.15 ครั้ง/คน" },
+          { label: "การดูหน้าเว็บ", value: analytics.views, delta: analytics.viewsDelta, note: "เฉลี่ย 2.1 หน้า/เซสชัน" },
+          { label: "การติดต่อทั้งหมด", value: analytics.leads, delta: analytics.leadsDelta, note: "Conversion 3.8%" },
         ].map((stat) => (
           <article key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{stat.value}</p>
-            <button type="button" onClick={() => onNavigate(stat.screen)} className={`mt-4 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-900 ${focusRing}`}>{stat.action}</button>
+            <div className="flex items-start justify-between gap-3"><p className="text-sm font-medium text-slate-500">{stat.label}</p><span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">{stat.delta}</span></div>
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{stat.value}</p>
+            <p className="mt-2 text-xs text-slate-500">{stat.note}</p>
           </article>
         ))}
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-5">
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm xl:col-span-3">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
-            <div><h2 className="font-semibold text-slate-900">เนื้อหาล่าสุด</h2><p className="mt-0.5 text-sm text-slate-500">รายการที่แก้ไขล่าสุดและสถานะการเผยแพร่</p></div>
-            <button type="button" onClick={() => onNavigate("news")} className={`text-sm font-semibold text-brand-700 hover:text-brand-900 ${focusRing}`}>จัดการข่าวสาร</button>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.8fr)]">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div><h2 className="font-semibold text-slate-900">แนวโน้มการเข้าชม</h2><p className="mt-1 text-sm text-slate-500">ข้อมูลรายวันจากช่วงเวลาที่เลือก</p></div>
+            <div className="inline-flex self-start rounded-xl bg-slate-100 p-1">
+              <button type="button" onClick={() => setChartMetric("visitors")} aria-pressed={chartMetric === "visitors"} className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${chartMetric === "visitors" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>ผู้เข้าชม</button>
+              <button type="button" onClick={() => setChartMetric("views")} aria-pressed={chartMetric === "views"} className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${chartMetric === "views" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>การดูหน้า</button>
+            </div>
           </div>
-          <div className="divide-y divide-slate-100">
-            {recentItems.map((item) => (
-              <article key={`${item.type}-${item.id}`} className="flex items-center gap-4 px-5 py-4 sm:px-6">
-                <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-800">{item.title}</p><p className="mt-1 text-xs text-slate-500">{item.type} · {item.updatedAt}</p></div>
-                <StatusBadge status={item.status} />
-              </article>
+          <div className="mt-7 grid h-64 grid-cols-[repeat(14,minmax(0,1fr))] items-end gap-1.5 border-b border-slate-200 px-1 sm:gap-2" aria-label={`กราฟ${chartMetric === "visitors" ? "ผู้เข้าชม" : "การดูหน้า"}รายวัน`}>
+            {chartValues.map((value, index) => (
+              <div key={`${range}-${chartMetric}-${index}`} className="group relative flex h-full items-end">
+                <div style={{ height: `${Math.max(12, (value / chartMax) * 100)}%` }} className="w-full rounded-t-md bg-brand-700/75 transition-all group-hover:bg-brand-700" />
+                <span className="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold text-white group-hover:block">{value}</span>
+              </div>
             ))}
           </div>
+          <div className="mt-3 flex justify-between text-xs text-slate-400"><span>{range === "7" ? "7 วันที่แล้ว" : range === "28" ? "28 วันที่แล้ว" : "90 วันที่แล้ว"}</span><span>วันนี้</span></div>
         </section>
-        <section className="rounded-2xl bg-brand-900 p-5 text-white shadow-sm sm:p-6 xl:col-span-2">
-          <p className="text-sm font-medium text-white/70">ขั้นตอนแนะนำ</p>
-          <h2 className="mt-2 text-lg font-semibold">ตรวจดูตัวอย่างก่อนเผยแพร่</h2>
-          <p className="mt-2 text-sm leading-6 text-white/70">แก้ไขข่าวหรือผลงาน บันทึกเป็นร่าง แล้วกดดูตัวอย่างเพื่อตรวจข้อความ รูปภาพ และข้อมูลสำหรับผลการค้นหาก่อนเผยแพร่</p>
-          <button type="button" onClick={() => onNavigate("news")} className={`mt-5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-900 transition-colors hover:bg-ink-100 ${focusRing}`}>จัดการข่าวสาร</button>
+
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-1">
+          <section className="rounded-2xl bg-brand-900 p-5 text-white shadow-sm">
+            <p className="text-sm font-medium text-white/65">ผู้เข้าชมในช่วง 30 นาที</p>
+            <div className="mt-3 flex items-end justify-between gap-4"><p className="text-4xl font-semibold">8</p><span className="mb-1 inline-flex items-center gap-2 text-xs text-emerald-300"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />กำลังใช้งาน</span></div>
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <p className="text-xs font-semibold text-white/50">หน้าที่กำลังเปิด</p>
+              <div className="mt-3 space-y-2 text-sm"><div className="flex justify-between"><span className="text-white/75">หน้าแรก</span><span>4</span></div><div className="flex justify-between"><span className="text-white/75">ผลิตภัณฑ์</span><span>2</span></div><div className="flex justify-between"><span className="text-white/75">ผลงาน</span><span>2</span></div></div>
+            </div>
+          </section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="font-semibold text-slate-900">อุปกรณ์ที่ใช้</h2>
+            <p className="mt-1 text-sm text-slate-500">สัดส่วนผู้เข้าชมทั้งหมด</p>
+            <div className="mt-5 flex h-3 overflow-hidden rounded-full bg-slate-100"><span className="bg-brand-700" style={{ width: "68%" }} /><span className="bg-blue-500" style={{ width: "27%" }} /><span className="bg-violet-400" style={{ width: "5%" }} /></div>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center"><div><p className="text-lg font-semibold text-slate-900">68%</p><p className="text-xs text-slate-500">มือถือ</p></div><div><p className="text-lg font-semibold text-slate-900">27%</p><p className="text-xs text-slate-500">คอมพิวเตอร์</p></div><div><p className="text-lg font-semibold text-slate-900">5%</p><p className="text-xs text-slate-500">แท็บเล็ต</p></div></div>
+          </section>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="font-semibold text-slate-900">แหล่งที่มาของผู้เข้าชม</h2>
+          <p className="mt-1 text-sm text-slate-500">ช่องทางก่อนเข้าสู่เว็บไซต์</p>
+          <div className="mt-5 space-y-4">
+            {trafficSources.map((source) => <div key={source.label}><div className="mb-1.5 flex items-center justify-between gap-4 text-sm"><span className="font-medium text-slate-700">{source.label}</span><span className="font-semibold text-slate-900">{source.value}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${source.color}`} style={{ width: `${source.value}%` }} /></div></div>)}
+          </div>
+        </section>
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="font-semibold text-slate-900">การติดต่อจากเว็บไซต์</h2>
+          <p className="mt-1 text-sm text-slate-500">จำนวนการกดปุ่มสำคัญ</p>
+          <div className="mt-5 space-y-4">
+            {conversionEvents.map((event) => <div key={event.label}><div className="mb-1.5 flex items-center justify-between gap-4 text-sm"><span className="font-medium text-slate-700">{event.label}</span><span className="font-semibold text-slate-900">{event.value}</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-energy-600" style={{ width: `${event.percent}%` }} /></div></div>)}
+          </div>
+        </section>
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="font-semibold text-slate-900">พื้นที่ของผู้เข้าชม</h2>
+          <p className="mt-1 text-sm text-slate-500">ตำแหน่งโดยประมาณจากการเข้าชม</p>
+          <div className="mt-5 divide-y divide-slate-100">
+            {[["นครราชสีมา", "31.4%"], ["กรุงเทพมหานคร", "21.8%"], ["ขอนแก่น", "12.6%"], ["ชลบุรี", "9.7%"], ["จังหวัดอื่น ๆ", "24.5%"]].map(([place, value]) => <div key={place} className="flex items-center justify-between py-3 first:pt-0 last:pb-0"><span className="text-sm font-medium text-slate-700">{place}</span><span className="text-sm font-semibold text-slate-900">{value}</span></div>)}
+          </div>
         </section>
       </div>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-4 sm:px-6"><h2 className="font-semibold text-slate-900">หน้าที่มีผู้เข้าชมมากที่สุด</h2><p className="mt-1 text-sm text-slate-500">ช่วยดูว่าคนสนใจเนื้อหาส่วนใดของเว็บไซต์</p></div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] text-left"><thead className="bg-slate-50 text-xs font-semibold text-slate-500"><tr><th className="px-6 py-3">หน้า</th><th className="px-4 py-3 text-right">การดูหน้า</th><th className="px-6 py-3 text-right">มีส่วนร่วม</th></tr></thead><tbody className="divide-y divide-slate-100">{topPages.map((item, index) => <tr key={item.path}><td className="px-6 py-3.5"><div className="flex items-center gap-3"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-500">{index + 1}</span><div><p className="text-sm font-semibold text-slate-800">{item.title}</p><p className="text-xs text-slate-400">{item.path}</p></div></div></td><td className="px-4 py-3.5 text-right text-sm font-semibold text-slate-800">{item.views}</td><td className="px-6 py-3.5 text-right text-sm text-slate-600">{item.engagement}</td></tr>)}</tbody></table>
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4"><div><h2 className="font-semibold text-slate-900">การเปลี่ยนแปลงล่าสุด</h2><p className="mt-1 text-sm text-slate-500">รายการใหม่สุดอยู่ด้านบน</p></div><button type="button" onClick={() => onNavigate("activity")} className={`text-sm font-semibold text-brand-700 hover:text-brand-900 ${focusRing}`}>ดูทั้งหมด</button></div>
+          <div className="divide-y divide-slate-100">
+            {activities.slice(0, 5).map((activity, index) => <button key={activity.id} type="button" onClick={() => onNavigate(activity.screen)} className={`flex w-full items-start gap-3 px-5 py-3.5 text-left transition-colors hover:bg-slate-50 ${focusRing}`}><span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${index === 0 ? "bg-energy-600 ring-4 ring-energy-600/10" : "bg-slate-300"}`} /><span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><ActivityBadge action={activity.action} />{index === 0 && <span className="text-[11px] font-semibold text-energy-600">ล่าสุด</span>}</span><span className="mt-1.5 block truncate text-sm font-semibold text-slate-800">{activity.title}</span><span className="mt-1 block text-xs text-slate-500">{activity.contentType} · {activity.at}</span></span></button>)}
+          </div>
+        </section>
+      </div>
+
+      <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-4" aria-label="สถานะระบบจัดการเนื้อหา">
+        {[
+          { label: "เผยแพร่แล้ว", value: publishedCount, screen: "news" as Screen },
+          { label: "รอตรวจหรือกำหนดเวลา", value: draftsCount, screen: "news" as Screen },
+          { label: "ข้อความใหม่", value: unreadCount, screen: "messages" as Screen },
+          { label: "เอกสารพร้อมใช้", value: publishedDocuments, screen: "downloads" as Screen },
+        ].map((item) => <button key={item.label} type="button" onClick={() => onNavigate(item.screen)} className={`flex items-center justify-between rounded-xl px-4 py-3 text-left transition-colors hover:bg-slate-50 ${focusRing}`}><span className="text-sm font-medium text-slate-600">{item.label}</span><span className="text-lg font-semibold text-slate-900">{item.value}</span></button>)}
+      </section>
+    </div>
+  );
+}
+
+function ActivityLog({ activities, onNavigate }: { activities: ContentActivity[]; onNavigate: (screen: Screen) => void }) {
+  const [query, setQuery] = useState("");
+  const [actionFilter, setActionFilter] = useState<ActivityAction | "ทั้งหมด">("ทั้งหมด");
+  const [typeFilter, setTypeFilter] = useState<ActivityContentType | "ทั้งหมด">("ทั้งหมด");
+  const filtered = useMemo(() => activities.filter((activity) => {
+    const search = query.trim().toLowerCase();
+    const matchesQuery = !search || activity.title.toLowerCase().includes(search) || activity.contentType.toLowerCase().includes(search);
+    const matchesAction = actionFilter === "ทั้งหมด" || activity.action === actionFilter;
+    const matchesType = typeFilter === "ทั้งหมด" || activity.contentType === typeFilter;
+    return matchesQuery && matchesAction && matchesType;
+  }), [activities, query, actionFilter, typeFilter]);
+
+  return (
+    <div className="space-y-6">
+      <PageHeading eyebrow="Content history" title="ประวัติการเปลี่ยนแปลง" />
+      <p className="-mt-3 text-sm text-slate-500">ตรวจสอบว่าเนื้อหาใดถูกเพิ่ม แก้ไข เผยแพร่ ยกเลิกเผยแพร่ หรือลบ โดยเรียงรายการล่าสุดก่อนเสมอ</p>
+      <section className="grid gap-3 sm:grid-cols-3">
+        {[{ label: "การเปลี่ยนแปลงทั้งหมด", value: activities.length }, { label: "เพิ่มหรือแก้ไข", value: activities.filter((item) => item.action === "เพิ่ม" || item.action === "แก้ไข").length }, { label: "เผยแพร่หรือลบ", value: activities.filter((item) => item.action === "เผยแพร่" || item.action === "ลบ").length }].map((item) => <article key={item.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p className="text-sm font-medium text-slate-500">{item.label}</p><p className="mt-2 text-3xl font-semibold text-slate-900">{item.value}</p></article>)}
+      </section>
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_190px_190px]">
+        <label><span className="sr-only">ค้นหาประวัติ</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาชื่อเนื้อหาหรือประเภท..." className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm ${focusRing}`} /></label>
+        <label><span className="sr-only">กรองการเปลี่ยนแปลง</span><select value={actionFilter} onChange={(event) => setActionFilter(event.target.value as ActivityAction | "ทั้งหมด")} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium shadow-sm ${focusRing}`}><option>ทั้งหมด</option><option>เพิ่ม</option><option>แก้ไข</option><option>เผยแพร่</option><option>กำหนดเผยแพร่</option><option>ยกเลิกเผยแพร่</option><option>ลบ</option></select></label>
+        <label><span className="sr-only">กรองประเภทเนื้อหา</span><select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as ActivityContentType | "ทั้งหมด")} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium shadow-sm ${focusRing}`}><option>ทั้งหมด</option><option>ผลงาน</option><option>ข่าวสาร</option><option>สินค้า</option><option>เอกสาร</option></select></label>
+      </div>
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="divide-y divide-slate-100">
+          {filtered.map((activity) => <article key={activity.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6"><div className="flex min-w-0 flex-1 items-start gap-3"><span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${activity.id === activities[0]?.id ? "bg-energy-600 ring-4 ring-energy-600/10" : "bg-slate-300"}`} /><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><ActivityBadge action={activity.action} /><span className="text-xs font-medium text-slate-500">{activity.contentType}</span>{activity.id === activities[0]?.id && <span className="rounded-full bg-energy-600/10 px-2 py-0.5 text-[11px] font-semibold text-energy-600">ล่าสุด</span>}</div><h2 className="mt-2 text-sm font-semibold text-slate-800">{activity.title}</h2><p className="mt-1 text-xs text-slate-500">{activity.at} · {activity.actor}</p></div></div><button type="button" onClick={() => onNavigate(activity.screen)} className={`self-start rounded-lg px-3 py-2 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-900/5 sm:self-auto ${focusRing}`}>เปิดรายการ</button></article>)}
+          {!filtered.length && <p className="px-6 py-12 text-center text-sm text-slate-500">ไม่พบประวัติที่ตรงกับตัวกรอง</p>}
+        </div>
+        <div className="border-t border-slate-100 px-6 py-3.5 text-sm text-slate-500">แสดง {filtered.length} จาก {activities.length} รายการ</div>
+      </section>
     </div>
   );
 }
@@ -419,7 +546,7 @@ function emptyContent(type: ContentType): ContentItem {
     category: type === "news" ? "ข่าวบริษัท" : type === "products" ? "สินค้า" : "โครงการใหม่",
     summary: "สรุปเนื้อหาแบบสั้นสำหรับแสดงในหน้ารายการ",
     body: "เขียนเนื้อหาหลักที่ต้องการแสดงบนเว็บไซต์\n\nสามารถกดดูตัวอย่างเพื่อตรวจสอบก่อนเผยแพร่ได้",
-    seoTitle: `${label}ใหม่ | ยักษ์ใหญ่ 2015`,
+    seoTitle: `${label}ใหม่ | ${COMPANY.shortName}`,
     seoDescription: "คำอธิบายสำหรับผลการค้นหา",
     status: "ร่าง",
     updatedAt: "เมื่อสักครู่",
@@ -451,7 +578,7 @@ function emptyContent(type: ContentType): ContentItem {
   };
 }
 
-function ContentManager({ type, items, onSave, onDelete }: { type: ContentType; items: ContentItem[]; onSave: (item: ContentItem) => void; onDelete: (id: string) => void }) {
+function ContentManager({ type, items, latestActivity, onSave, onDelete }: { type: ContentType; items: ContentItem[]; latestActivity?: ContentActivity; onSave: (item: ContentItem) => void; onDelete: (id: string) => void }) {
   const title = contentTypeLabel(type);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "ทั้งหมด">("ทั้งหมด");
@@ -510,6 +637,7 @@ function ContentManager({ type, items, onSave, onDelete }: { type: ContentType; 
         <button type="button" onClick={() => openEditor(emptyContent(type))} className={`rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-900 ${focusRing}`}>เพิ่ม{title}</button>
       </PageHeading>
       {notice && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{notice}</p>}
+      {latestActivity && <section className="flex flex-col gap-3 rounded-2xl border border-energy-600/20 bg-energy-600/[0.06] px-4 py-3.5 sm:flex-row sm:items-center"><span className="h-2.5 w-2.5 shrink-0 rounded-full bg-energy-600 ring-4 ring-energy-600/10" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-semibold text-energy-600">เปลี่ยนแปลงล่าสุด</span><ActivityBadge action={latestActivity.action} /></div><p className="mt-1 truncate text-sm font-semibold text-slate-800">{latestActivity.title}</p><p className="mt-0.5 text-xs text-slate-500">{latestActivity.at} · {latestActivity.actor}</p></div></section>}
       <div className="flex flex-col gap-3 sm:flex-row">
         <label className="block min-w-0 flex-1"><span className="sr-only">ค้นหา{title}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`ค้นหา${title}หรือหมวดหมู่...`} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 ${focusRing}`} /></label>
         <label><span className="sr-only">กรองสถานะ</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ContentStatus | "ทั้งหมด")} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm sm:w-44 ${focusRing}`}><option>ทั้งหมด</option><option>เผยแพร่</option><option>กำหนดเผยแพร่</option><option>ร่าง</option></select></label>
@@ -521,7 +649,7 @@ function ContentManager({ type, items, onSave, onDelete }: { type: ContentType; 
             <tbody className="divide-y divide-slate-100">
               {filteredItems.map((item) => (
                 <tr key={item.id} className="transition-colors hover:bg-slate-50/70">
-                  <td className="px-6 py-4"><p className="max-w-md text-sm font-semibold text-slate-800">{item.title}</p><p className="mt-1 line-clamp-1 max-w-md text-xs text-slate-500">{item.summary}</p>{type === "portfolio" && <p className="mt-1 text-xs text-brand-700">{item.province || "ยังไม่ระบุจังหวัด"} · {item.system || "ยังไม่ระบุระบบ"}</p>}</td>
+                  <td className="px-6 py-4"><div className="flex max-w-md flex-wrap items-center gap-2"><p className="text-sm font-semibold text-slate-800">{item.title}</p>{latestActivity?.contentId === item.id && latestActivity.action !== "ลบ" && <span className="rounded-full bg-energy-600/10 px-2 py-0.5 text-[11px] font-semibold text-energy-600">ล่าสุด</span>}</div><p className="mt-1 line-clamp-1 max-w-md text-xs text-slate-500">{item.summary}</p>{type === "portfolio" && <p className="mt-1 text-xs text-brand-700">{item.province || "ยังไม่ระบุจังหวัด"} · {item.system || "ยังไม่ระบุระบบ"}</p>}</td>
                   <td className="px-4 py-4 text-sm text-slate-600">{item.category}</td>
                   <td className="px-4 py-4 text-sm text-slate-500">{item.updatedAt}</td>
                   <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
@@ -582,7 +710,7 @@ function ContentEditor({ type, item, onChange, onBack, onSaveDraft, onSchedule, 
                 </label>
               </div>
             )}
-            {type === "products" && <div className="rounded-2xl border border-brand-700/15 bg-brand-900/5 p-4 sm:p-5"><h3 className="text-sm font-semibold text-brand-900">ข้อมูลสินค้า</h3><div className="mt-4 space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">ข้อความรอง</span><input value={item.subtitle ?? ""} onChange={(event) => onChange({ subtitle: event.target.value })} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-medium text-slate-700">รายละเอียดทางเทคนิค</span><textarea rows={6} value={item.specifications ?? ""} onChange={(event) => onChange({ specifications: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">เชื้อเพลิงที่รองรับ</span><textarea rows={6} value={item.fuelTypes ?? ""} onChange={(event) => onChange({ fuelTypes: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label></div></div></div>}
+            {type === "products" && <div className="rounded-2xl border border-brand-700/15 bg-brand-900/5 p-4 sm:p-5"><h3 className="text-sm font-semibold text-brand-900">ข้อมูลสินค้า</h3><div className="mt-4 space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">ข้อความรอง</span><input value={item.subtitle ?? ""} onChange={(event) => onChange({ subtitle: event.target.value })} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-medium text-slate-700">รายละเอียดทางเทคนิค</span><textarea rows={6} value={item.specifications ?? ""} onChange={(event) => onChange({ specifications: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">เชื้อเพลิงหรือการใช้งานที่รองรับ</span><textarea rows={6} value={item.fuelTypes ?? ""} onChange={(event) => onChange({ fuelTypes: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label></div></div></div>}
             {type === "news" && <div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-semibold text-slate-700">ผู้เขียน</span><input value={item.author} onChange={(event) => onChange({ author: event.target.value })} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-semibold text-slate-700">วันที่เผยแพร่</span><input value={item.publishDate ?? ""} onChange={(event) => onChange({ publishDate: event.target.value })} placeholder="เช่น 20 กรกฎาคม 2568" className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label></div>}
             <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">รายละเอียดโดยย่อ</span><textarea rows={3} value={item.summary} onChange={(event) => onChange({ summary: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-800 ${focusRing}`} /></label>
             <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">เนื้อหาหลัก</span><textarea rows={9} value={item.body} onChange={(event) => onChange({ body: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-800 ${focusRing}`} /></label>
@@ -745,18 +873,19 @@ function Messages({ messages, onOpenMessage, onStatusChange, onUpdateMessage }: 
   );
 }
 
-function Downloads({ documents, onAddDocument, onToggleStatus }: { documents: DownloadItem[]; onAddDocument: () => void; onToggleStatus: (id: string) => void }) {
+function Downloads({ documents, latestActivity, onAddDocument, onToggleStatus }: { documents: DownloadItem[]; latestActivity?: ContentActivity; onAddDocument: () => void; onToggleStatus: (id: string) => void }) {
   return (
     <div className="space-y-6">
       <PageHeading eyebrow="คลังเอกสาร" title="เอกสารดาวน์โหลด">
         <button type="button" onClick={onAddDocument} className={`rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-900 ${focusRing}`}>เพิ่มเอกสาร</button>
       </PageHeading>
       <p className="-mt-3 text-sm text-slate-500">จัดการโบรชัวร์ แคตตาล็อก ข้อมูลจำเพาะ และเอกสารที่เปิดให้ดาวน์โหลดบนเว็บไซต์</p>
+      {latestActivity && <section className="flex flex-col gap-3 rounded-2xl border border-energy-600/20 bg-energy-600/[0.06] px-4 py-3.5 sm:flex-row sm:items-center"><span className="h-2.5 w-2.5 shrink-0 rounded-full bg-energy-600 ring-4 ring-energy-600/10" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-semibold text-energy-600">เปลี่ยนแปลงล่าสุด</span><ActivityBadge action={latestActivity.action} /></div><p className="mt-1 truncate text-sm font-semibold text-slate-800">{latestActivity.title}</p><p className="mt-0.5 text-xs text-slate-500">{latestActivity.at} · {latestActivity.actor}</p></div></section>}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="divide-y divide-slate-100">
           {documents.map((document) => (
             <article key={document.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
-              <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold text-slate-800">{document.name}</h2><p className="mt-1 text-sm text-slate-500">{document.category} · อัปเดต {document.updatedAt}</p></div>
+              <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="truncate text-sm font-semibold text-slate-800">{document.name}</h2>{latestActivity?.contentId === document.id && <span className="rounded-full bg-energy-600/10 px-2 py-0.5 text-[11px] font-semibold text-energy-600">ล่าสุด</span>}</div><p className="mt-1 text-sm text-slate-500">{document.category} · อัปเดต {document.updatedAt}</p></div>
               <StatusBadge status={document.status} />
               <button type="button" onClick={() => onToggleStatus(document.id)} className={`self-start rounded-lg px-3 py-2 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-900/5 sm:self-auto ${focusRing}`}>{document.status === "เผยแพร่" ? "ยกเลิกเผยแพร่" : "เผยแพร่"}</button>
             </article>
@@ -885,20 +1014,61 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
   const [messages, setMessages] = useState(initialMessages);
   const [documents, setDocuments] = useState(initialDownloads);
   const [discoverySettings, setDiscoverySettings] = useState(initialDiscoverySettings);
+  const [activities, setActivities] = useState(initialActivities);
 
   const selectScreen = (nextScreen: Screen) => {
     setScreen(nextScreen);
     setMobileNavOpen(false);
   };
 
+  const recordActivity = (activity: Omit<ContentActivity, "id" | "at" | "actor" | "createdAt">) => {
+    const createdAt = Date.now();
+    setActivities((current) => [{
+      ...activity,
+      id: `activity-${createdAt}-${current.length}`,
+      at: "เมื่อสักครู่",
+      actor: "ผู้ดูแลระบบ",
+      createdAt,
+    }, ...current]);
+  };
+
   const saveContent = (type: ContentType, item: ContentItem) => {
     const setItems = type === "news" ? setNews : type === "products" ? setProducts : setPortfolio;
+    const currentItems = type === "news" ? news : type === "products" ? products : portfolio;
+    const existing = currentItems.find((entry) => entry.id === item.id);
+    const action: ActivityAction = !existing
+      ? "เพิ่ม"
+      : existing.status !== "เผยแพร่" && item.status === "เผยแพร่"
+        ? "เผยแพร่"
+        : existing.status === "เผยแพร่" && item.status !== "เผยแพร่"
+          ? "ยกเลิกเผยแพร่"
+          : existing.status !== "กำหนดเผยแพร่" && item.status === "กำหนดเผยแพร่"
+            ? "กำหนดเผยแพร่"
+            : "แก้ไข";
     setItems((current) => current.some((entry) => entry.id === item.id) ? current.map((entry) => entry.id === item.id ? item : entry) : [item, ...current]);
+    recordActivity({
+      contentId: item.id,
+      action,
+      contentType: contentTypeLabel(type) as ActivityContentType,
+      title: item.title,
+      screen: type,
+    });
   };
 
   const deleteContent = (type: ContentType, id: string) => {
     const setItems = type === "news" ? setNews : type === "products" ? setProducts : setPortfolio;
+    const currentItems = type === "news" ? news : type === "products" ? products : portfolio;
+    const item = currentItems.find((entry) => entry.id === id);
     setItems((current) => current.filter((item) => item.id !== id));
+    if (item) {
+      recordActivity({
+        contentId: item.id,
+        action: "ลบ",
+        contentType: contentTypeLabel(type) as ActivityContentType,
+        title: item.title,
+        screen: type,
+      });
+    }
   };
 
   const openMessage = (id: string) => {
@@ -914,11 +1084,23 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
   };
 
   const addDocument = () => {
-    setDocuments((current) => [{ id: `download-${Date.now()}`, name: "เอกสารใหม่.pdf", category: "เอกสารประกอบ", updatedAt: "เมื่อสักครู่", status: "ร่าง" }, ...current]);
+    const document = { id: `download-${Date.now()}`, name: "เอกสารใหม่.pdf", category: "เอกสารประกอบ", updatedAt: "เมื่อสักครู่", status: "ร่าง" as ContentStatus };
+    setDocuments((current) => [document, ...current]);
+    recordActivity({ contentId: document.id, action: "เพิ่ม", contentType: "เอกสาร", title: document.name, screen: "downloads" });
   };
 
   const toggleDocumentStatus = (id: string) => {
+    const document = documents.find((item) => item.id === id);
     setDocuments((current) => current.map((document) => document.id === id ? { ...document, status: document.status === "เผยแพร่" ? "ร่าง" : "เผยแพร่", updatedAt: "เมื่อสักครู่" } : document));
+    if (document) {
+      recordActivity({
+        contentId: document.id,
+        action: document.status === "เผยแพร่" ? "ยกเลิกเผยแพร่" : "เผยแพร่",
+        contentType: "เอกสาร",
+        title: document.name,
+        screen: "downloads",
+      });
+    }
   };
 
   if (!isAuthenticated) {
@@ -926,24 +1108,26 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
   }
 
   const page = screen === "dashboard"
-    ? <Dashboard portfolio={portfolio} news={news} products={products} messages={messages} documents={documents} onNavigate={selectScreen} />
-    : screen === "portfolio"
-      ? <ContentManager type="portfolio" items={portfolio} onSave={(item) => saveContent("portfolio", item)} onDelete={(id) => deleteContent("portfolio", id)} />
-    : screen === "news"
-        ? <ContentManager type="news" items={news} onSave={(item) => saveContent("news", item)} onDelete={(id) => deleteContent("news", id)} />
-        : screen === "products"
-          ? <ContentManager type="products" items={products} onSave={(item) => saveContent("products", item)} onDelete={(id) => deleteContent("products", id)} />
-          : screen === "messages"
-            ? <Messages messages={messages} onOpenMessage={openMessage} onStatusChange={changeMessageStatus} onUpdateMessage={updateMessage} />
-            : screen === "downloads"
-              ? <Downloads documents={documents} onAddDocument={addDocument} onToggleStatus={toggleDocumentStatus} />
-              : <DiscoverySettingsPage settings={discoverySettings} onChange={setDiscoverySettings} />;
+    ? <Dashboard portfolio={portfolio} news={news} products={products} messages={messages} documents={documents} activities={activities} onNavigate={selectScreen} />
+    : screen === "activity"
+      ? <ActivityLog activities={activities} onNavigate={selectScreen} />
+      : screen === "portfolio"
+        ? <ContentManager type="portfolio" items={portfolio} latestActivity={activities.find((activity) => activity.contentType === "ผลงาน")} onSave={(item) => saveContent("portfolio", item)} onDelete={(id) => deleteContent("portfolio", id)} />
+        : screen === "news"
+          ? <ContentManager type="news" items={news} latestActivity={activities.find((activity) => activity.contentType === "ข่าวสาร")} onSave={(item) => saveContent("news", item)} onDelete={(id) => deleteContent("news", id)} />
+          : screen === "products"
+            ? <ContentManager type="products" items={products} latestActivity={activities.find((activity) => activity.contentType === "สินค้า")} onSave={(item) => saveContent("products", item)} onDelete={(id) => deleteContent("products", id)} />
+            : screen === "messages"
+              ? <Messages messages={messages} onOpenMessage={openMessage} onStatusChange={changeMessageStatus} onUpdateMessage={updateMessage} />
+              : screen === "downloads"
+                ? <Downloads documents={documents} latestActivity={activities.find((activity) => activity.contentType === "เอกสาร")} onAddDocument={addDocument} onToggleStatus={toggleDocumentStatus} />
+                : <DiscoverySettingsPage settings={discoverySettings} onChange={setDiscoverySettings} />;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       <div className="lg:flex">
         <aside className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-slate-200 bg-white px-4 py-5 transition-transform lg:sticky lg:top-0 lg:block lg:h-screen lg:translate-x-0 ${mobileNavOpen ? "translate-x-0" : "-translate-x-full"}`} aria-label="เมนูผู้ดูแลระบบ">
-          <div className="px-2 pb-7"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-700 text-sm font-bold text-white shadow-sm">YY</div><div><p className="font-semibold text-slate-900">ยักษ์ใหญ่ 2015</p><p className="text-xs text-slate-500">ระบบจัดการเนื้อหา</p></div></div></div>
+          <div className="px-2 pb-7"><div className="flex items-center gap-3"><img src={COMPANY.logoPath} alt="" width="44" height="44" className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-700/10 shadow-sm" /><div><p className="font-brand text-[17px] font-bold tracking-[0.06em] text-slate-900">{COMPANY.shortName}</p><p className="text-xs text-slate-500">ระบบจัดการเนื้อหา</p></div></div></div>
           <nav className="space-y-1" aria-label="เมนูหลัก">{navItems.map((item) => { const isActive = screen === item.id; return <button key={item.id} type="button" onClick={() => selectScreen(item.id)} aria-current={isActive ? "page" : undefined} className={`w-full rounded-xl px-3 py-3 text-left text-sm font-semibold transition-colors ${focusRing} ${isActive ? "bg-brand-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}>{item.label}</button>; })}</nav>
           <div className="absolute right-4 bottom-5 left-4 space-y-1 border-t border-slate-100 pt-4"><button type="button" onClick={() => setIsAuthenticated(false)} className={`w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 ${focusRing}`}>ออกจากระบบ</button><button type="button" onClick={onExit} className={`w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 ${focusRing}`}>กลับสู่เว็บไซต์</button></div>
         </aside>

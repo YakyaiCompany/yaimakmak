@@ -4,13 +4,14 @@ import { NotFoundPage, PrivacyPolicyPage } from './LegalPages'
 import { COMPANY } from './config/company'
 import DownloadsPage from './pages/DownloadsPage'
 import { environment } from './config/environment'
-import { INDUSTRIES, NEWS, PRODUCTS, PROJECTS, SERVICES, WHY_US } from './data/siteContent'
+import { ABOUT, INDUSTRIES, NEWS, PRODUCTS, PROJECTS, SERVICES, WHY_US } from './data/siteContent'
 import { postJson } from './lib/api'
 import type { Article, IndustryIconName, Product, Project } from './types/content'
 
 /* ─── ROUTE TYPES ─────────────────────────── */
 type Page =
   | { t: 'home' }
+  | { t: 'about' }
   | { t: 'products' }
   | { t: 'projects' }
   | { t: 'news' }
@@ -52,6 +53,7 @@ function normalizePathname(pathname: string) {
 function pageFromPath(pathname: string): Page {
   const path = normalizePathname(pathname)
   if (path === '/') return { t: 'home' }
+  if (path === '/about') return { t: 'about' }
   if (path === '/products') return { t: 'products' }
   if (path === '/projects') return { t: 'projects' }
   if (path === '/news') return { t: 'news' }
@@ -77,6 +79,7 @@ function pageFromPath(pathname: string): Page {
 function pathForPage(page: Page) {
   switch (page.t) {
     case 'home': return '/'
+    case 'about': return '/about'
     case 'products': return '/products'
     case 'projects': return '/projects'
     case 'project': return `/projects/${page.p.slug}`
@@ -90,9 +93,10 @@ function pathForPage(page: Page) {
 }
 
 function titleForPage(page: Page) {
-  const suffix = 'บริษัท ยักษ์ใหญ่ 2015 จำกัด'
+  const suffix = COMPANY.legalNameEn
   switch (page.t) {
     case 'home': return `${suffix} | ระบบพลังงานชีวมวลอุตสาหกรรม`
+    case 'about': return `เกี่ยวกับเรา | ${suffix}`
     case 'products': return `ผลิตภัณฑ์ | ${suffix}`
     case 'projects': return `ผลงาน | ${suffix}`
     case 'project': return `${page.p.name} | ${suffix}`
@@ -102,6 +106,33 @@ function titleForPage(page: Page) {
     case 'privacy': return `นโยบายความเป็นส่วนตัว | ${suffix}`
     case 'admin': return `ระบบจัดการเนื้อหา | ${suffix}`
     case 'not-found': return `ไม่พบหน้า | ${suffix}`
+  }
+}
+
+function descriptionForPage(page: Page) {
+  switch (page.t) {
+    case 'home':
+      return 'ออกแบบ ผลิต และติดตั้งระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม พร้อมทดสอบเดินระบบและอบรมผู้ใช้งาน'
+    case 'about':
+      return `รู้จัก ${COMPANY.legalNameEn} ผู้เชี่ยวชาญด้านระบบผลิตความร้อนจากชีวมวลและเครื่องจักรอบแห้งสำหรับภาคอุตสาหกรรม`
+    case 'products':
+      return 'ผลิตภัณฑ์ระบบแก๊สซิไฟเออร์ 1.5 MW, 750 kW และเครื่องอบกากแป้งมันสำปะหลังสำหรับโรงงานอุตสาหกรรม'
+    case 'projects':
+      return `รวมผลงานออกแบบ ผลิต และติดตั้งระบบพลังงานชีวมวลและเครื่องจักรอบแห้งของ ${COMPANY.shortName}`
+    case 'project':
+      return page.p.summary
+    case 'news':
+      return 'ข่าวสาร บทความ และความรู้เกี่ยวกับพลังงานชีวมวล การลดต้นทุนเชื้อเพลิง และระบบแก๊สซิไฟเออร์'
+    case 'article':
+      return page.a.excerpt
+    case 'downloads':
+      return `ดาวน์โหลดโบรชัวร์ แคตตาล็อก ข้อมูลผลิตภัณฑ์ และเอกสารแนะนำบริษัท ${COMPANY.shortName}`
+    case 'privacy':
+      return `นโยบายความเป็นส่วนตัวของ ${COMPANY.legalNameEn}`
+    case 'admin':
+      return `ระบบจัดการเนื้อหาของ ${COMPANY.shortName}`
+    case 'not-found':
+      return 'ไม่พบหน้าที่คุณกำลังค้นหา'
   }
 }
 
@@ -253,7 +284,7 @@ function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="video-title" className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-black shadow-2xl">
         <div className="flex items-center justify-between bg-ink-950 px-4 py-3 text-white"><h2 id="video-title" className="font-heading text-sm font-semibold">วิดีโอแนะนำระบบ</h2><button onClick={onClose} className="min-w-11 min-h-11 rounded-lg hover:bg-white/10 flex items-center justify-center" aria-label="ปิดวิดีโอ"><IcoX /></button></div>
-        <div className="aspect-video"><iframe src={url} title="วิดีโอแนะนำระบบของยักษ์ใหญ่ 2015" className="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div>
+        <div className="aspect-video"><iframe src={url} title={`วิดีโอแนะนำระบบของ ${COMPANY.shortName}`} className="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div>
       </div>
     </div>
   )
@@ -262,26 +293,57 @@ function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
 /* ─── LOGO ───────────────────────────────────────── */
 function Logo({ light = false }: { light?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-heading font-bold ${light ? 'bg-white/20 text-white' : 'bg-brand-900 text-white'}`}>YY</div>
-      <div>
-        <div className={`font-heading font-semibold text-sm leading-tight ${light ? 'text-white' : 'text-brand-900'}`}>ยักษ์ใหญ่ 2015</div>
-      </div>
+    <div className="group flex items-center gap-3">
+      <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full transition-transform duration-300 group-hover:scale-[1.03]">
+        <img
+          src={COMPANY.logoPath}
+          alt=""
+          width="52"
+          height="52"
+          className="h-full w-full scale-[1.14] rounded-full object-cover"
+        />
+      </span>
+      <span className={`block whitespace-nowrap font-brand text-[17px] font-bold leading-none tracking-[0.075em] ${light ? 'text-white' : 'text-brand-900'}`}>{COMPANY.shortName}</span>
     </div>
   )
 }
 
 /* ─── HEADER ─────────────────────────────────────── */
-function Header({ scrolled, isHome, setPage, onQuote }: { scrolled: boolean; isHome: boolean; setPage: (p: Page) => void; onQuote: () => void }) {
+function Header({ scrolled, page, setPage, onQuote }: { scrolled: boolean; page: Page; setPage: (p: Page) => void; onQuote: () => void }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const isHome = page.t === 'home'
   const isLight = isHome && !scrolled
 
   const navLinks: Array<{ label: string; id?: string; page?: Page }> = [
     { label: 'หน้าแรก', id: 'hero' },
-    { label: 'เกี่ยวกับเรา', id: 'about' },
+    { label: 'เกี่ยวกับเรา', page: { t: 'about' } },
     { label: 'สินค้า', page: { t: 'products' } },
     { label: 'บริการ', id: 'services' },
+    { label: 'ผลงาน', page: { t: 'projects' } },
+    { label: 'ข่าวสาร', page: { t: 'news' } },
+    { label: 'เอกสาร', page: { t: 'downloads' } },
+    { label: 'ติดต่อเรา', id: 'contact' },
   ]
+
+  const isActive = (item: { id?: string; page?: Page }) => {
+    if (item.id === 'hero') return page.t === 'home'
+    if (!item.page) return false
+    if (item.page.t === 'projects') return page.t === 'projects' || page.t === 'project'
+    if (item.page.t === 'news') return page.t === 'news' || page.t === 'article'
+    return item.page.t === page.t
+  }
+
+  const desktopLinkClass = (active: boolean) => `whitespace-nowrap rounded-lg px-3 py-2 font-body text-sm transition-colors ${
+    isLight
+      ? active ? 'bg-white/15 text-white' : 'text-white/90 hover:bg-white/10 hover:text-white'
+      : active ? 'bg-brand-50 text-brand-900' : 'text-ink-700 hover:bg-ink-100 hover:text-brand-900'
+  }`
+
+  const mobileLinkClass = (active: boolean) => `rounded-lg px-4 py-3 text-left font-body text-sm transition-colors ${
+    active ? 'bg-brand-50 font-medium text-brand-900' : 'text-ink-700 hover:bg-ink-100 hover:text-brand-900'
+  }`
 
   const openNavItem = (item: { id?: string; page?: Page }) => {
     if (item.page) {
@@ -298,6 +360,24 @@ function Header({ scrolled, isHome, setPage, onQuote }: { scrolled: boolean; isH
     setMobileOpen(false)
   }
 
+  useEffect(() => {
+    if (!mobileOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.setTimeout(() => closeButtonRef.current?.focus(), 0)
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeyDown)
+      menuButtonRef.current?.focus()
+    }
+  }, [mobileOpen])
+
   return (
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isLight ? 'bg-transparent' : 'bg-white shadow-sm'}`}>
@@ -307,36 +387,30 @@ function Header({ scrolled, isHome, setPage, onQuote }: { scrolled: boolean; isH
           </button>
 
           {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map(l => (
+          <nav className="hidden xl:flex items-center gap-0.5" aria-label="เมนูหลัก">
+            {navLinks.slice(1).map(l => l.page ? (
+              <a
+                key={l.label}
+                href={pathForPage(l.page)}
+                onClick={event => { event.preventDefault(); openNavItem(l) }}
+                aria-current={isActive(l) ? 'page' : undefined}
+                className={desktopLinkClass(isActive(l))}
+              >
+                {l.label}
+              </a>
+            ) : (
               <button key={l.label} onClick={() => openNavItem(l)}
-                className={`px-4 py-2 text-sm font-body rounded-lg transition-colors ${isLight ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-ink-700 hover:text-brand-900 hover:bg-ink-100'}`}>
+                className={desktopLinkClass(isActive(l))}>
                 {l.label}
               </button>
             ))}
-            <button onClick={() => setPage({ t: 'projects' })}
-              className={`px-4 py-2 text-sm font-body rounded-lg transition-colors ${isLight ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-ink-700 hover:text-brand-900 hover:bg-ink-100'}`}>
-              ผลงาน
-            </button>
-            <button onClick={() => setPage({ t: 'news' })}
-              className={`px-4 py-2 text-sm font-body rounded-lg transition-colors ${isLight ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-ink-700 hover:text-brand-900 hover:bg-ink-100'}`}>
-              ข่าวสาร
-            </button>
-            <button onClick={() => setPage({ t: 'downloads' })}
-              className={`px-4 py-2 text-sm font-body rounded-lg transition-colors ${isLight ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-ink-700 hover:text-brand-900 hover:bg-ink-100'}`}>
-              เอกสาร
-            </button>
-            <button onClick={() => scrollTo('contact')}
-            className={`px-4 py-2 text-sm font-body rounded-lg transition-colors ${isLight ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-ink-700 hover:text-brand-900 hover:bg-ink-100'}`}>
-            ติดต่อเรา
-          </button>
           </nav>
 
-          <div className="flex items-center gap-2 lg:ml-4">
-            <button onClick={onQuote} className="hidden lg:flex items-center gap-2 bg-energy-600 hover:bg-energy-400 text-white text-sm font-body px-4 py-2.5 rounded-lg transition-colors duration-200">
+          <div className="flex items-center gap-2 xl:ml-4">
+            <button onClick={onQuote} className="hidden xl:flex items-center gap-2 bg-energy-600 hover:bg-energy-400 text-white text-sm font-body px-4 py-2.5 rounded-lg transition-colors duration-200">
               ขอใบเสนอราคา
             </button>
-            <button onClick={() => setMobileOpen(true)} className={`lg:hidden min-w-11 min-h-11 p-2 rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400 ${isLight ? 'text-white' : 'text-ink-950'}`} aria-label="เปิดเมนู">
+            <button ref={menuButtonRef} onClick={() => setMobileOpen(true)} className={`xl:hidden min-w-11 min-h-11 p-2 rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400 ${isLight ? 'text-white' : 'text-ink-950'}`} aria-label="เปิดเมนู" aria-expanded={mobileOpen} aria-controls="mobile-navigation">
               <IcoMenu />
             </button>
           </div>
@@ -347,19 +421,25 @@ function Header({ scrolled, isHome, setPage, onQuote }: { scrolled: boolean; isH
       {mobileOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <div className="relative ml-auto w-72 bg-white h-full flex flex-col shadow-2xl">
+          <div id="mobile-navigation" role="dialog" aria-modal="true" aria-label="เมนูเว็บไซต์" className="relative ml-auto w-72 bg-white h-full flex flex-col shadow-2xl">
             <div className="flex items-center justify-between p-5 border-b border-ink-300">
               <Logo />
-              <button onClick={() => setMobileOpen(false)} className="min-w-11 min-h-11 p-2 text-ink-700 hover:text-ink-950 rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700" aria-label="ปิดเมนู"><IcoX /></button>
+              <button ref={closeButtonRef} onClick={() => setMobileOpen(false)} className="min-w-11 min-h-11 p-2 text-ink-700 hover:text-ink-950 rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700" aria-label="ปิดเมนู"><IcoX /></button>
             </div>
             <nav className="flex-1 p-5 flex flex-col gap-1">
-              {navLinks.map(l => (
-                <button key={l.label} onClick={() => openNavItem(l)} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">{l.label}</button>
+              {navLinks.map(l => l.page ? (
+                <a
+                  key={l.label}
+                  href={pathForPage(l.page)}
+                  onClick={event => { event.preventDefault(); openNavItem(l) }}
+                  aria-current={isActive(l) ? 'page' : undefined}
+                  className={mobileLinkClass(isActive(l))}
+                >
+                  {l.label}
+                </a>
+              ) : (
+                <button key={l.label} onClick={() => openNavItem(l)} className={mobileLinkClass(isActive(l))}>{l.label}</button>
               ))}
-              <button onClick={() => { setPage({ t: 'projects' }); setMobileOpen(false) }} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">ผลงาน</button>
-              <button onClick={() => { setPage({ t: 'news' }); setMobileOpen(false) }} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">ข่าวสาร</button>
-              <button onClick={() => { setPage({ t: 'downloads' }); setMobileOpen(false) }} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">เอกสาร</button>
-              <button onClick={() => scrollTo('contact')} className="text-left px-4 py-3 text-ink-700 hover:text-brand-900 hover:bg-ink-100 rounded-lg text-sm font-body transition-colors">ติดต่อเรา</button>
             </nav>
             <div className="p-5 border-t border-ink-300 flex flex-col gap-3">
               <button onClick={() => { onQuote(); setMobileOpen(false) }} className="w-full bg-energy-600 text-white py-3 rounded-lg text-sm font-body font-medium">ขอใบเสนอราคา</button>
@@ -387,13 +467,14 @@ function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProduct
         <div className="absolute inset-0 bg-linear-to-b from-brand-900/65 via-brand-900/45 to-brand-900/55 md:bg-linear-to-r" />
       </div>
       <div className="relative z-10 max-w-[1200px] mx-auto px-5 md:px-8 pt-24 pb-20 w-full">
-        <div className="max-w-2xl">
-          <h1 className="font-heading font-bold text-white text-4xl md:text-5xl lg:text-[56px] leading-[1.2] mb-5">
-            ระบบเตาแก๊สซิไฟเออร์<br />และเครื่องจักรอบแห้ง<br />
-            <span className="text-brand-500">สำหรับโรงงานอุตสาหกรรม</span>
+        <div className="max-w-4xl">
+          <h1 className="mb-5 font-heading text-3xl font-bold leading-[1.2] text-white sm:text-4xl md:text-5xl lg:text-[56px]">
+            <span className="block lg:whitespace-nowrap">ระบบผลิตความร้อนจาก<span className="whitespace-nowrap">ชีวมวล</span></span>
+            <span className="block">และเครื่องจักรอบแห้ง</span>
+            <span className="block text-brand-500">สำหรับโรงงานอุตสาหกรรม</span>
           </h1>
-          <p className="text-white/75 text-base md:text-lg font-body leading-relaxed mb-8 max-w-lg">
-            ออกแบบ ผลิต ติดตั้ง และทดสอบระบบพลังงานชีวมวล ให้เหมาะกับกระบวนการผลิตของแต่ละโรงงาน
+          <p className="mb-8 max-w-xl font-body text-base leading-relaxed text-white/75 md:text-lg">
+            ออกแบบ ผลิต และติดตั้ง Gasifier System และเครื่องจักรอบแห้งตามการใช้งานจริง พร้อมทดสอบเดินระบบและอบรมผู้ใช้งาน เพื่อช่วยลดต้นทุนเชื้อเพลิงและเพิ่มประสิทธิภาพการผลิต
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-10">
             <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-energy-600 hover:bg-energy-400 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-all duration-200 hover:scale-[1.02]">
@@ -436,7 +517,7 @@ function TrustBar() {
       const sequenceWidth = track.scrollWidth / 3
       if (sequenceWidth > 0) {
         const elapsed = Math.min(timestamp - lastFrame, 64)
-        offset = (offset + elapsed * 0.035) % sequenceWidth
+        offset = (offset + elapsed * 0.06) % sequenceWidth
         track.style.transform = `translate3d(${-offset}px, 0, 0)`
       }
       lastFrame = timestamp
@@ -444,7 +525,10 @@ function TrustBar() {
     }
 
     frameId = window.requestAnimationFrame(animate)
-    return () => window.cancelAnimationFrame(frameId)
+    return () => {
+      window.cancelAnimationFrame(frameId)
+      track.style.transform = ''
+    }
   }, [])
 
   return (
@@ -471,7 +555,7 @@ function About({ onLearnMore }: { onLearnMore: () => void }) {
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
           <div className="relative">
             <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-ink-100">
-              <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=700&h=520&fit=crop&auto=format" alt="ทีมงานยักษ์ใหญ่ 2015" className="w-full h-full object-cover" />
+              <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=700&h=520&fit=crop&auto=format" alt={`ทีมงาน ${COMPANY.shortName}`} className="w-full h-full object-cover" />
             </div>
             <div className="absolute -bottom-4 -right-4 bg-brand-900 text-white rounded-xl p-4 shadow-xl hidden md:block">
               <div className="font-heading font-semibold text-sm">ออกแบบเฉพาะหน้างาน</div>
@@ -484,9 +568,9 @@ function About({ onLearnMore }: { onLearnMore: () => void }) {
               ผู้เชี่ยวชาญระบบพลังงาน<br />ชีวมวลอุตสาหกรรม
             </h2>
             <div className="space-y-3 text-ink-700 text-base font-body leading-relaxed mb-8">
-              <p>บริษัท ยักษ์ใหญ่ 2015 จำกัด เชี่ยวชาญด้านการออกแบบ ผลิต และติดตั้งระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้ง สำหรับโรงงานอุตสาหกรรมในประเทศไทย</p>
-              <p>เราให้บริการครบวงจรตั้งแต่ให้คำปรึกษา ออกแบบระบบให้เหมาะกับโรงงานของคุณ จนถึงการติดตั้ง ทดสอบ และดูแลหลังการขาย</p>
-              <p>ระบบของเราช่วยให้โรงงานลดต้นทุนพลังงานได้ 40–60% เมื่อเปลี่ยนจาก LPG หรือน้ำมันเตามาใช้เชื้อเพลิงชีวมวลในท้องถิ่น</p>
+              <p>{COMPANY.legalNameEn} เชี่ยวชาญด้านการออกแบบ ผลิต และติดตั้งระบบแก๊สซิไฟเออร์และเครื่องจักรสำหรับกระบวนการอบแห้งในภาคอุตสาหกรรม</p>
+              <p>เราให้บริการครบวงจรตั้งแต่ให้คำปรึกษา สำรวจหน้างาน ออกแบบ ผลิต ติดตั้ง ทดสอบการเดินเครื่อง ไปจนถึงฝึกอบรมการใช้งานและการบำรุงรักษา</p>
+              <p>ทุกระบบพัฒนาจากประเภทเชื้อเพลิง กระบวนการผลิต และความต้องการเฉพาะของแต่ละโรงงาน เพื่อช่วยลดต้นทุนพลังงานและเพิ่มประสิทธิภาพการผลิตอย่างเหมาะสมกับการใช้งานจริง</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
@@ -502,12 +586,223 @@ function About({ onLearnMore }: { onLearnMore: () => void }) {
               ))}
             </div>
             <button onClick={onLearnMore} className="mt-6 inline-flex items-center gap-2 text-brand-700 font-body text-sm font-medium hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700 rounded-lg">
-              ดูสินค้าและบริการ <IcoArrowRight />
+              ดูหน้าเกี่ยวกับเรา <IcoArrowRight />
             </button>
           </div>
         </div>
       </div>
     </section>
+  )
+}
+
+function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
+  const referenceProvinces = Array.from(new Set(PROJECTS.map(project => project.province)))
+  const featuredStrength = WHY_US[0]
+  const supportingStrengths = WHY_US.slice(1)
+
+  return (
+    <main className="min-h-screen pt-16 md:pt-18">
+      <section className="relative overflow-hidden bg-brand-900 py-16 text-white md:py-24">
+        <div className="absolute -right-20 -top-32 h-80 w-80 rounded-full bg-brand-500/10 blur-3xl" />
+        <div className="relative mx-auto max-w-[1200px] px-5 md:px-8">
+          <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 font-body text-xs text-white/50">
+            <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
+            <IcoChevron />
+            <span className="text-white/80">เกี่ยวกับเรา</span>
+          </nav>
+          <div className="grid items-end gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
+            <div>
+              <p className="mb-3 font-body text-sm font-medium uppercase tracking-[0.18em] text-brand-500">{ABOUT.eyebrow}</p>
+              <h1 className="max-w-3xl font-heading text-3xl font-bold leading-tight md:text-5xl">{ABOUT.title}</h1>
+            </div>
+            <p className="border-l border-white/20 pl-5 font-body text-base leading-relaxed text-white/70 md:text-lg">{ABOUT.summary}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16 md:py-24">
+        <div className="mx-auto grid max-w-[1200px] gap-10 px-5 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+          <div>
+            <div className="sticky top-24">
+              <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-ink-100">
+                <img
+                  src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=900&h=680&fit=crop&auto=format"
+                  alt={`ทีมงานวิศวกรรมและการผลิตเครื่องจักรของ ${COMPANY.shortName}`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="-mt-8 ml-5 mr-5 rounded-xl bg-brand-900 p-5 text-white shadow-xl md:ml-8 md:mr-8">
+                <p className="font-heading text-base font-semibold">{COMPANY.legalNameEn}</p>
+                <p className="mt-1 font-body text-xs leading-relaxed text-white/65">ระบบแก๊สซิไฟเออร์และเครื่องจักรอบแห้งสำหรับภาคอุตสาหกรรม</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-700">รู้จัก {COMPANY.shortName}</p>
+            <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-ink-950 md:text-3xl">จากความต้องการของโรงงาน<br className="hidden md:block" />สู่ระบบที่พร้อมใช้งานจริง</h2>
+            <div className="mt-6 space-y-4 font-body text-base leading-relaxed text-ink-700">
+              {ABOUT.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+            </div>
+
+            <div className="mt-9 border-t border-ink-300/70 pt-7">
+              <h3 className="font-heading text-base font-semibold text-ink-950">ความพร้อมของบริษัท</h3>
+              <ul className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                {ABOUT.capabilities.map(item => (
+                  <li key={item} className="flex items-start gap-2 font-body text-sm leading-relaxed text-ink-700">
+                    <span className="mt-0.5 shrink-0 text-brand-700"><IcoCheck /></span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <button onClick={() => setPage({ t: 'projects' })} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 font-body text-sm font-medium text-white transition-colors hover:bg-brand-900">
+                ดูผลงานที่ผ่านมา <IcoArrowRight />
+              </button>
+              <button onClick={() => setPage({ t: 'products' })} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand-700 px-5 font-body text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50">
+                ดูผลิตภัณฑ์
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-ink-100 py-16 md:py-24">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <div className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr] lg:gap-16">
+            <div>
+              <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-700">ความเชี่ยวชาญหลัก</p>
+              <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-ink-950 md:text-3xl">ระบบพลังงานและเครื่องจักรที่พัฒนาจากโจทย์จริง</h2>
+              <p className="mt-4 font-body text-sm leading-relaxed text-ink-700">บริษัทดูแลทั้งระบบผลิตความร้อน เครื่องจักรอบแห้ง และงานวิศวกรรมเชื่อมต่อเข้ากับกระบวนการเดิมของโรงงาน</p>
+            </div>
+            <div className="grid gap-5 md:grid-cols-3">
+              {ABOUT.expertise.map(item => (
+                <article key={item.label} className="flex flex-col rounded-2xl border border-ink-300/60 bg-white p-6">
+                  <p className="font-body text-xs font-semibold uppercase tracking-[0.12em] text-brand-500">{item.label}</p>
+                  <h3 className="mt-4 font-heading text-lg font-semibold leading-snug text-ink-950">{item.title}</h3>
+                  <p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{item.desc}</p>
+                  <ul className="mt-6 space-y-2 border-t border-ink-300/60 pt-5">
+                    {item.items.map(detail => (
+                      <li key={detail} className="flex items-start gap-2 font-body text-xs leading-relaxed text-ink-700">
+                        <span className="mt-0.5 shrink-0 text-brand-700"><IcoCheck /></span>
+                        <span>{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-brand-900 py-16 text-white md:py-24">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <div className="max-w-2xl">
+            <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-500">แนวทางของเรา</p>
+            <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-white md:text-3xl">หลักคิดที่ใช้กับทุกโครงการ</h2>
+            <p className="mt-3 font-body text-sm leading-relaxed text-white/65">ระบบที่เหมาะสมไม่ได้เริ่มจากขนาดเครื่องจักรเพียงอย่างเดียว แต่เริ่มจากความเข้าใจเงื่อนไขของโรงงานและเป้าหมายการใช้งาน</p>
+          </div>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {ABOUT.principles.map(item => (
+              <article key={item.label} className="rounded-2xl border border-white/15 bg-white/5 p-6 md:p-7">
+                <span className="font-heading text-sm font-semibold text-brand-500">{item.label}</span>
+                <h3 className="mt-8 font-heading text-lg font-semibold text-white">{item.title}</h3>
+                <p className="mt-3 font-body text-sm leading-relaxed text-white/65">{item.desc}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16 md:py-24">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <div className="mb-10 max-w-3xl">
+            <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-700">ประสบการณ์และอุตสาหกรรม</p>
+            <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-ink-950 md:text-3xl">ออกแบบระบบให้เหมาะกับลักษณะการใช้งานของแต่ละโรงงาน</h2>
+            <p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{ABOUT.coverageStatement}</p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="overflow-hidden rounded-2xl border border-ink-300/70">
+              {ABOUT.industries.map((industry, index) => (
+                <article key={industry.title} className={`grid gap-2 p-5 sm:grid-cols-[0.72fr_1.28fr] sm:gap-6 md:p-6 ${index < ABOUT.industries.length - 1 ? 'border-b border-ink-300/70' : ''}`}>
+                  <h3 className="font-heading text-sm font-semibold text-ink-950">{industry.title}</h3>
+                  <p className="font-body text-sm leading-relaxed text-ink-700">{industry.desc}</p>
+                </article>
+              ))}
+            </div>
+
+            <aside className="rounded-2xl bg-brand-900 p-6 text-white md:p-8">
+              <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-brand-500">ขอบเขตผลงานอ้างอิง</p>
+              <h3 className="mt-3 font-heading text-xl font-semibold">ระบบที่บริษัทมีประสบการณ์ดำเนินการ</h3>
+              <ul className="mt-6 space-y-3">
+                {ABOUT.projectTypes.map(item => (
+                  <li key={item} className="flex items-start gap-2 font-body text-sm leading-relaxed text-white/75">
+                    <span className="mt-0.5 shrink-0 text-brand-500"><IcoCheck /></span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-8 border-t border-white/15 pt-6">
+                <p className="font-heading text-sm font-semibold">พื้นที่ที่มีผลงานอ้างอิง</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {referenceProvinces.map(province => (
+                    <span key={province} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 font-body text-xs text-white/70">{province}</span>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={() => setPage({ t: 'projects' })} className="mt-8 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 font-body text-sm font-medium text-brand-900 transition-colors hover:bg-brand-50">
+                ดูผลงานทั้งหมด <IcoArrowRight />
+              </button>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-ink-100 py-16 md:py-24">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <div className="mb-10 grid gap-4 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+            <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-700">จุดเด่นของบริษัท</p>
+            <div>
+              <h2 className="font-heading text-2xl font-bold leading-snug text-ink-950 md:text-3xl">พร้อมปรับระบบให้เข้ากับโจทย์ของโรงงาน</h2>
+              <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-ink-700">เราให้ความสำคัญกับความเหมาะสมของระบบ คุณภาพงานผลิต และการดูแลให้โรงงานนำระบบไปใช้งานได้จริงอย่างต่อเนื่อง</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[1.08fr_1fr_1fr]">
+            <article className="relative overflow-hidden rounded-2xl bg-brand-900 p-7 text-white md:col-span-2 lg:col-span-1 lg:row-span-2 lg:min-h-[390px] lg:p-8">
+              <div aria-hidden="true" className="absolute -right-16 -top-16 h-52 w-52 rounded-full border border-white/10" />
+              <div aria-hidden="true" className="absolute -right-7 -top-7 h-28 w-28 rounded-full bg-brand-500/10" />
+              <div className="relative flex h-full flex-col">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="font-body text-xs font-semibold uppercase tracking-[0.16em] text-brand-500">Custom Design</p>
+                  <span className="font-heading text-xs font-semibold text-white/35">01</span>
+                </div>
+                <h3 className="mt-3 font-heading text-2xl font-semibold leading-snug">{featuredStrength.title}</h3>
+                <p className="mt-4 max-w-sm font-body text-sm leading-relaxed text-white/70">{featuredStrength.desc}</p>
+                <div className="mt-10 border-t border-white/15 pt-5 lg:mt-auto">
+                  <p className="font-body text-xs leading-relaxed text-white/55">พิจารณาจากเชื้อเพลิง พื้นที่ติดตั้ง กระบวนการผลิต และเป้าหมายของแต่ละโรงงาน</p>
+                </div>
+              </div>
+            </article>
+
+            {supportingStrengths.map((item, index) => (
+              <article key={item.title} className="group rounded-2xl border border-ink-300/70 bg-white p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-700/30 hover:shadow-lg hover:shadow-brand-900/5">
+                <span className="block text-right font-heading text-xs font-semibold text-ink-700/35">0{index + 2}</span>
+                <h3 className="mt-6 font-heading text-base font-semibold text-ink-950">{item.title}</h3>
+                <p className="mt-2 font-body text-sm leading-relaxed text-ink-700">{item.desc}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+    </main>
   )
 }
 
@@ -520,7 +815,7 @@ function Products({ onProduct, onQuote, onViewAll }: { onProduct: (p: Product) =
           <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">ผลิตภัณฑ์</div>
           <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25]">ระบบและเครื่องจักรที่ออกแบบ<br className="hidden md:block" />ตามการใช้งานจริง</h2>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
           {PRODUCTS.map(p => (
             <div key={p.id} className="bg-white rounded-2xl overflow-hidden border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col">
               <div className="aspect-[3/2] bg-ink-100 overflow-hidden">
@@ -636,7 +931,7 @@ function FeaturedProjects({ setPage }: { setPage: (p: Page) => void }) {
                 <p className="line-clamp-2 text-xs font-body leading-relaxed text-ink-700">{p.summary}</p>
                 <div className="mt-3 flex items-center justify-between text-xs font-body text-ink-700">
                   <div className="flex items-center gap-1"><IcoMapPin />{p.province}</div>
-                  <div>{p.year}</div>
+                  {p.year && <div>{p.year}</div>}
                 </div>
                 <span className="mt-3 flex items-center gap-1 border-t border-ink-300/60 pt-3 font-body text-xs font-medium text-brand-700">อ่านเพิ่มเติม <IcoArrowRight /></span>
               </div>
@@ -776,7 +1071,7 @@ function Contact({ onPrivacy }: { onPrivacy: () => void }) {
               <div className="text-center py-10" role="status" aria-live="polite">
                 <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 text-green-600"><IcoCheck /></div>
                 <h3 className="font-heading font-semibold text-ink-950 text-xl mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h3>
-                <p className="text-ink-700 text-sm font-body">{environment.demoMode && !environment.contactEndpoint ? 'ทดสอบขั้นตอนส่งข้อมูลสำเร็จแล้ว โดยยังไม่มีข้อมูลถูกส่งออกจากเว็บไซต์' : 'ทีมงานจะติดต่อกลับตามช่องทางที่คุณให้ไว้ภายใน 1 วันทำการ'}</p>
+                <p className="text-ink-700 text-sm font-body">ทีมงานจะติดต่อกลับตามช่องทางที่คุณให้ไว้ภายใน 1 วันทำการ</p>
                 <button onClick={() => { setStatus('idle'); setForm({ name: '', company: '', phone: '', email: '', topic: '', message: '', agree: false, website: '' }) }} className="mt-6 text-brand-700 text-sm font-body hover:underline">ส่งข้อมูลใหม่</button>
               </div>
             ) : (
@@ -814,18 +1109,16 @@ function Footer({ scrollTo, setPage, onPrivacy }: { scrollTo: (id: string) => vo
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <Logo light />
-            <p className="text-white/60 text-sm font-body leading-relaxed mt-4 mb-5">ผู้เชี่ยวชาญระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม</p>
-            <div className="flex gap-3">
-              <a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" aria-label="ติดต่อผ่าน LINE" className="min-w-11 min-h-11 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs font-heading font-bold text-white/70 hover:text-white transition-colors">LINE</a>
-              {COMPANY.facebookUrl ? <a href={COMPANY.facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="เปิด Facebook Page" className="flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"><IcoFacebook /></a> : <span title="รอลิงก์ Facebook จากบริษัท" aria-label="Facebook รอลิงก์จากบริษัท" className="flex min-h-11 min-w-11 cursor-not-allowed items-center justify-center rounded-lg bg-white/5 text-white/30"><IcoFacebook /></span>}
-            </div>
+            <p className="mt-2 font-body text-[11px] tracking-wide text-white/40">{COMPANY.legalNameEn}</p>
+            <p className="mt-4 font-body text-sm leading-relaxed text-white/60">ผู้เชี่ยวชาญระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม</p>
           </div>
           <div>
             <h5 className="font-heading font-semibold text-sm mb-4">เมนูหลัก</h5>
             <ul className="space-y-2.5">
-              {[['หน้าแรก', 'hero'], ['เกี่ยวกับเรา', 'about'], ['บริการ', 'services']].map(([l, id]) => (
+              {[['หน้าแรก', 'hero'], ['บริการ', 'services']].map(([l, id]) => (
                 <li key={l}><button onClick={() => scrollTo(id)} className="text-white/60 hover:text-white text-sm font-body transition-colors">{l}</button></li>
               ))}
+              <li><button onClick={() => setPage({ t: 'about' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">เกี่ยวกับเรา</button></li>
               <li><button onClick={() => setPage({ t: 'products' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">สินค้า</button></li>
             </ul>
           </div>
@@ -842,14 +1135,14 @@ function Footer({ scrollTo, setPage, onPrivacy }: { scrollTo: (id: string) => vo
           <div className="md:col-span-2 lg:col-span-2">
             <h5 className="font-heading font-semibold text-sm mb-4">แผนที่</h5>
             <div className="overflow-hidden rounded-xl border border-white/15 bg-brand-900/40">
-              <iframe title="แผนที่บริษัท ยักษ์ใหญ่ 2015" src={COMPANY.map.embedUrl} loading="lazy" referrerPolicy="no-referrer" className="h-52 w-full border-0 md:h-60" />
+              <iframe title={`แผนที่ ${COMPANY.legalNameEn}`} src={COMPANY.map.embedUrl} loading="lazy" referrerPolicy="no-referrer" className="h-52 w-full border-0 md:h-60" />
             </div>
           </div>
         </div>
       </div>
       <div className="border-t border-white/10">
         <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
-          <p className="text-white/40 text-xs font-body">© {new Date().getFullYear() + 543} บริษัท ยักษ์ใหญ่ 2015 จำกัด สงวนลิขสิทธิ์</p>
+          <p className="text-white/40 text-xs font-body">© {new Date().getFullYear() + 543} {COMPANY.legalNameEn} สงวนลิขสิทธิ์</p>
           <div className="flex gap-4">
             <button onClick={onPrivacy} className="text-white/40 hover:text-white/70 text-xs font-body transition-colors">นโยบายความเป็นส่วนตัว</button>
             <button onClick={() => setPage({ t: 'admin' })} className="text-white/40 hover:text-white/70 text-xs font-body transition-colors">ผู้ดูแลระบบ</button>
@@ -874,7 +1167,7 @@ function LineContactModal({ onClose }: { onClose: () => void }) {
         <p className="mt-2 font-body text-sm leading-relaxed text-ink-700">สแกน QR Code บนคอมพิวเตอร์ หรือกดปุ่มด้านล่างเพื่อเปิด LINE บนมือถือ</p>
 
         <div className="mx-auto mt-6 grid aspect-square w-52 place-items-center overflow-hidden rounded-2xl border border-ink-300 bg-white p-3">
-          {COMPANY.lineQrImage ? <img src={COMPANY.lineQrImage} alt="QR Code สำหรับติดต่อ LINE ยักษ์ใหญ่ 2015" className="h-full w-full object-contain" /> : <div className="grid h-full w-full place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-ink-100 p-5"><div><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#06C755] text-white"><IcoLine /></div><p className="mt-3 font-body text-xs leading-relaxed text-ink-700">พื้นที่ QR Code LINE OA<br />รอไฟล์จากบริษัท</p></div></div>}
+          {COMPANY.lineQrImage ? <img src={COMPANY.lineQrImage} alt={`QR Code สำหรับติดต่อ LINE ${COMPANY.shortName}`} className="h-full w-full object-contain" /> : <div className="grid h-full w-full place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-ink-100 p-5"><div><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#06C755] text-white"><IcoLine /></div><p className="mt-3 font-body text-xs leading-relaxed text-ink-700">พื้นที่ QR Code LINE OA<br />รอไฟล์จากบริษัท</p></div></div>}
         </div>
 
         <a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] px-5 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-[#05b34c]"><IcoLine />เปิด LINE อัตโนมัติ</a>
@@ -1007,7 +1300,7 @@ function QuoteModal({ onClose, context, onPrivacy }: { onClose: () => void; cont
           <button onClick={onClose} className="min-w-11 min-h-11 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-700 transition-colors" aria-label="ปิดแบบฟอร์ม"><IcoX /></button>
         </div>
         <div className="p-5">
-          {status === 'success' ? <div className="text-center py-8" role="status" aria-live="polite"><div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 text-green-600"><IcoCheck /></div><h4 className="font-heading font-semibold text-ink-950 text-xl mb-2">{environment.demoMode && !environment.contactEndpoint ? 'ทดสอบขั้นตอนสำเร็จแล้ว' : 'ส่งข้อมูลเรียบร้อยแล้ว'}</h4><p className="text-ink-700 text-sm font-body mb-6">{environment.demoMode && !environment.contactEndpoint ? 'นี่คือโหมดสาธิต ข้อมูลยังไม่ถูกส่งหรือจัดเก็บ' : 'ทีมงานจะติดต่อกลับโดยเร็ว'}</p><button onClick={onClose} className="bg-brand-700 text-white px-6 py-2.5 rounded-lg text-sm font-body">ปิด</button></div> : (
+          {status === 'success' ? <div className="text-center py-8" role="status" aria-live="polite"><div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 text-green-600"><IcoCheck /></div><h4 className="font-heading font-semibold text-ink-950 text-xl mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h4><p className="text-ink-700 text-sm font-body mb-6">ทีมงานจะติดต่อกลับโดยเร็ว</p><button onClick={onClose} className="bg-brand-700 text-white px-6 py-2.5 rounded-lg text-sm font-body">ปิด</button></div> : (
             <form onSubmit={handleSubmit} noValidate className="space-y-4">
               {context?.product && <div className="rounded-lg bg-brand-900/5 px-3 py-2 text-xs font-body text-brand-900">สินค้าอ้างอิง: <strong>{context.product}</strong></div>}
               {context?.project && <div className="rounded-lg bg-brand-900/5 px-3 py-2 text-xs font-body text-brand-900">โครงการอ้างอิง: <strong>{context.project}</strong></div>}
@@ -1072,10 +1365,10 @@ function ProductModal({ product: p, onClose, onQuote }: { product: Product; onCl
           </div>
 
           <div className="grid sm:grid-cols-2 gap-6 mb-8">
-            <div><h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">เชื้อเพลิงที่รองรับ</h4><div className="flex flex-wrap gap-2">{p.fuels.map(fuel => <span key={fuel} className="bg-brand-900/5 text-brand-700 text-xs font-body px-3 py-1.5 rounded-full">{fuel}</span>)}</div></div>
-            <div><h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">เหมาะกับ</h4><p className="text-ink-700 text-sm font-body leading-relaxed">โรงงานที่ต้องการใช้ความร้อนอย่างต่อเนื่องและต้องประเมินตามชนิดเชื้อเพลิง พื้นที่ติดตั้ง และกระบวนการผลิตจริง</p></div>
+            <div><h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">{p.supportLabel}</h4><div className="flex flex-wrap gap-2">{p.supportItems.map(item => <span key={item} className="bg-brand-900/5 text-brand-700 text-xs font-body px-3 py-1.5 rounded-full">{item}</span>)}</div></div>
+            <div><h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">เหมาะกับ</h4><p className="text-ink-700 text-sm font-body leading-relaxed">{p.suitableFor}</p></div>
           </div>
-          <div className="mb-8 rounded-xl bg-ink-100 p-4"><h4 className="font-heading font-semibold text-ink-950 text-sm mb-2">หลักการทำงาน</h4><p className="text-ink-700 text-sm font-body leading-relaxed">ทีมวิศวกรประเมินเชื้อเพลิง ความต้องการความร้อน และข้อจำกัดของโรงงาน เพื่อนำไปออกแบบระบบ ควบคุมการทำงาน และทดสอบก่อนส่งมอบ</p></div>
+          <div className="mb-8 rounded-xl bg-ink-100 p-4"><h4 className="font-heading font-semibold text-ink-950 text-sm mb-2">หลักการทำงาน</h4><p className="text-ink-700 text-sm font-body leading-relaxed">{p.workingPrinciple}</p></div>
           <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-ink-300/60">
             <button onClick={onQuote} className="flex-1 bg-energy-600 hover:bg-energy-400 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">ขอใบเสนอราคาสำหรับสินค้านี้</button>
             <span title="รออัปโหลดเอกสารที่ผ่านการตรวจสอบ" className="inline-flex items-center justify-center gap-1.5 border border-ink-300 text-ink-700/60 px-4 py-3 rounded-lg font-body text-sm cursor-not-allowed"><IcoDownload />PDF รออัปโหลด</span>
@@ -1097,7 +1390,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
   const normalizedQuery = query.trim().toLocaleLowerCase('th')
   const filteredProducts = PRODUCTS
     .filter(product => {
-      const searchable = `${product.name} ${product.subtitle} ${product.desc} ${product.category} ${product.fuels.join(' ')} ${product.highlights.join(' ')}`.toLocaleLowerCase('th')
+      const searchable = `${product.name} ${product.subtitle} ${product.desc} ${product.category} ${product.supportItems.join(' ')} ${product.highlights.join(' ')}`.toLocaleLowerCase('th')
       return (category === 'ทั้งหมด' || product.category === category) && (!normalizedQuery || searchable.includes(normalizedQuery))
     })
     .sort((a, b) => {
@@ -1204,7 +1497,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
 
                     <div className="mt-auto pt-5">
                       <div className="mb-4 flex items-center justify-between border-t border-ink-300/60 pt-4">
-                        <p className="font-body text-[11px] text-ink-700/60">รองรับเชื้อเพลิง {product.fuels.length} ประเภท</p>
+                        <p className="font-body text-[11px] text-ink-700/60">{product.catalogNote}</p>
                         <button onClick={() => onProduct(product)} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-2 font-body text-xs font-medium text-brand-700 hover:bg-brand-50">ดูรายละเอียด <IcoArrowRight /></button>
                       </div>
                       <button onClick={() => onQuote(product)} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-energy-600 px-5 py-2.5 font-body text-sm font-medium text-white transition-colors hover:bg-energy-400">ขอใบเสนอราคา</button>
@@ -1277,7 +1570,7 @@ function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
                   <div className="mb-2 flex flex-wrap items-center gap-2 font-body text-xs text-white/70">
                     <span className="rounded-full bg-white/15 px-2.5 py-1 backdrop-blur-sm">{project.industry}</span>
                     <span className="inline-flex items-center gap-1"><IcoMapPin />{project.province}</span>
-                    <span>{project.year}</span>
+                    {project.year && <span>{project.year}</span>}
                   </div>
                   <h3 className="font-heading text-lg font-semibold leading-snug text-white md:text-xl">{project.name}</h3>
                   <div className="mt-2 flex items-center justify-between gap-4">
@@ -1354,7 +1647,7 @@ function ProjectDetailPage({ p, setPage, onQuote }: { p: Project; setPage: (page
       </div>
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
-          {[{ l: 'จังหวัด', v: p.province }, { l: 'ประเภทโรงงาน', v: p.industry }, { l: 'ระบบที่ติดตั้ง', v: p.system }, { l: 'ปีที่ติดตั้ง', v: String(p.year) }].map(i => (
+          {[{ l: 'จังหวัด', v: p.province }, { l: 'ประเภทโรงงาน', v: p.industry }, { l: 'ระบบที่ติดตั้ง', v: p.system }, ...(p.year ? [{ l: 'ปีที่ติดตั้ง', v: String(p.year) }] : [])].map(i => (
             <div key={i.l} className="bg-ink-100 rounded-xl p-4">
               <div className="text-xs font-body text-ink-700 mb-1">{i.l}</div>
               <div className="font-heading font-semibold text-ink-950 text-sm">{i.v}</div>
@@ -1402,7 +1695,7 @@ function NewsListPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
   const featured = NEWS[0]
 
   return (
-    <main className="min-h-screen pt-20"><div className="bg-brand-900 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจากยักษ์ใหญ่ 2015</p></div></div>
+    <main className="min-h-screen pt-20"><div className="bg-brand-900 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจาก {COMPANY.shortName}</p></div></div>
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
         <section aria-labelledby="featured-news-heading" className="mb-10"><p className="text-sm font-body font-medium tracking-widest uppercase text-brand-700">บทความแนะนำ</p><button onClick={() => setPage({ t: 'article', a: featured })} className="group mt-3 grid overflow-hidden rounded-2xl border border-ink-300/60 bg-white text-left md:grid-cols-2 hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video overflow-hidden bg-ink-100"><img src={featured.image} alt={featured.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /></div><div className="p-6 md:p-8"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-brand-900/10 px-2.5 py-1 font-body text-xs text-brand-700">{featured.category}</span><span className="font-body text-xs text-ink-700/60">{featured.date}</span></div><h2 id="featured-news-heading" className="mt-4 font-heading text-xl font-semibold leading-snug text-ink-950 group-hover:text-brand-700 md:text-2xl">{featured.title}</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{featured.excerpt}</p><span className="mt-5 inline-flex items-center gap-1 font-body text-sm font-medium text-brand-700">อ่านบทความ <IcoArrowRight /></span></div></button></section>
         <div className="flex flex-wrap gap-2 mb-8" aria-label="กรองหมวดหมู่">{cats.map(category => <button key={category} onClick={() => setCat(category)} aria-pressed={cat === category} className={`px-4 py-2 rounded-full text-sm font-body transition-colors ${cat === category ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-700 hover:bg-ink-300/60'}`}>{category}</button>)}</div>
@@ -1535,7 +1828,23 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0)
     setScrolled(false)
-    document.title = titleForPage(page)
+    const title = titleForPage(page)
+    const description = descriptionForPage(page)
+    document.title = title
+
+    const setMetaContent = (selector: string, attributes: Record<string, string>) => {
+      let element = document.head.querySelector<HTMLMetaElement>(selector)
+      if (!element) {
+        element = document.createElement('meta')
+        Object.entries(attributes).forEach(([key, value]) => element?.setAttribute(key, value))
+        document.head.appendChild(element)
+      }
+      element.setAttribute('content', attributes.content)
+    }
+
+    setMetaContent('meta[name="description"]', { name: 'description', content: description })
+    setMetaContent('meta[property="og:title"]', { property: 'og:title', content: title })
+    setMetaContent('meta[property="og:description"]', { property: 'og:description', content: description })
   }, [page])
 
   useEffect(() => {
@@ -1584,14 +1893,14 @@ export default function App() {
   if (page.t === 'not-found') return <NotFoundPage onHome={() => navigate({ t: 'home' })} />
   if (page.t === 'admin') return <AdminPortal onExit={() => navigate({ t: 'home' })} />
 
-  const isHome = page.t === 'home'
   return (
     <div className="min-h-screen">
-      <Header scrolled={scrolled} isHome={isHome} setPage={navigate} onQuote={() => openQuote()} />
+      <Header scrolled={scrolled} page={page} setPage={navigate} onQuote={() => openQuote()} />
       {page.t === 'home' && <>
         <Hero onQuote={() => openQuote()} onProducts={() => navigate({ t: 'products' })} onVideo={HERO_VIDEO_URL ? () => setVideoOpen(true) : undefined} />
-        <TrustBar /><About onLearnMore={() => navigate({ t: 'products' })} /><Products onProduct={setSelectedProduct} onQuote={() => openQuote()} onViewAll={() => navigate({ t: 'products' })} /><Industries /><WhyUs /><FeaturedProjects setPage={navigate} /><LatestNews setPage={navigate} /><QuoteCTA onQuote={() => openQuote()} /><Contact onPrivacy={() => navigate({ t: 'privacy' })} />
+        <TrustBar /><About onLearnMore={() => navigate({ t: 'about' })} /><Products onProduct={setSelectedProduct} onQuote={() => openQuote()} onViewAll={() => navigate({ t: 'products' })} /><Industries /><WhyUs /><FeaturedProjects setPage={navigate} /><LatestNews setPage={navigate} /><QuoteCTA onQuote={() => openQuote()} /><Contact onPrivacy={() => navigate({ t: 'privacy' })} />
       </>}
+      {page.t === 'about' && <AboutPage setPage={navigate} />}
       {page.t === 'products' && <ProductsPage setPage={navigate} onProduct={setSelectedProduct} onQuote={product => openQuote(product ? { product: product.name } : undefined)} />}
       {page.t === 'projects' && <ProjectsPage setPage={navigate} onQuote={() => openQuote()} />}
       {page.t === 'project' && <ProjectDetailPage p={page.p} setPage={navigate} onQuote={() => openQuote({ project: page.p.name })} />}

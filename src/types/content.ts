@@ -14,7 +14,11 @@ export interface Product {
   image: string
   highlights: string[]
   specs: ProductSpecification[]
-  fuels: string[]
+  supportLabel: string
+  supportItems: string[]
+  catalogNote: string
+  suitableFor: string
+  workingPrinciple: string
 }
 
 export interface Project {
@@ -23,7 +27,7 @@ export interface Project {
   name: string
   province: string
   industry: string
-  year: number
+  year?: number
   system: string
   summary: string
   image: string
@@ -73,4 +77,29 @@ export interface WhyUsItem {
   icon: string
   title: string
   desc: string
+}
+
+export interface AboutContent {
+  eyebrow: string
+  title: string
+  summary: string
+  paragraphs: string[]
+  expertise: Array<{
+    label: string
+    title: string
+    desc: string
+    items: string[]
+  }>
+  principles: Array<{
+    label: string
+    title: string
+    desc: string
+  }>
+  capabilities: string[]
+  industries: Array<{
+    title: string
+    desc: string
+  }>
+  projectTypes: string[]
+  coverageStatement: string
 }

@@ -1,15 +1,15 @@
+import { COMPANY } from "./config/company"
+
 interface LegalPageProps {
   onHome: () => void
 }
 
 function BrandMark() {
   return (
-    <div className="flex items-center gap-2.5" aria-label="ยักษ์ใหญ่ 2015">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-900 font-heading text-sm font-bold text-white" aria-hidden="true">
-        YY
-      </span>
+    <div className="flex items-center gap-2.5" aria-label={COMPANY.shortName}>
+      <img src={COMPANY.logoPath} alt="" width="44" height="44" className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-900/10" />
       <span>
-        <span className="block font-heading text-sm font-semibold leading-tight text-brand-900">ยักษ์ใหญ่ 2015</span>
+        <span className="block font-brand text-base font-bold leading-tight tracking-[0.06em] text-brand-900">{COMPANY.shortName}</span>
       </span>
     </div>
   )
@@ -36,7 +36,7 @@ function SiteHeader({ onHome }: LegalPageProps) {
           type="button"
           onClick={onHome}
           className="rounded-lg text-left focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"
-          aria-label="กลับสู่หน้าแรกของยักษ์ใหญ่ 2015"
+          aria-label={`กลับสู่หน้าแรกของ ${COMPANY.shortName}`}
         >
           <BrandMark />
         </button>

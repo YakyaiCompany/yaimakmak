@@ -1,10 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Saira+Semi+Condensed:wght@600;700&display=swap');
 @import 'tailwindcss';
 
 @theme {
   --font-sans: 'Noto Sans Thai', sans-serif;
   --font-heading: 'Noto Sans Thai', sans-serif;
   --font-body: 'Noto Sans Thai', sans-serif;
+  --font-brand: 'Saira Semi Condensed', sans-serif;
   --color-brand-900: #143D32;
   --color-brand-700: #246B50;
   --color-brand-500: #3E8B68;

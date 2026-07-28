@@ -1,6 +1,8 @@
 export const COMPANY = {
-  name: "บริษัท ยักษ์ใหญ่ 2015 จำกัด",
-  shortName: "ยักษ์ใหญ่ 2015",
+  name: "YAKYAI 2015 CO., LTD.",
+  legalNameEn: "YAKYAI 2015 CO., LTD.",
+  shortName: "YAKYAI 2015",
+  logoPath: "/assets/brand/yakyai-2015-logo.png",
   publicAddress: "199 หมู่ 3 อ.โชคชัย จ.นครราชสีมา 30190",
   phone: "081-234-5678",
   phoneHref: "tel:+66812345678",
