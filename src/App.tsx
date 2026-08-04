@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import AdminPortal from './AdminPortal'
+
 import { NotFoundPage, PrivacyPolicyPage } from './LegalPages'
 import { COMPANY } from './config/company'
 import DownloadsPage from './pages/DownloadsPage'
@@ -19,7 +19,6 @@ type Page =
   | { t: 'project'; p: Project }
   | { t: 'article'; a: Article }
   | { t: 'privacy' }
-  | { t: 'admin' }
   | { t: 'not-found' }
 
 
@@ -59,7 +58,6 @@ function pageFromPath(pathname: string): Page {
   if (path === '/news') return { t: 'news' }
   if (path === '/downloads') return { t: 'downloads' }
   if (path === '/privacy-policy') return { t: 'privacy' }
-  if (path === '/admin' || path.startsWith('/admin/')) return { t: 'admin' }
 
   const projectMatch = path.match(/^\/projects\/([^/]+)$/)
   if (projectMatch) {
@@ -87,7 +85,6 @@ function pathForPage(page: Page) {
     case 'downloads': return '/downloads'
     case 'article': return `/news/${page.a.slug}`
     case 'privacy': return '/privacy-policy'
-    case 'admin': return '/admin'
     case 'not-found': return '/404'
   }
 }
@@ -104,7 +101,6 @@ function titleForPage(page: Page) {
     case 'article': return `${page.a.title} | ${suffix}`
     case 'downloads': return `เอกสารดาวน์โหลด | ${suffix}`
     case 'privacy': return `นโยบายความเป็นส่วนตัว | ${suffix}`
-    case 'admin': return `ระบบจัดการเนื้อหา | ${suffix}`
     case 'not-found': return `ไม่พบหน้า | ${suffix}`
   }
 }
@@ -129,8 +125,6 @@ function descriptionForPage(page: Page) {
       return `ดาวน์โหลดโบรชัวร์ แคตตาล็อก ข้อมูลผลิตภัณฑ์ และเอกสารแนะนำบริษัท ${COMPANY.shortName}`
     case 'privacy':
       return `นโยบายความเป็นส่วนตัวของ ${COMPANY.legalNameEn}`
-    case 'admin':
-      return `ระบบจัดการเนื้อหาของ ${COMPANY.shortName}`
     case 'not-found':
       return 'ไม่พบหน้าที่คุณกำลังค้นหา'
   }
@@ -1145,7 +1139,6 @@ function Footer({ scrollTo, setPage, onPrivacy }: { scrollTo: (id: string) => vo
           <p className="text-white/40 text-xs font-body">© {new Date().getFullYear() + 543} {COMPANY.legalNameEn} สงวนลิขสิทธิ์</p>
           <div className="flex gap-4">
             <button onClick={onPrivacy} className="text-white/40 hover:text-white/70 text-xs font-body transition-colors">นโยบายความเป็นส่วนตัว</button>
-            <button onClick={() => setPage({ t: 'admin' })} className="text-white/40 hover:text-white/70 text-xs font-body transition-colors">ผู้ดูแลระบบ</button>
           </div>
         </div>
       </div>
@@ -1891,7 +1884,6 @@ export default function App() {
 
   if (page.t === 'privacy') return <PrivacyPolicyPage onHome={() => navigate({ t: 'home' })} />
   if (page.t === 'not-found') return <NotFoundPage onHome={() => navigate({ t: 'home' })} />
-  if (page.t === 'admin') return <AdminPortal onExit={() => navigate({ t: 'home' })} />
 
   return (
     <div className="min-h-screen">

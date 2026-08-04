@@ -103,8 +103,6 @@ type DiscoverySettings = {
   allowIndexing: boolean;
 };
 const focusRing = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700";
-const demoEmail = "admin@yakyai2015.co.th";
-const demoPassword = "admin2015";
 
 const navItems: Array<{ id: Screen; label: string }> = [
   { id: "dashboard", label: "ภาพรวม" },
@@ -297,48 +295,15 @@ function PageHeading({ eyebrow, title, children }: { eyebrow: string; title: str
   );
 }
 
-function MockLogin({ onLogin, onExit }: { onLogin: () => void; onExit: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const submit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (email.trim().toLowerCase() !== demoEmail || password !== demoPassword) {
-      setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-      return;
-    }
-    setError("");
-    onLogin();
-  };
-
+function MockLogin({ onExit }: { onExit: () => void }) {
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 font-sans text-slate-800 sm:grid sm:place-items-center">
       <section className="mx-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5 sm:p-8">
         <img src={COMPANY.logoPath} alt="" width="48" height="48" className="h-11 w-11 rounded-full object-cover ring-2 ring-brand-700/10" />
         <p className="mt-6 text-xs font-bold tracking-[0.16em] text-brand-700 uppercase">ระบบจัดการเนื้อหา</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">เข้าสู่ระบบผู้ดูแล</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-500">เข้าสู่ระบบเพื่อจัดการผลงาน ข่าวสาร สินค้า เอกสาร และข้อความจากลูกค้า</p>
-
-        <div className="mt-6 rounded-2xl border border-brand-700/15 bg-brand-900/5 p-4 text-sm leading-6 text-brand-900">
-          <p className="font-semibold">บัญชีสำหรับเข้าชมระบบ</p>
-          <p className="mt-1">อีเมล: {demoEmail}</p>
-          <p>รหัสผ่าน: {demoPassword}</p>
-        </div>
-
-        <form className="mt-6 space-y-4" onSubmit={submit} noValidate>
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">อีเมล</span>
-            <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="admin@yakyai2015.co.th" className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 ${focusRing}`} />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">รหัสผ่าน</span>
-            <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="กรอกรหัสผ่าน" className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 ${focusRing}`} />
-          </label>
-          {error && <p role="alert" className="rounded-xl bg-rose-50 px-3 py-2.5 text-sm text-rose-700">{error}</p>}
-          <button type="submit" className={`w-full rounded-xl bg-brand-700 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-900 ${focusRing}`}>เข้าสู่ระบบ</button>
-        </form>
-        <button type="button" onClick={onExit} className={`mt-4 w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 ${focusRing}`}>กลับสู่เว็บไซต์</button>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">ยังไม่เปิดให้ใช้งาน</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-500">ระบบจัดการเนื้อหาจะเปิดใช้งานหลังเชื่อมต่อการยืนยันตัวตนและ API ฝั่งเซิร์ฟเวอร์อย่างปลอดภัยแล้ว</p>
+        <button type="button" onClick={onExit} className={`mt-6 w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 ${focusRing}`}>กลับสู่เว็บไซต์</button>
       </section>
     </main>
   );
@@ -1104,7 +1069,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
   };
 
   if (!isAuthenticated) {
-    return <MockLogin onLogin={() => setIsAuthenticated(true)} onExit={onExit} />;
+    return <MockLogin onExit={onExit} />;
   }
 
   const page = screen === "dashboard"
