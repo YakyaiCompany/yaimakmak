@@ -90,18 +90,18 @@ function pathForPage(page: Page) {
 }
 
 function titleForPage(page: Page) {
-  const suffix = COMPANY.legalNameEn
+  const siteName = 'yakyai2015'
   switch (page.t) {
-    case 'home': return `${suffix} | ระบบพลังงานชีวมวลอุตสาหกรรม`
-    case 'about': return `เกี่ยวกับเรา | ${suffix}`
-    case 'products': return `ผลิตภัณฑ์ | ${suffix}`
-    case 'projects': return `ผลงาน | ${suffix}`
-    case 'project': return `${page.p.name} | ${suffix}`
-    case 'news': return `ข่าวสารและบทความ | ${suffix}`
-    case 'article': return `${page.a.title} | ${suffix}`
-    case 'downloads': return `เอกสารดาวน์โหลด | ${suffix}`
-    case 'privacy': return `นโยบายความเป็นส่วนตัว | ${suffix}`
-    case 'not-found': return `ไม่พบหน้า | ${suffix}`
+    case 'home': return `ระบบพลังงานชีวมวลอุตสาหกรรม | ${siteName}`
+    case 'about': return `เกี่ยวกับเรา | ${siteName}`
+    case 'products': return `ผลิตภัณฑ์ | ${siteName}`
+    case 'projects': return `ผลงาน | ${siteName}`
+    case 'project': return `${page.p.name} | ${siteName}`
+    case 'news': return `ข่าวสารและบทความ | ${siteName}`
+    case 'article': return `${page.a.title} | ${siteName}`
+    case 'downloads': return `เอกสารดาวน์โหลด | ${siteName}`
+    case 'privacy': return `นโยบายความเป็นส่วนตัว | ${siteName}`
+    case 'not-found': return `ไม่พบหน้า | ${siteName}`
   }
 }
 
@@ -288,13 +288,13 @@ function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
 function Logo({ light = false }: { light?: boolean }) {
   return (
     <div className="group flex items-center gap-3">
-      <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full transition-transform duration-300 group-hover:scale-[1.03]">
+      <span className="relative flex h-12 w-12 shrink-0 items-center justify-center transition-transform duration-300 group-hover:scale-[1.03]">
         <img
-          src={COMPANY.logoPath}
-          alt=""
+          src="/assets/brand/yakyai2015-favicon.png"
+          alt={`โลโก้ ${COMPANY.shortName}`}
           width="52"
           height="52"
-          className="h-full w-full scale-[1.14] rounded-full object-cover"
+          className="h-full w-full object-contain"
         />
       </span>
       <span className={`block whitespace-nowrap font-brand text-[17px] font-bold leading-none tracking-[0.075em] ${light ? 'text-white' : 'text-brand-900'}`}>{COMPANY.shortName}</span>
@@ -303,12 +303,11 @@ function Logo({ light = false }: { light?: boolean }) {
 }
 
 /* ─── HEADER ─────────────────────────────────────── */
-function Header({ scrolled, page, setPage, onQuote }: { scrolled: boolean; page: Page; setPage: (p: Page) => void; onQuote: () => void }) {
+function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => void; onQuote: () => void }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const isHome = page.t === 'home'
-  const isLight = isHome && !scrolled
+
 
   const navLinks: Array<{ label: string; id?: string; page?: Page }> = [
     { label: 'หน้าแรก', id: 'hero' },
@@ -330,9 +329,7 @@ function Header({ scrolled, page, setPage, onQuote }: { scrolled: boolean; page:
   }
 
   const desktopLinkClass = (active: boolean) => `whitespace-nowrap rounded-lg px-3 py-2 font-body text-sm transition-colors ${
-    isLight
-      ? active ? 'bg-white/15 text-white' : 'text-white/90 hover:bg-white/10 hover:text-white'
-      : active ? 'bg-brand-50 text-brand-900' : 'text-ink-700 hover:bg-ink-100 hover:text-brand-900'
+    active ? 'bg-white/15 text-white' : 'text-white/90 hover:bg-white/10 hover:text-white'
   }`
 
   const mobileLinkClass = (active: boolean) => `rounded-lg px-4 py-3 text-left font-body text-sm transition-colors ${
@@ -374,10 +371,10 @@ function Header({ scrolled, page, setPage, onQuote }: { scrolled: boolean; page:
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isLight ? 'bg-transparent' : 'bg-white shadow-sm'}`}>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-brand-900/95 shadow-sm backdrop-blur-sm transition-all duration-300">
         <div className="max-w-[1200px] mx-auto px-5 md:px-8 h-16 md:h-18 flex items-center justify-between">
           <button onClick={() => scrollTo('hero')} className="cursor-pointer rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400" aria-label="กลับสู่หน้าแรก">
-            <Logo light={isLight} />
+            <Logo light />
           </button>
 
           {/* Desktop nav */}
@@ -404,7 +401,7 @@ function Header({ scrolled, page, setPage, onQuote }: { scrolled: boolean; page:
             <button onClick={onQuote} className="hidden xl:flex items-center gap-2 bg-energy-600 hover:bg-energy-400 text-white text-sm font-body px-4 py-2.5 rounded-lg transition-colors duration-200">
               ขอใบเสนอราคา
             </button>
-            <button ref={menuButtonRef} onClick={() => setMobileOpen(true)} className={`xl:hidden min-w-11 min-h-11 p-2 rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400 ${isLight ? 'text-white' : 'text-ink-950'}`} aria-label="เปิดเมนู" aria-expanded={mobileOpen} aria-controls="mobile-navigation">
+            <button ref={menuButtonRef} onClick={() => setMobileOpen(true)} className="xl:hidden min-w-11 min-h-11 rounded-lg p-2 text-white focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400" aria-label="เปิดเมนู" aria-expanded={mobileOpen} aria-controls="mobile-navigation">
               <IcoMenu />
             </button>
           </div>
@@ -1787,7 +1784,6 @@ function ArticleDetailPage({ a, setPage, onQuote }: { a: Article; setPage: (p: P
 
 /* ─── APP ────────────────────────────────────────── */
 export default function App() {
-  const [scrolled, setScrolled] = useState(false)
   const [quoteOpen, setQuoteOpen] = useState(false)
   const [quoteContext, setQuoteContext] = useState<{ product?: string; project?: string }>()
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -1807,22 +1803,16 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50)
     const handlePopState = () => setPage(pageFromPath(window.location.pathname))
-    handleScroll()
-    window.addEventListener('scroll', handleScroll, { passive: true })
     window.addEventListener('popstate', handlePopState)
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-      window.removeEventListener('popstate', handlePopState)
-    }
+    return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    setScrolled(false)
     const title = titleForPage(page)
     const description = descriptionForPage(page)
+    const pageUrl = new URL(pathForPage(page), window.location.origin).toString()
     document.title = title
 
     const setMetaContent = (selector: string, attributes: Record<string, string>) => {
@@ -1835,9 +1825,20 @@ export default function App() {
       element.setAttribute('content', attributes.content)
     }
 
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+    if (!canonical) {
+      canonical = document.createElement('link')
+      canonical.setAttribute('rel', 'canonical')
+      document.head.appendChild(canonical)
+    }
+    canonical.setAttribute('href', pageUrl)
+
     setMetaContent('meta[name="description"]', { name: 'description', content: description })
     setMetaContent('meta[property="og:title"]', { property: 'og:title', content: title })
     setMetaContent('meta[property="og:description"]', { property: 'og:description', content: description })
+    setMetaContent('meta[property="og:url"]', { property: 'og:url', content: pageUrl })
+    setMetaContent('meta[name="twitter:title"]', { name: 'twitter:title', content: title })
+    setMetaContent('meta[name="twitter:description"]', { name: 'twitter:description', content: description })
   }, [page])
 
   useEffect(() => {
@@ -1887,7 +1888,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <Header scrolled={scrolled} page={page} setPage={navigate} onQuote={() => openQuote()} />
+      <Header page={page} setPage={navigate} onQuote={() => openQuote()} />
       {page.t === 'home' && <>
         <Hero onQuote={() => openQuote()} onProducts={() => navigate({ t: 'products' })} onVideo={HERO_VIDEO_URL ? () => setVideoOpen(true) : undefined} />
         <TrustBar /><About onLearnMore={() => navigate({ t: 'about' })} /><Products onProduct={setSelectedProduct} onQuote={() => openQuote()} onViewAll={() => navigate({ t: 'products' })} /><Industries /><WhyUs /><FeaturedProjects setPage={navigate} /><LatestNews setPage={navigate} /><QuoteCTA onQuote={() => openQuote()} /><Contact onPrivacy={() => navigate({ t: 'privacy' })} />

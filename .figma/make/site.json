@@ -1,9 +1,9 @@
 {
-  "title": "บริษัท ยักษ์ใหญ่ 2015 จำกัด | Industrial Biomass Engineering",
+  "title": "ระบบพลังงานชีวมวลอุตสาหกรรม | yakyai2015",
   "language": "th",
   "description": "ผู้เชี่ยวชาญระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม",
   "robots": {
-    "index": false
+    "index": true
   },
   "accessibility": {
     "addBypassLinks": false,
