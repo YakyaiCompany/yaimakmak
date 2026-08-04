@@ -13,9 +13,11 @@ function readOptionalPublicValue(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined
 }
 
+const localApiBaseUrl = import.meta.env.DEV ? "http://localhost:3000/api/v1" : undefined
+
 export const environment: Readonly<PublicEnvironmentConfig> = Object.freeze({
   contactEndpoint: readOptionalPublicValue(import.meta.env.VITE_CONTACT_ENDPOINT),
-  cmsApiBaseUrl: readOptionalPublicValue(import.meta.env.VITE_CMS_API_BASE_URL),
+  cmsApiBaseUrl: readOptionalPublicValue(import.meta.env.VITE_CMS_API_BASE_URL) ?? localApiBaseUrl,
   heroVideoUrl: readOptionalPublicValue(import.meta.env.VITE_HERO_VIDEO_URL),
   demoMode: import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE === "true",
 })

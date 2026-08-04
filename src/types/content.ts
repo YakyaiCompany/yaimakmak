@@ -6,7 +6,8 @@ export interface ProductSpecification {
 }
 
 export interface Product {
-  id: number
+  id: string | number
+  slug?: string
   category: string
   name: string
   subtitle: string
@@ -22,7 +23,7 @@ export interface Product {
 }
 
 export interface Project {
-  id: number
+  id: string | number
   slug: string
   name: string
   province: string
@@ -36,11 +37,11 @@ export interface Project {
   solution: string
   scope: string[]
   result: string
-  relatedProductId: number
+  relatedProductId: string | number
 }
 
 export interface Article {
-  id: number
+  id: string | number
   slug: string
   title: string
   category: string

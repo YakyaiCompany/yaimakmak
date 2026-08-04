@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { NotFoundPage, PrivacyPolicyPage } from './LegalPages'
-import { COMPANY } from './config/company'
-import DownloadsPage from './pages/DownloadsPage'
 import { environment } from './config/environment'
-import { ABOUT, INDUSTRIES, NEWS, PRODUCTS, PROJECTS, SERVICES, WHY_US } from './data/siteContent'
 import { postJson } from './lib/api'
+import {
+  fallbackSiteContent,
+  loadArticleDetail,
+  loadProjectDetail,
+  loadSiteContent,
+  type SiteContent,
+} from './lib/content-api'
+import DownloadsPage from './pages/DownloadsPage'
 import type { Article, IndustryIconName, Product, Project } from './types/content'
 
 /* ─── ROUTE TYPES ─────────────────────────── */
@@ -21,13 +26,31 @@ type Page =
   | { t: 'privacy' }
   | { t: 'not-found' }
 
+// Existing page components share these names. App updates the bindings before
+// rendering so legacy UI continues to work while its data comes from the CMS.
+let COMPANY = fallbackSiteContent.company
+let ABOUT = fallbackSiteContent.about
+let HOME = fallbackSiteContent.home
+let PRODUCTS = fallbackSiteContent.products
+let PROJECTS = fallbackSiteContent.projects
+let NEWS = fallbackSiteContent.news
+let INDUSTRIES = fallbackSiteContent.industries
+let SERVICES = fallbackSiteContent.services
+let WHY_US = fallbackSiteContent.whyUs
+let DOWNLOADS = fallbackSiteContent.downloads
 
-
-
-
-
-
-
+function bindSiteContent(content: SiteContent) {
+  COMPANY = content.company
+  ABOUT = content.about
+  HOME = content.home
+  PRODUCTS = content.products
+  PROJECTS = content.projects
+  NEWS = content.news
+  INDUSTRIES = content.industries
+  SERVICES = content.services
+  WHY_US = content.whyUs
+  DOWNLOADS = content.downloads
+}
 
 function safeVideoUrl(value: string | undefined) {
   if (!value) return null
@@ -130,22 +153,61 @@ function descriptionForPage(page: Page) {
   }
 }
 
+function isEmail(value: string) {
+  return /^\S+@\S+\.\S+$/.test(value)
+}
+
+function publicApiEndpoint(path: string) {
+  const baseUrl = environment.cmsApiBaseUrl?.replace(/\/+$/, '')
+  return baseUrl ? `${baseUrl}${path}` : undefined
+}
+
 async function submitLead(kind: 'contact' | 'quote', payload: Record<string, unknown>) {
-  if (!environment.contactEndpoint) {
+  const endpoint = publicApiEndpoint(`/public/leads/${kind}`)
+  if (!endpoint) {
     if (environment.demoMode) {
       await new Promise(resolve => window.setTimeout(resolve, 450))
       return
     }
-    throw new Error('ยังไม่ได้ตั้งค่าปลายทางรับข้อมูล กรุณาติดต่อบริษัทผ่านโทรศัพท์หรือ LINE')
+    throw new Error('ยังไม่ได้กำหนดปลายทางรับข้อมูล กรุณาติดต่อบริษัทผ่านโทรศัพท์หรือ LINE')
   }
 
-  const { agree, ...lead } = payload
-  const message = typeof lead.message === 'string' ? lead.message : typeof lead.detail === 'string' ? lead.detail : ''
+  const contact = typeof payload.email === 'string'
+    ? payload.email.trim()
+    : typeof payload.contact === 'string' ? payload.contact.trim() : ''
+  const systemName = typeof payload.system === 'string' ? payload.system : ''
+  const referenceName = typeof payload.reference === 'string' ? payload.reference : ''
+  const selectedProduct = PRODUCTS.find(product => product.name === systemName)
+  const referencedProject = PROJECTS.find(project => project.name === referenceName)
+  const message = typeof payload.message === 'string'
+    ? payload.message.trim()
+    : typeof payload.detail === 'string' ? payload.detail.trim() : ''
+  const common = {
+    name: typeof payload.name === 'string' ? payload.name.trim() : '',
+    company: typeof payload.company === 'string' ? payload.company.trim() || undefined : undefined,
+    phone: typeof payload.phone === 'string' ? payload.phone.trim() || undefined : undefined,
+    email: isEmail(contact) ? contact : undefined,
+    lineId: contact && !isEmail(contact) ? contact : undefined,
+    message: message || 'ขอให้ทีมงานติดต่อกลับเพื่อประเมินความต้องการ',
+    consent: payload.agree === true,
+    honeypot: typeof payload.website === 'string' ? payload.website : undefined,
+    privacyPolicyVersion: 'website-v1',
+    source: `website-${kind}`,
+  }
 
-  await postJson<{ data: { id: string; status: string } }, Record<string, unknown>>(
-    environment.contactEndpoint,
-    { kind, ...lead, message, consent: agree === true },
-  )
+  const body = kind === 'quote'
+    ? {
+        ...common,
+        productSlug: selectedProduct?.slug,
+        referenceProjectSlug: referencedProject?.slug,
+        projectType: typeof payload.factory === 'string' ? payload.factory.trim() || undefined : undefined,
+      }
+    : {
+        ...common,
+        topic: typeof payload.topic === 'string' ? payload.topic.trim() || undefined : undefined,
+      }
+
+  await postJson<{ data: { id: string; status: string } }, typeof body>(endpoint, body)
 }
 
 /* ─── ICON COMPONENTS ────────────────────────────── */
@@ -450,36 +512,38 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
 
 /* ─── HERO ───────────────────────────────────────── */
 function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProducts: () => void; onVideo?: () => void }) {
+  const { hero } = HOME
+
   return (
     <section id="hero" className="relative flex min-h-[calc(100svh-4rem)] items-center lg:min-h-[calc(100svh-5rem)]">
       <div className="absolute inset-0 bg-brand-900">
-        <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&h=1080&fit=crop&auto=format" alt="โรงงานอุตสาหกรรม" className="w-full h-full object-cover opacity-30" />
-        <div className="absolute inset-0 bg-brand-900/50" />
-        <div className="absolute inset-0 bg-linear-to-b from-brand-900/65 via-brand-900/45 to-brand-900/55 md:bg-linear-to-r" />
+        <img src={hero.image.url} alt={hero.image.alt} className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-brand-900/55" />
+        <div className="absolute inset-0 bg-linear-to-b from-brand-900/90 via-brand-900/75 to-brand-900/65 md:bg-linear-to-r" />
       </div>
       <div className="relative z-10 max-w-[1200px] mx-auto px-5 md:px-8 pt-24 pb-20 w-full">
         <div className="max-w-4xl">
           <h1 className="mb-5 font-heading text-3xl font-bold leading-[1.2] text-white sm:text-4xl md:text-5xl lg:text-[56px]">
-            <span className="block lg:whitespace-nowrap">ระบบผลิตความร้อนจาก<span className="whitespace-nowrap">ชีวมวล</span></span>
-            <span className="block">และเครื่องจักรอบแห้ง</span>
-            <span className="block text-brand-500">สำหรับโรงงานอุตสาหกรรม</span>
+            <span className="block lg:whitespace-nowrap">{hero.headingLines[0]}</span>
+            <span className="block">{hero.headingLines[1]}</span>
+            <span className="block text-energy-400">{hero.headingLines[2]}</span>
           </h1>
           <p className="mb-8 max-w-xl font-body text-base leading-relaxed text-white/75 md:text-lg">
-            ออกแบบ ผลิต และติดตั้ง Gasifier System และเครื่องจักรอบแห้งตามการใช้งานจริง พร้อมทดสอบเดินระบบและอบรมผู้ใช้งาน เพื่อช่วยลดต้นทุนเชื้อเพลิงและเพิ่มประสิทธิภาพการผลิต
+            {hero.description}
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-10">
             <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-energy-600 hover:bg-energy-400 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-all duration-200 hover:scale-[1.02]">
-              ขอใบเสนอราคา <IcoArrowRight />
+              {hero.actions.primary.label} <IcoArrowRight />
             </button>
             <button onClick={onProducts} className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-colors duration-200">
-              ดูสินค้าและบริการ
+              {hero.actions.secondary.label}
             </button>
             {onVideo && <button onClick={onVideo} className="flex items-center justify-center gap-2 border border-white/30 hover:bg-white/10 text-white px-5 py-3.5 rounded-lg font-body font-medium text-sm transition-colors" aria-label="เล่นวิดีโอแนะนำระบบ">
-              <IcoPlay />ดูวิดีโอ
+              <IcoPlay />{hero.actions.video.label}
             </button>}
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {['ออกแบบตามหน้างาน', 'ติดตั้งครบวงจร', 'ทดสอบก่อนส่งมอบ'].map(t => (
+            {hero.benefits.map(t => (
               <div key={t} className="flex items-center gap-1.5 text-white/70 text-sm font-body">
                 <span className="text-brand-500"><IcoCheck /></span>{t}
               </div>
@@ -540,44 +604,39 @@ function TrustBar() {
 
 /* ─── ABOUT ──────────────────────────────────────── */
 function About({ onLearnMore }: { onLearnMore: () => void }) {
+  const { aboutTeaser } = HOME
+
   return (
     <section id="about" data-scroll-reveal className="bg-white py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8">
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
           <div className="relative">
             <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-ink-100">
-              <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=700&h=520&fit=crop&auto=format" alt={`ทีมงาน ${COMPANY.shortName}`} className="w-full h-full object-cover" />
+              <img src={aboutTeaser.image.url} alt={aboutTeaser.image.alt} className="h-full w-full object-cover" />
             </div>
             <div className="absolute -bottom-4 -right-4 bg-brand-900 text-white rounded-xl p-4 shadow-xl hidden md:block">
-              <div className="font-heading font-semibold text-sm">ออกแบบเฉพาะหน้างาน</div>
-              <div className="text-white/70 text-xs font-body mt-1">ประเมินจากกระบวนการผลิตจริง</div>
+              <div className="font-heading font-semibold text-sm">{aboutTeaser.badge.title}</div>
+              <div className="text-white/70 text-xs font-body mt-1">{aboutTeaser.badge.description}</div>
             </div>
           </div>
           <div>
-            <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">เกี่ยวกับเรา</div>
+            <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">{aboutTeaser.eyebrow}</div>
             <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25] mb-5">
-              ผู้เชี่ยวชาญระบบพลังงาน<br />ชีวมวลอุตสาหกรรม
+              {aboutTeaser.title}
             </h2>
             <div className="space-y-3 text-ink-700 text-base font-body leading-relaxed mb-8">
-              <p>{COMPANY.legalNameEn} เชี่ยวชาญด้านการออกแบบ ผลิต และติดตั้งระบบแก๊สซิไฟเออร์และเครื่องจักรสำหรับกระบวนการอบแห้งในภาคอุตสาหกรรม</p>
-              <p>เราให้บริการครบวงจรตั้งแต่ให้คำปรึกษา สำรวจหน้างาน ออกแบบ ผลิต ติดตั้ง ทดสอบการเดินเครื่อง ไปจนถึงฝึกอบรมการใช้งานและการบำรุงรักษา</p>
-              <p>ทุกระบบพัฒนาจากประเภทเชื้อเพลิง กระบวนการผลิต และความต้องการเฉพาะของแต่ละโรงงาน เพื่อช่วยลดต้นทุนพลังงานและเพิ่มประสิทธิภาพการผลิตอย่างเหมาะสมกับการใช้งานจริง</p>
+              {aboutTeaser.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {[
-                { title: 'สำรวจหน้างาน', desc: 'วิเคราะห์พื้นที่ เชื้อเพลิง และความต้องการความร้อน' },
-                { title: 'ออกแบบเฉพาะระบบ', desc: 'วางแนวทางให้สอดคล้องกับกระบวนการผลิต' },
-                { title: 'ทดสอบก่อนส่งมอบ', desc: 'ตรวจสอบการทำงานก่อนเริ่มใช้งานจริง' },
-                { title: 'ดูแลต่อเนื่อง', desc: 'วางแผนการบำรุงรักษาหลังติดตั้ง' },
-              ].map(item => (
+              {aboutTeaser.strengths.map(item => (
                 <div key={item.title} className="bg-ink-100 rounded-xl p-4">
                   <div className="font-heading font-semibold text-brand-700 text-sm">{item.title}</div>
-                  <div className="text-ink-700 text-xs font-body mt-1 leading-relaxed">{item.desc}</div>
+                  <div className="text-ink-700 text-xs font-body mt-1 leading-relaxed">{item.description}</div>
                 </div>
               ))}
             </div>
             <button onClick={onLearnMore} className="mt-6 inline-flex items-center gap-2 text-brand-700 font-body text-sm font-medium hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700 rounded-lg">
-              ดูหน้าเกี่ยวกับเรา <IcoArrowRight />
+              {aboutTeaser.action.label} <IcoArrowRight />
             </button>
           </div>
         </div>
@@ -614,17 +673,16 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
       <section className="bg-white py-16 md:py-24">
         <div className="mx-auto grid max-w-[1200px] gap-10 px-5 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
           <div>
-            <div className="sticky top-24">
-              <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-ink-100">
+            <div className="mt-10 lg:mt-16">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-ink-100">
                 <img
-                  src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=900&h=680&fit=crop&auto=format"
-                  alt={`ทีมงานวิศวกรรมและการผลิตเครื่องจักรของ ${COMPANY.shortName}`}
+                  src="/assets/company/about-industrial-system.jpg"
+                  alt="ระบบเครื่องจักรอุตสาหกรรมของ YAKYAI 2015"
                   className="h-full w-full object-cover"
                 />
-              </div>
-              <div className="-mt-8 ml-5 mr-5 rounded-xl bg-brand-900 p-5 text-white shadow-xl md:ml-8 md:mr-8">
-                <p className="font-heading text-base font-semibold">{COMPANY.legalNameEn}</p>
-                <p className="mt-1 font-body text-xs leading-relaxed text-white/65">ระบบแก๊สซิไฟเออร์และเครื่องจักรอบแห้งสำหรับภาคอุตสาหกรรม</p>
+                <div className="absolute bottom-4 right-4 rounded-full border border-white/25 bg-brand-900/90 px-4 py-2 shadow-lg backdrop-blur-sm">
+                  <p className="font-body text-xs text-white/80"><span className="font-semibold text-white">ใช้ในระบบสตีม</span><span className="mx-2 text-white/45">•</span>จังหวัดลำพูน</p>
+                </div>
               </div>
             </div>
           </div>
@@ -689,19 +747,18 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
         </div>
       </section>
 
-      <section className="bg-brand-900 py-16 text-white md:py-24">
+      <section className="bg-brand-900 py-14 text-white md:py-20">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <div className="max-w-2xl">
             <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-500">แนวทางของเรา</p>
             <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-white md:text-3xl">หลักคิดที่ใช้กับทุกโครงการ</h2>
             <p className="mt-3 font-body text-sm leading-relaxed text-white/65">ระบบที่เหมาะสมไม่ได้เริ่มจากขนาดเครื่องจักรเพียงอย่างเดียว แต่เริ่มจากความเข้าใจเงื่อนไขของโรงงานและเป้าหมายการใช้งาน</p>
           </div>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
             {ABOUT.principles.map(item => (
-              <article key={item.label} className="rounded-2xl border border-white/15 bg-white/5 p-6 md:p-7">
-                <span className="font-heading text-sm font-semibold text-brand-500">{item.label}</span>
-                <h3 className="mt-8 font-heading text-lg font-semibold text-white">{item.title}</h3>
-                <p className="mt-3 font-body text-sm leading-relaxed text-white/65">{item.desc}</p>
+              <article key={item.label} className="rounded-xl border border-white/15 bg-white/5 p-5">
+                <h3 className="font-heading text-base font-semibold text-white">{item.title}</h3>
+                <p className="mt-2 font-body text-xs leading-relaxed text-white/65">{item.desc}</p>
               </article>
             ))}
           </div>
@@ -757,12 +814,10 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
 
       <section className="bg-ink-100 py-16 md:py-24">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
-          <div className="mb-10 grid gap-4 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+          <div className="mb-10 max-w-3xl">
             <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-700">จุดเด่นของบริษัท</p>
-            <div>
-              <h2 className="font-heading text-2xl font-bold leading-snug text-ink-950 md:text-3xl">พร้อมปรับระบบให้เข้ากับโจทย์ของโรงงาน</h2>
-              <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-ink-700">เราให้ความสำคัญกับความเหมาะสมของระบบ คุณภาพงานผลิต และการดูแลให้โรงงานนำระบบไปใช้งานได้จริงอย่างต่อเนื่อง</p>
-            </div>
+            <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-ink-950 md:text-3xl">พร้อมปรับระบบให้เข้ากับโจทย์ของโรงงาน</h2>
+            <p className="mt-3 max-w-2xl font-body text-sm leading-relaxed text-ink-700">เราให้ความสำคัญกับความเหมาะสมของระบบ คุณภาพงานผลิต และการดูแลให้โรงงานนำระบบไปใช้งานได้จริงอย่างต่อเนื่อง</p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[1.08fr_1fr_1fr]">
@@ -974,27 +1029,32 @@ function LatestNews({ setPage }: { setPage: (p: Page) => void }) {
 
 /* ─── QUOTE CTA ──────────────────────────────────── */
 function QuoteCTA({ onQuote }: { onQuote: () => void }) {
+  const { quoteCta } = HOME
+  const primaryAction = quoteCta.actions.find((action) => action.action === 'quote')
+  const phoneAction = quoteCta.actions.find((action) => action.action === 'phone')
+  const lineAction = quoteCta.actions.find((action) => action.action === 'line')
+
   return (
     <section data-scroll-reveal className="py-20 md:py-24 bg-brand-900 relative overflow-hidden">
       <div className="absolute inset-0">
-        <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&h=600&fit=crop&auto=format" alt="" className="w-full h-full object-cover opacity-10" />
+        <img src={quoteCta.backgroundImage.url} alt={quoteCta.backgroundImage.alt} className="w-full h-full object-cover opacity-10" />
       </div>
       <div className="relative z-10 max-w-[1200px] mx-auto px-5 md:px-8 text-center">
         <h2 className="font-heading font-bold text-white text-3xl md:text-[40px] leading-[1.25] mb-4">
-          กำลังมองหาระบบผลิตความร้อน<br className="hidden md:block" />ที่เหมาะกับโรงงานของคุณ?
+          {quoteCta.title}
         </h2>
         <p className="text-white/70 font-body text-base md:text-lg mb-10 max-w-xl mx-auto">
-          ส่งรายละเอียดเบื้องต้นให้ทีมวิศวกรช่วยประเมินระบบ ไม่มีค่าใช้จ่าย
+          {quoteCta.description}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-energy-600 hover:bg-energy-400 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
-            ขอใบเสนอราคา <IcoArrowRight />
+            {primaryAction?.label ?? 'ขอใบเสนอราคา'} <IcoArrowRight />
           </button>
           <a href={COMPANY.phoneHref} className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
-            <IcoPhone />โทรปรึกษา
+            <IcoPhone />{phoneAction?.label ?? 'โทรปรึกษา'}
           </a>
           <a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
-            <IcoLine />LINE
+            <IcoLine />{lineAction?.label ?? 'LINE'}
           </a>
         </div>
       </div>
@@ -1386,7 +1446,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
     .sort((a, b) => {
       if (sort === 'name-asc') return a.name.localeCompare(b.name, 'th')
       if (sort === 'name-desc') return b.name.localeCompare(a.name, 'th')
-      return a.id - b.id
+      return 0
     })
   const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize))
   const visibleProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -1414,7 +1474,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
   }
 
   return (
-    <main className="min-h-screen bg-white pt-20">
+    <main className="min-h-screen bg-white pt-16 md:pt-18">
       <section className="bg-brand-900 py-14 md:py-18">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 font-body text-xs text-white/50">
@@ -1532,7 +1592,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
 /* ─── PROJECTS PAGE ──────────────────────────────── */
 function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuote: () => void }) {
   return (
-    <main className="min-h-screen bg-white pt-20">
+    <main className="min-h-screen bg-white pt-16 md:pt-18">
       <section className="bg-brand-900 py-12 md:py-16">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 font-body text-xs text-white/50">
@@ -1614,13 +1674,31 @@ function ProjectGalleryModal({ project, activeIndex, onChange, onClose }: { proj
   )
 }
 
-function ProjectDetailPage({ p, setPage, onQuote }: { p: Project; setPage: (page: Page) => void; onQuote: () => void }) {
+function ProjectDetailPage({ p: initialProject, setPage, onQuote }: { p: Project; setPage: (page: Page) => void; onQuote: () => void }) {
+  const [p, setProject] = useState(initialProject)
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setProject(initialProject)
+    setGalleryIndex(null)
+
+    void loadProjectDetail(initialProject.slug, controller.signal)
+      .then((project) => {
+        if (project) setProject(project)
+      })
+      .catch(() => {
+        // The list response or fallback remains visible if this request fails.
+      })
+
+    return () => controller.abort()
+  }, [initialProject.slug])
+
   const relatedProduct = PRODUCTS.find(product => product.id === p.relatedProductId)
   const relatedProjects = PROJECTS.filter(project => project.id !== p.id && (project.industry === p.industry || project.relatedProductId === p.relatedProductId)).slice(0, 3)
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen pt-16 md:pt-18">
       <div className="relative h-64 md:h-80 bg-brand-900">
         <img src={p.image} alt={p.name} className="w-full h-full object-cover opacity-40" />
         <div className="absolute inset-0 flex flex-col justify-end">
@@ -1685,7 +1763,7 @@ function NewsListPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
   const featured = NEWS[0]
 
   return (
-    <main className="min-h-screen pt-20"><div className="bg-brand-900 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจาก {COMPANY.shortName}</p></div></div>
+    <main className="min-h-screen pt-16 md:pt-18"><div className="bg-brand-900 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจาก {COMPANY.shortName}</p></div></div>
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
         <section aria-labelledby="featured-news-heading" className="mb-10"><p className="text-sm font-body font-medium tracking-widest uppercase text-brand-700">บทความแนะนำ</p><button onClick={() => setPage({ t: 'article', a: featured })} className="group mt-3 grid overflow-hidden rounded-2xl border border-ink-300/60 bg-white text-left md:grid-cols-2 hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video overflow-hidden bg-ink-100"><img src={featured.image} alt={featured.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /></div><div className="p-6 md:p-8"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-brand-900/10 px-2.5 py-1 font-body text-xs text-brand-700">{featured.category}</span><span className="font-body text-xs text-ink-700/60">{featured.date}</span></div><h2 id="featured-news-heading" className="mt-4 font-heading text-xl font-semibold leading-snug text-ink-950 group-hover:text-brand-700 md:text-2xl">{featured.title}</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{featured.excerpt}</p><span className="mt-5 inline-flex items-center gap-1 font-body text-sm font-medium text-brand-700">อ่านบทความ <IcoArrowRight /></span></div></button></section>
         <div className="flex flex-wrap gap-2 mb-8" aria-label="กรองหมวดหมู่">{cats.map(category => <button key={category} onClick={() => setCat(category)} aria-pressed={cat === category} className={`px-4 py-2 rounded-full text-sm font-body transition-colors ${cat === category ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-700 hover:bg-ink-300/60'}`}>{category}</button>)}</div>
@@ -1727,13 +1805,30 @@ function ShareActions({ title }: { title: string }) {
 }
 
 /* ─── ARTICLE DETAIL PAGE ────────────────────────── */
-function ArticleDetailPage({ a, setPage, onQuote }: { a: Article; setPage: (p: Page) => void; onQuote: () => void }) {
+function ArticleDetailPage({ a: initialArticle, setPage, onQuote }: { a: Article; setPage: (p: Page) => void; onQuote: () => void }) {
+  const [a, setArticle] = useState(initialArticle)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setArticle(initialArticle)
+
+    void loadArticleDetail(initialArticle.slug, controller.signal)
+      .then((article) => {
+        if (article) setArticle(article)
+      })
+      .catch(() => {
+        // The list response or fallback remains visible if this request fails.
+      })
+
+    return () => controller.abort()
+  }, [initialArticle.slug])
+
   const related = NEWS.filter(article => article.id !== a.id)
     .sort((left, right) => Number(right.category === a.category) - Number(left.category === a.category))
     .slice(0, 3)
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen pt-16 md:pt-18">
       <div className="max-w-[800px] mx-auto px-5 md:px-8 py-12">
         <div className="flex items-center gap-2 text-ink-700/60 text-xs font-body mb-6">
           <button onClick={() => setPage({ t: 'home' })} className="hover:text-brand-700 transition-colors">หน้าแรก</button>
@@ -1784,12 +1879,43 @@ function ArticleDetailPage({ a, setPage, onQuote }: { a: Article; setPage: (p: P
 
 /* ─── APP ────────────────────────────────────────── */
 export default function App() {
+  const [siteContent, setSiteContent] = useState<SiteContent>(fallbackSiteContent)
   const [quoteOpen, setQuoteOpen] = useState(false)
   const [quoteContext, setQuoteContext] = useState<{ product?: string; project?: string }>()
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [videoOpen, setVideoOpen] = useState(false)
   const [contactPopup, setContactPopup] = useState<'line' | 'phone' | null>(null)
   const [page, setPage] = useState<Page>(() => pageFromPath(window.location.pathname))
+
+  bindSiteContent(siteContent)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    void loadSiteContent(controller.signal)
+      .then((content) => {
+        if (content) setSiteContent(content)
+      })
+      .catch(() => {
+        // Keep the approved local fallback available if the CMS is offline.
+      })
+
+    return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    setPage((current) => {
+      if (current.t === 'project') {
+        const project = PROJECTS.find((item) => item.slug === current.p.slug)
+        return project ? { t: 'project', p: project } : { t: 'not-found' }
+      }
+      if (current.t === 'article') {
+        const article = NEWS.find((item) => item.slug === current.a.slug)
+        return article ? { t: 'article', a: article } : { t: 'not-found' }
+      }
+      return current.t === 'not-found' ? pageFromPath(window.location.pathname) : current
+    })
+  }, [siteContent])
 
   const navigate = useCallback((next: Page) => {
     const nextPath = pathForPage(next)
@@ -1839,7 +1965,7 @@ export default function App() {
     setMetaContent('meta[property="og:url"]', { property: 'og:url', content: pageUrl })
     setMetaContent('meta[name="twitter:title"]', { name: 'twitter:title', content: title })
     setMetaContent('meta[name="twitter:description"]', { name: 'twitter:description', content: description })
-  }, [page])
+  }, [page, siteContent])
 
   useEffect(() => {
     if (page.t !== 'home') return
@@ -1898,7 +2024,7 @@ export default function App() {
       {page.t === 'projects' && <ProjectsPage setPage={navigate} onQuote={() => openQuote()} />}
       {page.t === 'project' && <ProjectDetailPage p={page.p} setPage={navigate} onQuote={() => openQuote({ project: page.p.name })} />}
       {page.t === 'news' && <NewsListPage setPage={navigate} onQuote={() => openQuote()} />}
-      {page.t === 'downloads' && <DownloadsPage onHome={() => navigate({ t: 'home' })} onQuote={() => openQuote()} />}
+      {page.t === 'downloads' && <DownloadsPage documents={DOWNLOADS} onHome={() => navigate({ t: 'home' })} onQuote={() => openQuote()} />}
       {page.t === 'article' && <ArticleDetailPage a={page.a} setPage={navigate} onQuote={() => openQuote()} />}
       <Footer scrollTo={scrollTo} setPage={navigate} onPrivacy={() => navigate({ t: 'privacy' })} />
       <div className="pb-14 md:pb-0"><FloatingActions onQuote={() => openQuote()} onPhone={() => setContactPopup('phone')} onLine={() => setContactPopup('line')} /></div>

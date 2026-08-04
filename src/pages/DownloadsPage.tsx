@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { DOWNLOADS, type DownloadCategory } from "../data/downloads"
+import type { FrontendDownload } from "../lib/content-api"
 
 interface DownloadsPageProps {
+  documents: FrontendDownload[]
   onHome: () => void
   onQuote: () => void
 }
@@ -14,13 +15,13 @@ function DownloadIcon() {
   return <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4" /></svg>
 }
 
-export default function DownloadsPage({ onHome, onQuote }: DownloadsPageProps) {
-  const [category, setCategory] = useState<"ทั้งหมด" | DownloadCategory>("ทั้งหมด")
-  const categories: Array<"ทั้งหมด" | DownloadCategory> = ["ทั้งหมด", "ข้อมูลบริษัท", "สินค้า", "โบรชัวร์"]
-  const documents = category === "ทั้งหมด" ? DOWNLOADS : DOWNLOADS.filter((document) => document.category === category)
+export default function DownloadsPage({ documents: allDocuments, onHome, onQuote }: DownloadsPageProps) {
+  const [category, setCategory] = useState("ทั้งหมด")
+  const categories = ["ทั้งหมด", ...Array.from(new Set(allDocuments.map((document) => document.category)))]
+  const documents = category === "ทั้งหมด" ? allDocuments : allDocuments.filter((document) => document.category === category)
 
   return (
-    <main className="min-h-screen pt-20">
+    <main className="min-h-screen pt-16 md:pt-18">
       <section className="bg-brand-900 py-14">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 font-body text-xs text-white/50">
