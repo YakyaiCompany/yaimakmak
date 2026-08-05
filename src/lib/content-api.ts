@@ -73,8 +73,8 @@ export interface HomeContent {
 const fallbackHomeContent: HomeContent = {
   hero: {
     image: {
-      url: "/assets/company/hero-industrial-dryer.jpg",
-      alt: "เครื่องจักรระบบอบแห้งในโรงงานอุตสาหกรรม",
+      url: "/assets/company/hero-yakyai-installation.jpg",
+      alt: "งานติดตั้งระบบอบแห้งอุตสาหกรรมของ YAKYAI 2015",
     },
     headingLines: [
       "ระบบผลิตความร้อนจากชีวมวล",
