@@ -144,3 +144,7 @@
 *.stl                filter=lfs diff=lfs merge=lfs -text
 *.nc                 filter=lfs diff=lfs merge=lfs -text
 *.mat                filter=lfs diff=lfs merge=lfs -text
+
+# Vite copies public assets directly to the deployment output. Keep these files
+# as regular Git blobs so the Vercel build receives image bytes, not LFS pointers.
+public/assets/** -filter -diff -merge -text
