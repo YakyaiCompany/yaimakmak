@@ -66,6 +66,7 @@ function safeVideoUrl(value: string | undefined) {
 }
 
 const HERO_VIDEO_URL = safeVideoUrl(environment.heroVideoUrl)
+const SITE_URL = 'https://yakyai2015.com'
 
 function normalizePathname(pathname: string) {
   const normalized = pathname.replace(/\/+$/, '')
@@ -1938,7 +1939,7 @@ export default function App() {
     window.scrollTo(0, 0)
     const title = titleForPage(page)
     const description = descriptionForPage(page)
-    const pageUrl = new URL(pathForPage(page), window.location.origin).toString()
+    const pageUrl = new URL(pathForPage(page), SITE_URL).toString()
     document.title = title
 
     const setMetaContent = (selector: string, attributes: Record<string, string>) => {
