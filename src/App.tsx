@@ -1250,9 +1250,8 @@ function PhoneContactModal({ onClose }: { onClose: () => void }) {
         <h2 id="phone-contact-title" className="mt-5 font-heading text-2xl font-semibold text-ink-950">โทรปรึกษาทีมงาน</h2>
         <p className="mt-2 font-body text-sm text-ink-700">{COMPANY.businessHours}</p>
         <p className="mt-6 font-heading text-3xl font-bold tracking-wide text-brand-900">{COMPANY.phone}</p>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <a href={COMPANY.phoneHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-brand-900"><IcoPhone />โทรออก</a>
-          <button type="button" onClick={copyPhone} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-brand-700 px-5 py-3 font-body text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white"><IcoCopy />คัดลอกเบอร์</button>
+        <div className="mt-6">
+          <button type="button" onClick={copyPhone} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-brand-700 px-5 py-3 font-body text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white"><IcoCopy />คัดลอกเบอร์</button>
         </div>
         {copyStatus && <p role="status" className="mt-3 font-body text-xs text-brand-700">{copyStatus}</p>}
       </section>
