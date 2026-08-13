@@ -264,11 +264,9 @@ const IcoPlay = () => (
   </svg>
 )
 const IcoLine = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M20 11.5c0 4.14-3.58 7.5-8 7.5a8.9 8.9 0 01-3.6-.75L4 19l1.15-3.05A7 7 0 014 11.5C4 7.36 7.58 4 12 4s8 3.36 8 7.5z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01" />
-  </svg>
+  <img src="/assets/brand/LINE_logo.svg.webp" alt="LINE" className="w-5 h-5 object-contain" aria-hidden="true" />
 )
+
 const IcoFacebook = () => (
   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 00-2.5-.1c-2.5 0-4.2 1.5-4.2 4.3V10H7.3v3h2.8v8h3.4z" />
