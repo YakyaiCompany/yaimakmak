@@ -1875,9 +1875,9 @@ function ArticleDetailPage({ a: initialArticle, setPage, onQuote }: { a: Article
   )
 }
 
-/* ─── APP ────────────────────────────────────────── */
 export default function App() {
   const [siteContent, setSiteContent] = useState<SiteContent>(fallbackSiteContent)
+  const [apiConnected, setApiConnected] = useState<boolean | null>(null)
   const [quoteOpen, setQuoteOpen] = useState(false)
   const [quoteContext, setQuoteContext] = useState<{ product?: string; project?: string }>()
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -1892,9 +1892,15 @@ export default function App() {
 
     void loadSiteContent(controller.signal)
       .then((content) => {
-        if (content) setSiteContent(content)
+        if (content) {
+          setSiteContent(content)
+          setApiConnected(true)
+        } else {
+          setApiConnected(false)
+        }
       })
       .catch(() => {
+        setApiConnected(false)
         // Keep the approved local fallback available if the CMS is offline.
       })
 
@@ -2029,8 +2035,17 @@ export default function App() {
       {quoteOpen && <QuoteModal context={quoteContext} onClose={() => { setQuoteOpen(false); setQuoteContext(undefined) }} onPrivacy={() => navigate({ t: 'privacy' })} />}
       {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onQuote={() => { setSelectedProduct(null); openQuote({ product: selectedProduct.name }) }} />}
       {videoOpen && HERO_VIDEO_URL && <VideoModal url={HERO_VIDEO_URL} onClose={() => setVideoOpen(false)} />}
-      {contactPopup === 'line' && <LineContactModal onClose={() => setContactPopup(null)} />}
       {contactPopup === 'phone' && <PhoneContactModal onClose={() => setContactPopup(null)} />}
+      
+      {/* Dev/Debug Badge to show API connection status */}
+      {apiConnected !== null && (
+        <div className={`fixed bottom-4 left-4 z-50 flex items-center gap-1.5 rounded-full px-3 py-1.5 font-body text-[11px] font-medium text-white shadow-lg backdrop-blur-sm transition-opacity duration-300 ${
+          apiConnected ? 'bg-green-600/80 hover:bg-green-600' : 'bg-red-600/80 hover:bg-red-600'
+        }`}>
+          <div className={`h-2 w-2 rounded-full ${apiConnected ? 'bg-green-300 animate-pulse' : 'bg-red-300'}`} />
+          {apiConnected ? 'Live Data Connected' : 'Fallback Data Mode'}
+        </div>
+      )}
     </div>
   )
 }
