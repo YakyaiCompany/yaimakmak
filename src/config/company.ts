@@ -2,7 +2,7 @@ export const COMPANY = {
   name: "YAKYAI 2015 CO., LTD.",
   legalNameEn: "YAKYAI 2015 CO., LTD.",
   shortName: "YAKYAI 2015",
-  logoPath: "/assets/brand/yakyai-2015-logo.png",
+  logoPath: "/assets/brand/yakyai2015-favicon.png",
   publicAddress: "199 หมู่ 3 อ.โชคชัย จ.นครราชสีมา 30190",
   phone: "089-630-4588",
   phoneHref: "tel:+66896304588",
