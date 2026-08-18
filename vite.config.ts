@@ -34,6 +34,14 @@ export default defineConfig(({ mode }) => {
       port: parseInt(process.env.PORT || '8443'),
       strictPort: true,
       watch: { ignored: ['**/.figma/**'] },
+      proxy: {
+        '/api': {
+          target: 'https://api.yakyai2015.com',
+          changeOrigin: true,
+          secure: false,
+          cookieDomainRewrite: 'localhost',
+        }
+      }
     },
     preview: {
       host: '0.0.0.0',
