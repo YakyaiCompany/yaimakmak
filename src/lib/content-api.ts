@@ -158,13 +158,19 @@ export const fallbackSiteContent: SiteContent = {
 
   home: fallbackHomeContent,
 
-  products: [],
-  projects: [],
-  news: [],
-  downloads: [],
-  industries: [],
-  services: [],
-  whyUs: [],
+  products: PRODUCTS,
+
+  projects: PROJECTS,
+
+  news: NEWS,
+
+  downloads: DOWNLOADS,
+
+  industries: INDUSTRIES,
+
+  services: SERVICES,
+
+  whyUs: WHY_US,
 }
 
 type UnknownRecord = Record<string, unknown>
@@ -299,12 +305,14 @@ function listData(response: unknown): unknown[] | undefined {
 
 function mapList<T>(
   response: unknown,
+
   fallback: T[],
+
   mapper: (value: unknown, index: number) => T,
 ): T[] {
   const items = listData(response)
 
-  return items !== undefined ? items.map(mapper) : fallback.map((item, index) => mapper(item, index))
+  return items === undefined ? fallback : items.map(mapper)
 }
 
 function emptyProduct(index: number): Product {

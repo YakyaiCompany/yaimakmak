@@ -306,63 +306,12 @@ separate threat-model review before adoption.
 | `POST` | `/api/v1/admin/media/upload-url` | Create a constrained direct-upload URL |
 | `GET` | `/api/v1/admin/leads` | Search/filter leads for authorized staff |
 | `GET`, `PATCH` | `/api/v1/admin/leads/:id` | Inspect/update lead status and assignment |
-| `GET` | `/api/v1/admin/analytics` | Traffic and visitor statistics for dashboard |
-| `GET` | `/api/v1/admin/site-settings` | Retrieve all site settings (including SEO) |
-| `PUT` | `/api/v1/admin/site-settings/discovery_settings` | Update SEO and discovery settings |
-| `GET` | `/api/v1/admin/activities` | Recent activity log for admin |
 
 CMS mutations accept the public shapes above plus administrative fields such as
 `status` (`draft`, `scheduled`, `published`, `archived`), `publishedAt`, and
 `revision`. `PATCH` should use optimistic concurrency (`If-Match`/ETag or a
 revision field) so one editor cannot silently overwrite another editor's work.
 `DELETE` should normally archive records and retain a clear audit trail.
-
-### Admin Dashboard Analytics Shape
-
-```json
-{
-  "data": {
-    "visitors": "2,847",
-    "sessions": "3,286",
-    "views": "6,924",
-    "leads": "126",
-    "visitorsDelta": "+18.6%",
-    "sessionsDelta": "+14.2%",
-    "viewsDelta": "+22.4%",
-    "leadsDelta": "+21.8%",
-    "chart": [48, 61, 54, 72, 68, 83, 76, 94, 89, 101, 96, 112, 108, 127]
-  }
-}
-```
-
-### Discovery Settings Shape
-
-```json
-{
-  "value": {
-    "title": "บริษัท ยักษ์ใหญ่ 2015 จำกัด",
-    "description": "...",
-    "keywords": ["..."]
-  }
-}
-```
-
-### Activity Log Shape
-
-```json
-{
-  "data": [
-    {
-      "id": "act_01H...",
-      "action": "เผยแพร่",
-      "contentType": "ข่าวสาร",
-      "title": "ระบบแก๊สซิไฟเออร์ทำงานอย่างไร?",
-      "at": "10 นาทีที่แล้ว",
-      "screen": "news"
-    }
-  ]
-}
-```
 
 ## Security and authorization requirements
 

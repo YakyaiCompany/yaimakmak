@@ -11,7 +11,6 @@ import {
   type SiteContent,
 } from './lib/content-api'
 import DownloadsPage from './pages/DownloadsPage'
-import AdminPortal from './AdminPortal'
 import type { Article, IndustryIconName, Product, Project } from './types/content'
 
 /* ─── ROUTE TYPES ─────────────────────────── */
@@ -26,7 +25,6 @@ type Page =
   | { t: 'article'; a: Article }
   | { t: 'privacy' }
   | { t: 'not-found' }
-  | { t: 'admin' }
 
 // Existing page components share these names. App updates the bindings before
 // rendering so legacy UI continues to work while its data comes from the CMS.
@@ -84,7 +82,6 @@ function pageFromPath(pathname: string): Page {
   if (path === '/news') return { t: 'news' }
   if (path === '/downloads') return { t: 'downloads' }
   if (path === '/privacy-policy') return { t: 'privacy' }
-  if (path === '/admin') return { t: 'admin' }
 
   const projectMatch = path.match(/^\/projects\/([^/]+)$/)
   if (projectMatch) {
@@ -113,7 +110,6 @@ function pathForPage(page: Page) {
     case 'article': return `/news/${page.a.slug}`
     case 'privacy': return '/privacy-policy'
     case 'not-found': return '/404'
-    case 'admin': return '/admin'
   }
 }
 
@@ -130,7 +126,6 @@ function titleForPage(page: Page) {
     case 'downloads': return `เอกสารดาวน์โหลด | ${siteName}`
     case 'privacy': return `นโยบายความเป็นส่วนตัว | ${siteName}`
     case 'not-found': return `ไม่พบหน้า | ${siteName}`
-    case 'admin': return `ผู้ดูแลระบบ | ${siteName}`
   }
 }
 
@@ -156,8 +151,6 @@ function descriptionForPage(page: Page) {
       return `นโยบายความเป็นส่วนตัวของ ${COMPANY.legalNameEn}`
     case 'not-found':
       return 'ไม่พบหน้าที่คุณกำลังค้นหา'
-    case 'admin':
-      return 'เข้าสู่ระบบการจัดการเนื้อหา'
   }
 }
 
@@ -1210,7 +1203,7 @@ function Footer({ scrollTo, setPage, onPrivacy }: { scrollTo: (id: string) => vo
 }
 
 /* ─── FLOATING ACTIONS ───────────────────────────── */
-export function LineContactModal({ onClose }: { onClose: () => void }) {
+function LineContactModal({ onClose }: { onClose: () => void }) {
   const dialogRef = useDialogFocus(onClose)
 
   return (
@@ -1233,7 +1226,7 @@ export function LineContactModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-export function PhoneContactModal({ onClose }: { onClose: () => void }) {
+function PhoneContactModal({ onClose }: { onClose: () => void }) {
   const [copyStatus, setCopyStatus] = useState('')
   const dialogRef = useDialogFocus(onClose)
 
@@ -1770,9 +1763,7 @@ function NewsListPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
   return (
     <main className="min-h-screen pt-16 md:pt-18"><div className="bg-brand-900 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจาก {COMPANY.shortName}</p></div></div>
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
-        {featured && (
-          <section aria-labelledby="featured-news-heading" className="mb-10"><p className="text-sm font-body font-medium tracking-widest uppercase text-brand-700">บทความแนะนำ</p><button onClick={() => setPage({ t: 'article', a: featured })} className="group mt-3 grid overflow-hidden rounded-2xl border border-ink-300/60 bg-white text-left md:grid-cols-2 hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video overflow-hidden bg-ink-100"><img src={featured.image} alt={featured.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /></div><div className="p-6 md:p-8"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-brand-900/10 px-2.5 py-1 font-body text-xs text-brand-700">{featured.category}</span><span className="font-body text-xs text-ink-700/60">{featured.date}</span></div><h2 id="featured-news-heading" className="mt-4 font-heading text-xl font-semibold leading-snug text-ink-950 group-hover:text-brand-700 md:text-2xl">{featured.title}</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{featured.excerpt}</p><span className="mt-5 inline-flex items-center gap-1 font-body text-sm font-medium text-brand-700">อ่านบทความ <IcoArrowRight /></span></div></button></section>
-        )}
+        <section aria-labelledby="featured-news-heading" className="mb-10"><p className="text-sm font-body font-medium tracking-widest uppercase text-brand-700">บทความแนะนำ</p><button onClick={() => setPage({ t: 'article', a: featured })} className="group mt-3 grid overflow-hidden rounded-2xl border border-ink-300/60 bg-white text-left md:grid-cols-2 hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video overflow-hidden bg-ink-100"><img src={featured.image} alt={featured.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /></div><div className="p-6 md:p-8"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-brand-900/10 px-2.5 py-1 font-body text-xs text-brand-700">{featured.category}</span><span className="font-body text-xs text-ink-700/60">{featured.date}</span></div><h2 id="featured-news-heading" className="mt-4 font-heading text-xl font-semibold leading-snug text-ink-950 group-hover:text-brand-700 md:text-2xl">{featured.title}</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{featured.excerpt}</p><span className="mt-5 inline-flex items-center gap-1 font-body text-sm font-medium text-brand-700">อ่านบทความ <IcoArrowRight /></span></div></button></section>
         <div className="flex flex-wrap gap-2 mb-8" aria-label="กรองหมวดหมู่">{cats.map(category => <button key={category} onClick={() => setCat(category)} aria-pressed={cat === category} className={`px-4 py-2 rounded-full text-sm font-body transition-colors ${cat === category ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-700 hover:bg-ink-300/60'}`}>{category}</button>)}</div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">{filtered.map(article => <article key={article.id}><button onClick={() => setPage({ t: 'article', a: article })} className="group h-full w-full text-left rounded-2xl overflow-hidden bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video bg-ink-100 overflow-hidden"><img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /></div><div className="p-5"><div className="flex items-center gap-2 mb-3"><span className="bg-brand-500/10 text-brand-700 text-xs font-body px-2.5 py-1 rounded-full">{article.category}</span><span className="text-ink-700/60 text-xs font-body">{article.date}</span></div><h2 className="font-heading font-semibold text-ink-950 text-sm leading-snug mb-2 line-clamp-2 group-hover:text-brand-700 transition-colors">{article.title}</h2><p className="text-ink-700 text-xs font-body leading-relaxed line-clamp-3">{article.excerpt}</p><span className="flex items-center gap-1 text-brand-700 text-xs font-body font-medium mt-4">อ่านเพิ่มเติม <IcoArrowRight /></span></div></button></article>)}</div>
         <section className="mt-12 rounded-2xl bg-ink-100 p-7 text-center"><h2 className="font-heading text-xl font-bold text-ink-950">ต้องการคำแนะนำสำหรับโรงงานของคุณ?</h2><p className="mx-auto mt-2 max-w-xl font-body text-sm text-ink-700">ส่งข้อมูลเบื้องต้นเพื่อให้ทีมวิศวกรช่วยประเมินแนวทางที่เหมาะสม</p><button onClick={onQuote} className="mt-5 rounded-lg bg-energy-600 px-6 py-3 font-body text-sm font-medium text-white hover:bg-energy-400">ขอใบเสนอราคา</button></section>
@@ -2024,7 +2015,6 @@ export default function App() {
 
   if (page.t === 'privacy') return <PrivacyPolicyPage onHome={() => navigate({ t: 'home' })} />
   if (page.t === 'not-found') return <NotFoundPage onHome={() => navigate({ t: 'home' })} />
-  if (page.t === 'admin') return <AdminPortal onExit={() => navigate({ t: 'home' })} />
 
   return (
     <div className="min-h-screen">

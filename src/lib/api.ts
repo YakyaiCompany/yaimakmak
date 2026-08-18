@@ -103,15 +103,11 @@ function normalizeTimeout(timeoutMs: number | undefined): number {
 }
 
 function normalizeEndpoint(endpoint: string): string {
-  let value = endpoint.trim()
+  const value = endpoint.trim()
   if (!value) {
     throw new ApiRequestError("ยังไม่ได้กำหนดปลายทางของบริการ", {
       code: "configuration",
     })
-  }
-
-  if (value.startsWith("/api/v1") && environment.cmsApiBaseUrl && !import.meta.env.DEV) {
-    value = environment.cmsApiBaseUrl + value.substring(7)
   }
 
   try {
@@ -247,7 +243,7 @@ export async function postJson<TResponse, TPayload>(
   try {
     const response = await fetch(requestUrl, {
       method: "POST",
-      credentials: "include",
+      credentials: "same-origin",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
@@ -300,7 +296,7 @@ export async function getJson<TResponse>(
   try {
     const response = await fetch(requestUrl, {
       method: "GET",
-      credentials: "include",
+      credentials: "same-origin",
       headers: { Accept: "application/json" },
       signal: abortContext.signal,
     })
@@ -331,120 +327,6 @@ export async function getJson<TResponse>(
   }
 }
 
-export async function putJson<TResponse, TPayload>(
-  endpoint: string,
-  payload: TPayload,
-  options: JsonPostOptions = {},
-): Promise<TResponse> {
-  const requestUrl = normalizeEndpoint(endpoint)
-  const body = serializeJson(payload)
-  const abortContext = createAbortContext(normalizeTimeout(options.timeoutMs), options.signal)
-
-  try {
-    const response = await fetch(requestUrl, {
-      method: "PUT",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body,
-      signal: abortContext.signal,
-    })
-
-    const responseBody = await response.text()
-    if (!response.ok) {
-      throw errorForStatus(response.status)
-    }
-
-    return parseJsonResponse<TResponse>(responseBody)
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    if (abortContext.didTimeout()) {
-      throw new ApiRequestError("การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่", { code: "timeout", cause: error })
-    }
-    if (abortContext.signal.aborted) {
-      throw new ApiRequestError("ยกเลิกการส่งคำขอแล้ว", { code: "aborted", cause: error })
-    }
-    throw new ApiRequestError("ไม่สามารถเชื่อมต่อกับบริการได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่", { code: "network", cause: error })
-  } finally {
-    abortContext.cleanup()
-  }
-}
-
-export async function patchJson<TResponse, TPayload>(
-  endpoint: string,
-  payload: TPayload,
-  options: JsonPostOptions = {},
-): Promise<TResponse> {
-  const requestUrl = normalizeEndpoint(endpoint)
-  const body = serializeJson(payload)
-  const abortContext = createAbortContext(normalizeTimeout(options.timeoutMs), options.signal)
-
-  try {
-    const response = await fetch(requestUrl, {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body,
-      signal: abortContext.signal,
-    })
-
-    const responseBody = await response.text()
-    if (!response.ok) {
-      throw errorForStatus(response.status)
-    }
-
-    return parseJsonResponse<TResponse>(responseBody)
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    if (abortContext.didTimeout()) {
-      throw new ApiRequestError("การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่", { code: "timeout", cause: error })
-    }
-    if (abortContext.signal.aborted) {
-      throw new ApiRequestError("ยกเลิกการส่งคำขอแล้ว", { code: "aborted", cause: error })
-    }
-    throw new ApiRequestError("ไม่สามารถเชื่อมต่อกับบริการได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่", { code: "network", cause: error })
-  } finally {
-    abortContext.cleanup()
-  }
-}
-
-export async function deleteJson<TResponse>(
-  endpoint: string,
-  options: JsonPostOptions = {},
-): Promise<TResponse> {
-  const requestUrl = normalizeEndpoint(endpoint)
-  const abortContext = createAbortContext(normalizeTimeout(options.timeoutMs), options.signal)
-
-  try {
-    const response = await fetch(requestUrl, {
-      method: "DELETE",
-      credentials: "include",
-      headers: { Accept: "application/json" },
-      signal: abortContext.signal,
-    })
-    const responseBody = await response.text()
-    if (!response.ok) throw errorForStatus(response.status)
-
-    return parseJsonResponse<TResponse>(responseBody)
-  } catch (error) {
-    if (error instanceof ApiRequestError) throw error
-    if (abortContext.didTimeout()) {
-      throw new ApiRequestError("การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่", { code: "timeout", cause: error })
-    }
-    if (abortContext.signal.aborted) {
-      throw new ApiRequestError("ยกเลิกการส่งคำขอแล้ว", { code: "aborted", cause: error })
-    }
-    throw new ApiRequestError("ไม่สามารถเชื่อมต่อกับบริการได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่", { code: "network", cause: error })
-  } finally {
-    abortContext.cleanup()
-  }
-}
-
 export function submitContactLead<TResponse>(
   payload: ContactLeadPayload,
   options?: JsonPostOptions,
@@ -457,4 +339,3 @@ export function submitContactLead<TResponse>(
 
   return postJson<TResponse, ContactLeadPayload>(environment.contactEndpoint, payload, options)
 }
-
