@@ -39,13 +39,14 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
 
   const fetchDashboardData = async () => {
     try {
-      const [projectsRes, articlesRes, productsRes, leadsRes, downloadsRes, siteSettingsRes] = await Promise.all([
+      const [projectsRes, articlesRes, productsRes, leadsRes, downloadsRes, siteSettingsRes, activitiesRes] = await Promise.all([
         getJson<any>("/api/v1/admin/projects").catch(() => ({ data: [] })),
         getJson<any>("/api/v1/admin/articles").catch(() => ({ data: [] })),
         getJson<any>("/api/v1/admin/products").catch(() => ({ data: [] })),
         getJson<any>("/api/v1/admin/leads").catch(() => ({ data: [] })),
         getJson<any>("/api/v1/admin/downloads").catch(() => ({ data: [] })),
         getJson<any>("/api/v1/admin/site-settings").catch(() => ({ data: [] })),
+        getJson<any>("/api/v1/admin/activities").catch(() => ({ data: [] })),
       ]);
       
       if (projectsRes.data) setPortfolio(projectsRes.data.map(mapProjectToContentItem));
@@ -54,6 +55,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
       if (leadsRes.data) setMessages(leadsRes.data.map(mapLeadToMessage));
       if (downloadsRes.data) setDocuments(downloadsRes.data.map(mapDownloadToDownloadItem));
       if (siteSettingsRes.data) setDiscoverySettings(mapSiteSettingsToDiscoverySettings(siteSettingsRes.data));
+      if (activitiesRes.data && activitiesRes.data.length > 0) setActivities(activitiesRes.data);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
     }
