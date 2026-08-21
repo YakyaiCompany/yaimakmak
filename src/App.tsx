@@ -18,6 +18,7 @@ import type { Article, IndustryIconName, Product, Project } from './types/conten
 type Page =
   | { t: 'home' }
   | { t: 'about' }
+  | { t: 'gasifier' }
   | { t: 'products' }
   | { t: 'projects' }
   | { t: 'news' }
@@ -79,6 +80,7 @@ function pageFromPath(pathname: string): Page {
   const path = normalizePathname(pathname)
   if (path === '/') return { t: 'home' }
   if (path === '/about') return { t: 'about' }
+  if (path === '/gasifier') return { t: 'gasifier' }
   if (path === '/products') return { t: 'products' }
   if (path === '/projects') return { t: 'projects' }
   if (path === '/news') return { t: 'news' }
@@ -105,6 +107,7 @@ function pathForPage(page: Page) {
   switch (page.t) {
     case 'home': return '/'
     case 'about': return '/about'
+    case 'gasifier': return '/gasifier'
     case 'products': return '/products'
     case 'projects': return '/projects'
     case 'project': return `/projects/${page.p.slug}`
@@ -122,6 +125,7 @@ function titleForPage(page: Page) {
   switch (page.t) {
     case 'home': return `ระบบพลังงานชีวมวลอุตสาหกรรม | ${siteName}`
     case 'about': return `เกี่ยวกับเรา | ${siteName}`
+    case 'gasifier': return `ระบบ Gasifier และความคุ้มค่า | ${siteName}`
     case 'products': return `ผลิตภัณฑ์ | ${siteName}`
     case 'projects': return `ผลงาน | ${siteName}`
     case 'project': return `${page.p.name} | ${siteName}`
@@ -140,6 +144,8 @@ function descriptionForPage(page: Page) {
       return 'ออกแบบ ผลิต และติดตั้งระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม พร้อมทดสอบเดินระบบและอบรมผู้ใช้งาน'
     case 'about':
       return `รู้จัก ${COMPANY.legalNameEn} ผู้เชี่ยวชาญด้านระบบผลิตความร้อนจากชีวมวลและเครื่องจักรอบแห้งสำหรับภาคอุตสาหกรรม`
+    case 'gasifier':
+      return 'ทำความเข้าใจระบบ Gasifier กระบวนการผลิต Producer Gas ข้อมูลทางเทคนิค และแนวทางประเมินความคุ้มค่าสำหรับโรงงานอุตสาหกรรม'
     case 'products':
       return 'ผลิตภัณฑ์ระบบแก๊สซิไฟเออร์ 1.5 MW, 750 kW และเครื่องอบกากแป้งมันสำปะหลังสำหรับโรงงานอุตสาหกรรม'
     case 'projects':
@@ -380,6 +386,7 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
   const navLinks: Array<{ label: string; id?: string; page?: Page }> = [
     { label: 'หน้าแรก', id: 'hero' },
     { label: 'เกี่ยวกับเรา', page: { t: 'about' } },
+    { label: 'ระบบ Gasifier', page: { t: 'gasifier' } },
     { label: 'สินค้า', page: { t: 'products' } },
     { label: 'บริการ', id: 'services' },
     { label: 'ผลงาน', page: { t: 'projects' } },
@@ -651,6 +658,171 @@ function About({ onLearnMore }: { onLearnMore: () => void }) {
   )
 }
 
+/* ─── GASIFIER STORY ─────────────────────────────── */
+type GasifierImage = {
+  src: string
+  alt: string
+  caption: string
+}
+
+function GasifierImageModal({ image, onClose }: { image: GasifierImage; onClose: () => void }) {
+  const dialogRef = useDialogFocus(onClose)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button type="button" onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" aria-label="ปิดภาพขยาย" />
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={image.alt} className="relative w-full max-w-6xl">
+        <img src={image.src} alt={image.alt} className="mx-auto max-h-[82vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl" />
+        <button type="button" onClick={onClose} className="absolute right-2 top-2 flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80" aria-label="ปิดภาพขยาย"><IcoX /></button>
+      </div>
+    </div>
+  )
+}
+
+function GasifierFigure({ image, onOpen }: { image: GasifierImage; onOpen: (image: GasifierImage) => void }) {
+  return (
+    <figure className="mx-auto mt-6 max-w-3xl">
+      <button type="button" onClick={() => onOpen(image)} className="group block w-full overflow-hidden rounded-2xl bg-white text-left shadow-sm transition-shadow hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700" aria-label={`ขยายภาพ: ${image.alt}`}>
+        <img src={image.src} alt={image.alt} className="w-full transition-transform duration-300 group-hover:scale-[1.01]" loading="lazy" />
+      </button>
+    </figure>
+  )
+}
+
+function GasifierStory() {
+  const [selectedImage, setSelectedImage] = useState<GasifierImage | null>(null)
+
+  return (
+    <section className="bg-ink-100 py-16 md:py-20">
+      <div className="mx-auto max-w-4xl px-5 md:px-8">
+        <div className="max-w-3xl">
+          <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-700">Understanding Our Solution</p>
+          <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-ink-950 md:text-3xl">ทำความเข้าใจระบบ Gasifier<br className="hidden md:block" /> ก่อนตัดสินใจลงทุน</h2>
+          <p className="mt-5 font-body text-base leading-relaxed text-ink-700">การเลือกระบบพลังงานสำหรับโรงงานไม่ได้พิจารณาเพียงราคาเครื่องจักร แต่ต้องพิจารณาเชื้อเพลิงเดิม ความต้องการความร้อน ชั่วโมงเดินเครื่อง พื้นที่ติดตั้ง และต้นทุนตลอดอายุการใช้งานด้วย</p>
+        </div>
+
+        <div className="mt-10 space-y-14 md:space-y-18">
+          <article>
+            <h3 className="font-heading text-lg font-semibold text-ink-950">Gasifier คืออะไร และเรากำลังเสนออะไรให้โรงงาน</h3>
+            <div className="mt-3 max-w-3xl space-y-3 font-body text-sm leading-relaxed text-ink-700">
+              <p>Gasifier คือระบบที่เปลี่ยนเชื้อเพลิงชีวมวล เช่น ไม้สับ ให้เป็น Producer Gas หรือก๊าซเชื้อเพลิง แล้วส่งไปใช้กับหัวเผาเพื่อจ่ายความร้อนแก่กระบวนการผลิต ระบบจึงไม่ได้เป็นเพียงตัวเตา แต่รวมถึงการจัดเตรียมเชื้อเพลิง การลำเลียง การทำความสะอาดก๊าซ การควบคุม และการเชื่อมต่อกับอุปกรณ์เดิมของโรงงาน</p>
+              <p>ผลผลิตหลักคือ Producer Gas สำหรับใช้เป็นพลังงานความร้อน ส่วนถ่านชีวภาพและน้ำส้มควันไม้เป็นผลพลอยได้ที่ต้องพิจารณาตามชนิดเชื้อเพลิงและรูปแบบการเดินระบบของแต่ละโครงการ</p>
+            </div>
+            <GasifierFigure image={{ src: "/assets/data/รูปตัวอย่าง.jpg", alt: "แผนภาพไม้สับผ่านกระบวนการ Gasification ไปสู่ Producer Gas ถ่านชีวภาพ และน้ำส้มควันไม้", caption: "ภาพรวมวัตถุดิบ กระบวนการ Gasification และผลผลิตที่เกี่ยวข้อง โดยการนำผลพลอยได้ไปใช้ต้องประเมินความเหมาะสมของแต่ละโครงการ" }} onOpen={setSelectedImage} />
+            <div className="mx-auto mt-6 max-w-3xl font-body text-sm leading-relaxed text-ink-700">
+              <p>ไม้สับเป็นวัตถุดิบหลักที่ป้อนเข้าสู่ระบบ เมื่อผ่านกระบวนการ Gasification ผลผลิตหลักคือ Producer Gas ซึ่งนำไปใช้กับหัวเผาเพื่อจ่ายความร้อนแก่กระบวนการผลิต ส่วนถ่านชีวภาพและน้ำส้มควันไม้เป็นผลพลอยได้ โดยคุณสมบัติ ปริมาณ และแนวทางนำไปใช้ขึ้นอยู่กับชนิดเชื้อเพลิงและเงื่อนไขการเดินระบบ</p>
+            </div>
+          </article>
+
+          <article>
+            <h3 className="font-heading text-lg font-semibold text-ink-950">Producer Gas เกิดขึ้นได้อย่างไร</h3>
+            <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-ink-700">ไม้สับถูกจัดเก็บและลำเลียงเข้าสู่เตา Gasifier ก่อนผ่านระบบทำความสะอาดก๊าซและส่งต่อไปยังหัวเผาเพื่อใช้งานจริง ลำดับอุปกรณ์และการควบคุมถูกออกแบบให้สัมพันธ์กับชนิดเชื้อเพลิง ความชื้น และกำลังความร้อนที่โรงงานต้องการ</p>
+            <GasifierFigure image={{ src: "/assets/data/ขบวนการทำงาน.jpg", alt: "แผนภาพลำดับการทำงานตั้งแต่ถังพักเชื้อเพลิงจนถึงหัวเผา Gas Burner", caption: "ลำดับการทำงานโดยสรุป: ถังพักเชื้อเพลิง ระบบลำเลียง เตา Gasifier ระบบทำความสะอาดก๊าซ ชุดส่งจ่ายก๊าซ และหัวเผา" }} onOpen={setSelectedImage} />
+            <p className="mx-auto mt-6 max-w-3xl font-body text-sm leading-relaxed text-ink-700">เมื่อไม้สับผ่านถังพักและระบบลำเลียงเข้าสู่เตา จะเกิด Producer Gas จากนั้นก๊าซจะผ่านระบบทำความสะอาดและชุดส่งจ่าย ก่อนเข้าสู่หัวเผาเพื่อให้ความร้อนแก่กระบวนการผลิตอย่างต่อเนื่อง</p>
+            <GasifierFigure image={{ src: "/assets/data/รูปตัวอย่างแสดงผลลัพที่ได้.jpg", alt: "โครงสร้างภายในเตา Gasifier แสดงโซน Drying Pyrolysis Combustion และ Reduction", caption: "ภายในเตา ชีวมวลเคลื่อนตัวผ่านโซนลดความชื้น สลายตัวด้วยความร้อน สร้างความร้อน และสร้างก๊าซเชื้อเพลิง" }} onOpen={setSelectedImage} />
+            <p className="mx-auto mt-6 max-w-3xl font-body text-sm leading-relaxed text-ink-700">ภายในเตา เชื้อเพลิงจะเคลื่อนผ่าน 4 โซนหลัก ได้แก่ การลดความชื้น การสลายตัวด้วยความร้อน การเผาไหม้ และการสร้างก๊าซเชื้อเพลิง ซึ่งเป็นขั้นตอนสำคัญที่ทำให้ชีวมวลเปลี่ยนเป็นพลังงานความร้อนที่นำไปใช้ได้</p>
+          </article>
+
+          <article>
+            <h3 className="font-heading text-lg font-semibold text-ink-950">ข้อมูลทางเทคนิคที่ใช้เริ่มต้นการออกแบบ</h3>
+            <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-ink-700">เอกสารอ้างอิงระบุระบบขนาด G-750, G-1000 และ G-1500 ซึ่งมีกำลังความร้อน 750, 1,000 และ 1,500 kWth ตามลำดับ โดยใช้ไม้สับเป็นเชื้อเพลิงอ้างอิงที่ความชื้น 20–35% และค่าความร้อน 3,500 kcal/kg ค่าดังกล่าวใช้สำหรับประเมินเบื้องต้นเท่านั้น ก่อนเลือกขนาดระบบต้องตรวจสอบข้อมูลเชื้อเพลิงและความต้องการความร้อนจริงของโรงงาน</p>
+            <p className="mt-4 max-w-3xl font-body text-sm leading-relaxed text-ink-700">ตารางนี้ช่วยให้เห็นขอบเขตของระบบมาตรฐานก่อนเริ่มสำรวจหน้างาน ไม่ใช่ specification สุดท้ายสำหรับการสั่งผลิตหรือรับประกันสมรรถนะ</p>
+            <div className="mt-6 overflow-x-auto">
+              <table className="min-w-[720px] w-full border-collapse bg-white font-body text-sm text-ink-700">
+                <thead className="bg-brand-900 text-white">
+                  <tr><th scope="col" className="border border-brand-900 px-4 py-3 text-left font-semibold">รายการ</th><th scope="col" className="border border-brand-900 px-4 py-3 text-center font-semibold">หน่วย</th><th scope="col" className="border border-brand-900 px-4 py-3 text-center font-semibold">G-750</th><th scope="col" className="border border-brand-900 px-4 py-3 text-center font-semibold">G-1000</th><th scope="col" className="border border-brand-900 px-4 py-3 text-center font-semibold">G-1500</th></tr>
+                </thead>
+                <tbody>
+                  <tr className="bg-brand-50"><th colSpan={5} scope="rowgroup" className="border border-ink-300 px-4 py-2 text-left font-semibold text-ink-950">Gasifier</th></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">กำลังความร้อน</th><td className="border border-ink-300 px-4 py-3 text-center">kWth</td><td className="border border-ink-300 px-4 py-3 text-center">750</td><td className="border border-ink-300 px-4 py-3 text-center">1,000</td><td className="border border-ink-300 px-4 py-3 text-center">1,500</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ประสิทธิภาพการแปลงพลังงานอ้างอิง</th><td className="border border-ink-300 px-4 py-3 text-center">%</td><td className="border border-ink-300 px-4 py-3 text-center">70</td><td className="border border-ink-300 px-4 py-3 text-center">70</td><td className="border border-ink-300 px-4 py-3 text-center">70</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">อัตราการไหลของ Producer Gas</th><td className="border border-ink-300 px-4 py-3 text-center">Nm³/h</td><td className="border border-ink-300 px-4 py-3 text-center">—</td><td className="border border-ink-300 px-4 py-3 text-center">900</td><td className="border border-ink-300 px-4 py-3 text-center">1,350</td></tr>
+                  <tr className="bg-brand-50"><th colSpan={5} scope="rowgroup" className="border border-ink-300 px-4 py-2 text-left font-semibold text-ink-950">เชื้อเพลิงชีวมวลอ้างอิง</th></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ชนิดเชื้อเพลิง</th><td className="border border-ink-300 px-4 py-3 text-center">—</td><td colSpan={3} className="border border-ink-300 px-4 py-3 text-center">ไม้สับ</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ความชื้น</th><td className="border border-ink-300 px-4 py-3 text-center">%</td><td colSpan={3} className="border border-ink-300 px-4 py-3 text-center">20–35</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ค่าความร้อน</th><td className="border border-ink-300 px-4 py-3 text-center">kcal/kg</td><td colSpan={3} className="border border-ink-300 px-4 py-3 text-center">3,500</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ขนาดไม้สับอ้างอิง</th><td className="border border-ink-300 px-4 py-3 text-center">mm</td><td colSpan={3} className="border border-ink-300 px-4 py-3 text-center">50 × 50</td></tr>
+                  <tr className="bg-brand-50"><th colSpan={5} scope="rowgroup" className="border border-ink-300 px-4 py-2 text-left font-semibold text-ink-950">การใช้งานและการควบคุม</th></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ระบบทำความสะอาดก๊าซ</th><td className="border border-ink-300 px-4 py-3 text-center">—</td><td colSpan={3} className="border border-ink-300 px-4 py-3 text-center">Condenser</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ระบบควบคุม PLC</th><td className="border border-ink-300 px-4 py-3 text-center">—</td><td colSpan={3} className="border border-ink-300 px-4 py-3 text-center">Semi-automatic</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">การเดินระบบต่อเนื่องอ้างอิง</th><td className="border border-ink-300 px-4 py-3 text-center">hr/day</td><td colSpan={3} className="border border-ink-300 px-4 py-3 text-center">24</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article>
+            <h3 className="font-heading text-lg font-semibold text-ink-950">ความคุ้มค่า ประเมินจากอะไร</h3>
+            <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-ink-700">การเปรียบเทียบควรเริ่มจากความร้อนที่นำไปใช้ได้ ไม่ใช่ดูเฉพาะราคาเชื้อเพลิงต่อกิโลกรัม ตารางด้านล่างเป็นกรณีตัวอย่างจากเอกสารอ้างอิง เพื่อช่วยให้เห็นสมมติฐานที่ต้องตรวจสอบก่อนประเมินโครงการจริง</p>
+
+            <h4 className="mt-8 font-heading text-base font-semibold text-ink-950">เปรียบเทียบพลังงานความร้อน</h4>
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-[620px] w-full border-collapse bg-white font-body text-sm text-ink-700">
+                <thead className="bg-brand-900 text-white"><tr><th scope="col" className="border border-brand-900 px-4 py-3 text-left font-semibold">รายการ</th><th scope="col" className="border border-brand-900 px-4 py-3 text-center font-semibold">LPG</th><th scope="col" className="border border-brand-900 px-4 py-3 text-center font-semibold">Biomass + Gasifier</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">อัตราการใช้เชื้อเพลิง</th><td className="border border-ink-300 px-4 py-3 text-center">100 kg/h</td><td className="border border-ink-300 px-4 py-3 text-center">480 kg/h</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ค่าความร้อนเชื้อเพลิง</th><td className="border border-ink-300 px-4 py-3 text-center">12,000 kcal/kg</td><td className="border border-ink-300 px-4 py-3 text-center">3,500 kcal/kg</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">พลังงานขาเข้า</th><td className="border border-ink-300 px-4 py-3 text-center">1,200,000 kcal/h</td><td className="border border-ink-300 px-4 py-3 text-center">1,680,000 kcal/h</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ประสิทธิภาพที่ใช้ในการคำนวณ</th><td className="border border-ink-300 px-4 py-3 text-center">100%*</td><td className="border border-ink-300 px-4 py-3 text-center">70%</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">พลังงานความร้อนที่ใช้งานได้</th><td className="border border-ink-300 px-4 py-3 text-center">1,200,000 kcal/h</td><td className="border border-ink-300 px-4 py-3 text-center">1,176,000 kcal/h</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4 max-w-3xl font-body text-sm leading-relaxed text-ink-700">แม้ไม้สับต้องใช้ปริมาณมากกว่า แต่เมื่อคำนวณหลังประสิทธิภาพของระบบแล้ว พลังงานความร้อนที่นำไปใช้ได้อยู่ในระดับใกล้เคียงกับ LPG จึงเป็นจุดเริ่มต้นให้โรงงานพิจารณาทางเลือกของเชื้อเพลิงได้อย่างเหมาะสม</p>
+
+            <h4 className="mt-10 font-heading text-base font-semibold text-ink-950">เปรียบเทียบต้นทุนเชื้อเพลิง</h4>
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-[620px] w-full border-collapse bg-white font-body text-sm text-ink-700">
+                <thead className="bg-brand-900 text-white"><tr><th scope="col" className="border border-brand-900 px-4 py-3 text-left font-semibold">รายการ</th><th scope="col" className="border border-brand-900 px-4 py-3 text-center font-semibold">LPG</th><th scope="col" className="border border-brand-900 px-4 py-3 text-center font-semibold">Biomass + Updraft Gasifier</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">อัตราการใช้เชื้อเพลิง</th><td className="border border-ink-300 px-4 py-3 text-center">100 kg/h</td><td className="border border-ink-300 px-4 py-3 text-center">480 kg/h</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ราคาเชื้อเพลิงตัวอย่าง</th><td className="border border-ink-300 px-4 py-3 text-center">25 บาท/kg</td><td className="border border-ink-300 px-4 py-3 text-center">1.25 บาท/kg</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ต้นทุนเชื้อเพลิงต่อชั่วโมง</th><td className="border border-ink-300 px-4 py-3 text-center">2,500 บาท/h</td><td className="border border-ink-300 px-4 py-3 text-center">600 บาท/h</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">ส่วนต่างต้นทุนเชื้อเพลิง</th><td className="border border-ink-300 px-4 py-3 text-center">—</td><td className="border border-ink-300 px-4 py-3 text-center font-semibold text-brand-700">1,900 บาท/h</td></tr>
+                  <tr><th scope="row" className="border border-ink-300 px-4 py-3 text-left font-medium text-ink-950">อัตราลดต้นทุนเชื้อเพลิง</th><td className="border border-ink-300 px-4 py-3 text-center">—</td><td className="border border-ink-300 px-4 py-3 text-center font-semibold text-brand-700">ประมาณ 76%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 max-w-3xl space-y-2 font-body text-xs leading-relaxed text-ink-700">
+              <p>ตารางนี้เป็นตัวอย่างเพื่ออธิบายแนวทางประเมินเบื้องต้น ไม่ใช่การรับประกันผลประหยัดของทุกโครงการ</p>
+              <p>*ค่า LPG 100% ใช้เป็น reference basis สำหรับตัวอย่างคำนวณ ไม่ได้หมายถึงประสิทธิภาพจริงของหัวเผาหรือกระบวนการผลิตทุกประเภท การประเมินโครงการจริงต้องรวมคุณภาพและราคาเชื้อเพลิง ค่าไฟ ค่าแรง ค่าบำรุงรักษา ชั่วโมงเดินระบบ และเงื่อนไขหน้างาน</p>
+            </div>
+          </article>
+
+          <article>
+            <h3 className="font-heading text-lg font-semibold text-ink-950">จากการประเมินสู่การติดตั้ง</h3>
+            <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-ink-700">ทีมงานเริ่มจากสำรวจหน้างานและเก็บข้อมูลการใช้พลังงาน จากนั้นจึงออกแบบ ผลิต ติดตั้ง ทดสอบการเดินระบบ และอบรมผู้ปฏิบัติงาน ปัจจุบันบริษัทมีผลงานอ้างอิงใน 7 จังหวัด รวม 15 เครื่อง และกำลังผลิตติดตั้งรวม 21 MW</p>
+            <GasifierFigure image={{ src: "/assets/data/รูปพื้นที่ที่ใช้ติดตั้งให้ลูกค้า.jpg", alt: "แผนที่ประเทศไทยแสดงจังหวัดที่มีผลงานติดตั้ง Gasifier", caption: "แผนที่ผลงานติดตั้งอ้างอิงในหลายจังหวัดทั่วประเทศไทย" }} onOpen={setSelectedImage} />
+          </article>
+        </div>
+      </div>
+      {selectedImage && <GasifierImageModal image={selectedImage} onClose={() => setSelectedImage(null)} />}
+    </section>
+  )
+}
+
+function GasifierPage({ setPage }: { setPage: (page: Page) => void }) {
+  return (
+    <main className="min-h-screen pt-16 md:pt-18">
+      <section className="bg-brand-900 py-16 text-white md:py-20">
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+          <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 font-body text-xs text-white/50">
+            <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
+            <IcoChevron />
+            <button onClick={() => setPage({ t: 'about' })} className="transition-colors hover:text-white">เกี่ยวกับเรา</button>
+            <IcoChevron />
+            <span className="text-white/80">ระบบ Gasifier</span>
+          </nav>
+          <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-500">Gasifier System</p>
+          <h1 className="mt-3 max-w-3xl font-heading text-3xl font-bold leading-tight md:text-5xl">ระบบ Gasifier<br className="hidden md:block" /> และแนวทางประเมินความคุ้มค่า</h1>
+          <p className="mt-5 max-w-2xl font-body text-base leading-relaxed text-white/70">ทำความเข้าใจระบบผลิต Producer Gas ข้อมูลทางเทคนิค และสิ่งที่โรงงานควรใช้ประกอบการประเมินก่อนตัดสินใจลงทุน</p>
+        </div>
+      </section>
+      <GasifierStory />
+    </main>
+  )
+}
+
 function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
   const referenceProvinces = Array.from(new Set(PROJECTS.map(project => project.province)))
   const featuredStrength = WHY_US[0]
@@ -712,12 +884,17 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
               </ul>
             </div>
 
+            <p className="mt-7 font-body text-sm leading-relaxed text-ink-700">จากความเข้าใจเชื้อเพลิง กระบวนการผลิต และข้อจำกัดของแต่ละโรงงาน เราจึงพัฒนาระบบ Gasifier ที่ออกแบบให้ใช้งานร่วมกับกระบวนการเดิมได้จริง</p>
+
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <button onClick={() => setPage({ t: 'projects' })} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 font-body text-sm font-medium text-white transition-colors hover:bg-brand-900">
                 ดูผลงานที่ผ่านมา <IcoArrowRight />
               </button>
               <button onClick={() => setPage({ t: 'products' })} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand-700 px-5 font-body text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50">
                 ดูผลิตภัณฑ์
+              </button>
+              <button onClick={() => setPage({ t: 'gasifier' })} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand-700 px-5 font-body text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50">
+                ดูข้อมูลระบบ Gasifier <IcoArrowRight />
               </button>
             </div>
           </div>
@@ -2034,6 +2211,7 @@ export default function App() {
         <TrustBar /><About onLearnMore={() => navigate({ t: 'about' })} /><Products onProduct={setSelectedProduct} onQuote={() => openQuote()} onViewAll={() => navigate({ t: 'products' })} /><Industries /><WhyUs /><FeaturedProjects setPage={navigate} /><LatestNews setPage={navigate} /><QuoteCTA onQuote={() => openQuote()} /><Contact onPrivacy={() => navigate({ t: 'privacy' })} />
       </>}
       {page.t === 'about' && <AboutPage setPage={navigate} />}
+      {page.t === 'gasifier' && <GasifierPage setPage={navigate} />}
       {page.t === 'products' && <ProductsPage setPage={navigate} onProduct={setSelectedProduct} onQuote={product => openQuote(product ? { product: product.name } : undefined)} />}
       {page.t === 'projects' && <ProjectsPage setPage={navigate} onQuote={() => openQuote()} />}
       {page.t === 'project' && <ProjectDetailPage p={page.p} setPage={navigate} onQuote={() => openQuote({ project: page.p.name })} />}
@@ -2046,7 +2224,7 @@ export default function App() {
       {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onQuote={() => { setSelectedProduct(null); openQuote({ product: selectedProduct.name }) }} />}
       {videoOpen && HERO_VIDEO_URL && <VideoModal url={HERO_VIDEO_URL} onClose={() => setVideoOpen(false)} />}
       {contactPopup === 'phone' && <PhoneContactModal onClose={() => setContactPopup(null)} />}
-      
+
       {/* Dev/Debug Badge to show API connection status */}
       {apiConnected !== null && (
         <div className={`fixed bottom-4 left-4 z-50 flex items-center gap-1.5 rounded-full px-3 py-1.5 font-body text-[11px] font-medium text-white shadow-lg backdrop-blur-sm transition-opacity duration-300 ${

@@ -5,6 +5,7 @@ import { COMPANY } from "../../../config/company";
 export function LoginScreen({ onLoginSuccess, onBack }: { onLoginSuccess: () => void; onBack: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +65,7 @@ export function LoginScreen({ onLoginSuccess, onBack }: { onLoginSuccess: () => 
               onChange={e => setEmail(e.target.value)}
               className="w-full rounded-lg border border-ink-300 px-4 py-2.5 text-sm focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700 bg-white text-ink-950"
               placeholder="admin@example.com"
+              autoComplete="username"
               disabled={loading}
               required
             />
@@ -71,16 +73,38 @@ export function LoginScreen({ onLoginSuccess, onBack }: { onLoginSuccess: () => 
           
           <div className="mb-6">
             <label className="block text-sm font-medium text-ink-950 mb-1" htmlFor="password">รหัสผ่าน</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-ink-300 px-4 py-2.5 text-sm focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700 bg-white text-ink-950"
-              placeholder="••••••••"
-              disabled={loading}
-              required
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-ink-300 py-2.5 pl-4 pr-11 text-sm focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700 bg-white text-ink-950"
+                placeholder="••••••••"
+                autoComplete="current-password"
+                disabled={loading}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(current => !current)}
+                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-600 transition-colors hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                title={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                disabled={loading}
+              >
+                {showPassword ? (
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 4.2A10.8 10.8 0 0 1 12 4c5.5 0 9.4 4.2 10 8-.2 1.3-.8 2.5-1.6 3.5M6.2 6.2C4.3 7.7 2.7 9.9 2 12c.6 3.8 4.5 8 10 8 1.3 0 2.6-.3 3.7-.8" />
+                  </svg>
+                ) : (
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2 12s3.5-8 10-8 10 8 10 8-3.5 8-10 8S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
           
           <button
