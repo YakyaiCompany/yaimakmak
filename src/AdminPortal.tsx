@@ -48,7 +48,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
         getJson<any>("/api/v1/admin/products?pageSize=100"),
         getJson<any>("/api/v1/admin/leads?pageSize=100"),
         getJson<any>("/api/v1/admin/downloads?pageSize=100"),
-        getJson<any>("/api/v1/admin/site-settings?pageSize=100"),
+        getJson<any>("/api/v1/admin/site-settings"),
         getJson<any>("/api/v1/admin/activities"),
         getJson<any>("/api/v1/users"),
       ]);

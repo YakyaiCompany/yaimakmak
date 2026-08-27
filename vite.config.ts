@@ -47,10 +47,24 @@ export default defineConfig(({ mode }) => {
             proxy.on('proxyRes', (_proxyRes, _req, res) => {
               const raw = _proxyRes.headers['set-cookie']
               if (!raw) return
-              // Strip Secure flag so http://localhost browser accepts the cookie
-              const patched = (Array.isArray(raw) ? raw : [raw]).map((c) =>
-                c.replace(/;\s*Secure/gi, '').replace(/;\s*SameSite=None/gi, '; SameSite=Lax')
-              )
+              
+              // Figma preview runs in a cross-origin iframe (figma.com -> localhost:8443).
+              // Cross-origin iframes REQUIRE cookies to have "SameSite=None; Secure".
+              // We ensure these flags are present.
+              const patched = (Array.isArray(raw) ? raw : [raw]).map((c) => {
+                let newCookie = c;
+                // Make sure SameSite is None
+                if (!/SameSite=None/i.test(newCookie)) {
+                  newCookie = newCookie.replace(/SameSite=Lax/ig, 'SameSite=None');
+                }
+                // Make sure Secure is present
+                if (!/Secure/i.test(newCookie)) {
+                  newCookie += '; Secure';
+                }
+                // The backend restricts cookie to /api/v1/admin, but we need it for /api/v1/users too
+                newCookie = newCookie.replace(/Path=\/api\/v1\/admin/ig, 'Path=/');
+                return newCookie;
+              })
               _proxyRes.headers['set-cookie'] = patched
             })
           },
