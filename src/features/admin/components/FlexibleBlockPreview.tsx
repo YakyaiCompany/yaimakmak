@@ -4,7 +4,8 @@ export function FlexibleBlockPreview({ block }: { block: ContentBlock }) {
   const safeUrl = block.content.trim().startsWith("https://") || block.content.trim().startsWith("/") ? block.content.trim() : "";
 
   if (block.kind === "รูปภาพ") {
-    return <section>{block.title && <h2 className="mb-3 text-xl font-semibold text-slate-900">{block.title}</h2>}{safeUrl ? <img src={safeUrl} alt={block.title || "ภาพประกอบ"} className="w-full rounded-2xl object-cover" /> : <div className="grid min-h-44 place-items-center rounded-2xl bg-slate-100 text-sm text-slate-500">รอรูปภาพ</div>}</section>;
+    const urls = block.content.split('\n').filter(Boolean).filter(u => u !== "กำลังอัปโหลด...");
+    return <section>{block.title && <h2 className="mb-3 text-xl font-semibold text-slate-900">{block.title}</h2>}{urls.length > 0 ? <div className={`grid gap-3 ${urls.length > 1 ? "sm:grid-cols-2" : ""}`}>{urls.map((url, i) => <img key={i} src={url} alt={block.title || "ภาพประกอบ"} className="w-full rounded-2xl object-cover" />)}</div> : <div className="grid min-h-44 place-items-center rounded-2xl bg-slate-100 text-sm text-slate-500">รอรูปภาพ</div>}</section>;
   }
 
   if (block.kind === "ปุ่ม/ลิงก์") {

@@ -765,36 +765,57 @@ function ContentEditor({
                         />
                       </label>
                     </div>
-                    {block.kind === "รูปภาพ" ? (
+                    {block.kind === "รูปภาพ" ? (() => {
+                      const urls = block.content.split('\n').filter(Boolean);
+                      const isUploading = urls.includes("กำลังอัปโหลด...");
+                      const actualUrls = urls.filter(u => u !== "กำลังอัปโหลด...");
+                      return (
                       <div className="mt-3">
                         <span className="mb-1.5 block text-xs font-medium text-slate-600">
-                          รูปภาพ
+                          รูปภาพ (เลือกได้ทีละหลายภาพ)
                         </span>
-                        <div className="flex items-center gap-3">
-                          {block.content && block.content !== "กำลังอัปโหลด..." && (
-                            <img src={block.content} alt="" className="h-16 w-16 rounded-lg object-cover border border-slate-200" />
-                          )}
+                        <div className="flex flex-wrap items-center gap-3">
+                          {actualUrls.map((url, i) => (
+                            <div key={i} className="relative h-16 w-16 group">
+                              <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover border border-slate-200" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newUrls = [...actualUrls];
+                                  newUrls.splice(i, 1);
+                                  updateBlock(block.id, { content: newUrls.join('\n') });
+                                }}
+                                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm hover:bg-rose-600 transition-colors"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
                           <label className={`inline-flex cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 ${focusRing}`}>
-                            <span>{block.content === "กำลังอัปโหลด..." ? "กำลังอัปโหลด..." : block.content ? "เปลี่ยนรูปภาพ" : "อัปโหลดภาพ"}</span>
-                            <input disabled={block.content === "กำลังอัปโหลด..."} accept="image/jpeg,image/png,image/webp,image/gif" type="file" className="sr-only" onChange={async (event) => {
-                              const file = event.target.files?.[0];
-                              if (!file) return;
+                            <span>{isUploading ? "กำลังอัปโหลด..." : actualUrls.length > 0 ? "เพิ่มรูปภาพ" : "อัปโหลดภาพ"}</span>
+                            <input disabled={isUploading} accept="image/jpeg,image/png,image/webp,image/gif" type="file" multiple className="sr-only" onChange={async (event) => {
+                              const files = Array.from(event.target.files || []);
+                              if (!files.length) return;
                               event.target.value = '';
-                              updateBlock(block.id, { content: "กำลังอัปโหลด..." });
-                              try {
-                                const formData = new FormData();
-                                formData.append("file", file);
-                                const response = await postFormData<{ data: { url: string } }>("/api/v1/admin/media/upload", formData);
-                                updateBlock(block.id, { content: response.data.url });
-                              } catch (e) {
-                                updateBlock(block.id, { content: "" });
-                                alert("ไม่สามารถอัปโหลดภาพได้");
+                              let currentUrls = [...actualUrls];
+                              updateBlock(block.id, { content: [...currentUrls, "กำลังอัปโหลด..."].join('\n') });
+                              for (const file of files) {
+                                try {
+                                  const formData = new FormData();
+                                  formData.append("file", file);
+                                  const response = await postFormData<{ data: { url: string } }>("/api/v1/admin/media/upload", formData);
+                                  currentUrls.push(response.data.url);
+                                } catch (e) {
+                                  alert("ไม่สามารถอัปโหลดภาพบางภาพได้");
+                                }
                               }
+                              updateBlock(block.id, { content: currentUrls.join('\n') });
                             }} />
                           </label>
                         </div>
                       </div>
-                    ) : (
+                      );
+                    })() : (
                       <label className="mt-3 block">
                         <span className="mb-1.5 block text-xs font-medium text-slate-600">
                           {block.kind === "ปุ่ม/ลิงก์"
