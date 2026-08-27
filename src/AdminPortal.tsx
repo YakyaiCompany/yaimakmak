@@ -117,6 +117,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
       displayOrder: item.displayOrder ?? 0,
       publishedAt,
       coverImageId: item.coverImageId || null,
+      contentBlocks: item.contentBlocks || [],
     };
 
     let payload: Record<string, unknown>;

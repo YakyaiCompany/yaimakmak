@@ -34,7 +34,7 @@ export function mapProjectToContentItem(project: any): ContentItem {
     scheduledAt: project.publishedAt ? new Date(project.publishedAt).toISOString().slice(0, 16) : "",
     gallery: (project.gallery || []).map((g: any) => g.url).join("\n"),
     tags: [project.industry, project.system, project.province].filter(Boolean).join(", "),
-    contentBlocks: [],
+    contentBlocks: project.contentBlocks || [],
   };
 }
 
@@ -58,7 +58,7 @@ export function mapArticleToContentItem(article: any): ContentItem {
     featured: Boolean(article.featured),
     displayOrder: article.displayOrder ?? 0,
     tags: (article.tags || []).join(", "),
-    contentBlocks: [],
+    contentBlocks: article.contentBlocks || [],
   };
 }
 
@@ -85,7 +85,7 @@ export function mapProductToContentItem(product: any): ContentItem {
     displayOrder: product.displayOrder ?? 0,
     scheduledAt: product.publishedAt ? new Date(product.publishedAt).toISOString().slice(0, 16) : "",
     tags: [product.category, product.suitableFor].filter(Boolean).join(", "),
-    contentBlocks: [],
+    contentBlocks: product.contentBlocks || [],
   };
 }
 
