@@ -5,14 +5,17 @@ import { ActivityBadge } from "../components/ActivityBadge";
 import { StatusBadge } from "../components/StatusBadge";
 import { FlexibleBlockPreview } from "../components/FlexibleBlockPreview";
 import { contentTypeLabel, emptyContent, focusRing } from "../utils";
+import { postFormData } from "../../../lib/api";
 
-export function ContentManager({ type, items, latestActivity, onSave, onDelete }: { type: ContentType; items: ContentItem[]; latestActivity?: ContentActivity; onSave: (item: ContentItem) => void; onDelete: (id: string) => void }) {
+export function ContentManager({ type, items, latestActivity, onSave, onDelete, externalError }: { type: ContentType; items: ContentItem[]; latestActivity?: ContentActivity; onSave: (item: ContentItem) => Promise<unknown>; onDelete: (id: string) => Promise<unknown>; externalError?: string }) {
   const title = contentTypeLabel(type);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "ทั้งหมด">("ทั้งหมด");
   const [draft, setDraft] = useState<ContentItem | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const filteredItems = useMemo(() => items.filter((item) => {
     const matchesQuery = item.title.toLowerCase().includes(query.trim().toLowerCase()) || item.category.toLowerCase().includes(query.trim().toLowerCase());
@@ -22,38 +25,69 @@ export function ContentManager({ type, items, latestActivity, onSave, onDelete }
 
   const openEditor = (item: ContentItem) => {
     setNotice("");
+    setError("");
     setDraft({ ...item });
   };
 
   const openPreview = (item: ContentItem) => {
     setNotice("");
+    setError("");
     setDraft({ ...item });
     setPreviewOpen(true);
   };
 
-  const duplicate = (item: ContentItem) => {
-    onSave({ ...item, id: `${type}-${Date.now()}`, title: `${item.title} (สำเนา)`, status: "ร่าง", updatedAt: "เมื่อสักครู่" });
-    setNotice(`สร้างสำเนา${title}เป็นร่างแล้ว`);
+  const duplicate = async (item: ContentItem) => {
+    setError("");
+    setIsSaving(true);
+    try {
+      await onSave({ ...item, id: `new-${type}-${Date.now()}`, slug: `${item.slug || type}-copy-${Date.now()}`, title: `${item.title} (สำเนา)`, status: "ร่าง", updatedAt: "เมื่อสักครู่" });
+      setNotice(`สร้างสำเนา${title}เป็นร่างแล้ว`);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "ไม่สามารถสร้างสำเนาได้");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const remove = (item: ContentItem) => {
+  const remove = async (item: ContentItem) => {
     if (!window.confirm(`ต้องการลบ "${item.title}" หรือไม่?`)) return;
-    onDelete(item.id);
-    setNotice(`ลบ${title}แล้ว`);
+    setError("");
+    setIsSaving(true);
+    try {
+      await onDelete(item.id);
+      setNotice(`ลบ${title}แล้ว`);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "ไม่สามารถลบรายการได้");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const save = (status: ContentStatus) => {
+  const save = async (status: ContentStatus) => {
     if (!draft) return;
-    onSave({ ...draft, status, updatedAt: "เมื่อสักครู่", author: "ผู้ดูแลระบบ" });
-    setNotice(status === "เผยแพร่" ? "เผยแพร่เนื้อหาแล้ว" : status === "กำหนดเผยแพร่" ? "กำหนดเวลาเผยแพร่แล้ว" : "บันทึกเนื้อหาเป็นร่างแล้ว");
-    setPreviewOpen(false);
-    setDraft(null);
+    if (!draft.title.trim()) {
+      setError("กรุณากรอกหัวข้อก่อนบันทึก");
+      return;
+    }
+    setError("");
+    setIsSaving(true);
+    try {
+      await onSave({ ...draft, status, updatedAt: "เมื่อสักครู่", author: "ผู้ดูแลระบบ" });
+      setNotice(status === "เผยแพร่" ? "เผยแพร่เนื้อหาแล้ว" : status === "กำหนดเผยแพร่" ? "กำหนดเวลาเผยแพร่แล้ว" : "บันทึกเนื้อหาเป็นร่างแล้ว");
+      setPreviewOpen(false);
+      setDraft(null);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "ไม่สามารถบันทึกเนื้อหาได้");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (draft) {
     return (
       <>
-        <ContentEditor type={type} item={draft} onChange={(patch) => setDraft((current) => current ? { ...current, ...patch } : current)} onBack={() => { setPreviewOpen(false); setDraft(null); }} onSaveDraft={() => save("ร่าง")} onSchedule={() => save("กำหนดเผยแพร่")} onPreview={() => setPreviewOpen(true)} />
+        {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">{error}</p>}
+        <ContentEditor type={type} item={draft} onChange={(patch) => setDraft((current) => current ? { ...current, ...patch } : current)} onBack={() => { setPreviewOpen(false); setDraft(null); }} onSaveDraft={() => void save("ร่าง")} onSchedule={() => void save("กำหนดเผยแพร่")} onPreview={() => setPreviewOpen(true)} isSaving={isSaving} />
         {previewOpen && <ContentPreview type={type} item={draft} onClose={() => setPreviewOpen(false)} onPublish={() => save("เผยแพร่")} />}
       </>
     );
@@ -65,6 +99,7 @@ export function ContentManager({ type, items, latestActivity, onSave, onDelete }
         <button type="button" onClick={() => openEditor(emptyContent(type))} className={`rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-900 ${focusRing}`}>เพิ่ม{title}</button>
       </PageHeading>
       {notice && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{notice}</p>}
+      {(error || externalError) && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">{error || externalError}</p>}
       {latestActivity && <section className="flex flex-col gap-3 rounded-2xl border border-energy-600/20 bg-energy-600/[0.06] px-4 py-3.5 sm:flex-row sm:items-center"><span className="h-2.5 w-2.5 shrink-0 rounded-full bg-energy-600 ring-4 ring-energy-600/10" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-semibold text-energy-600">เปลี่ยนแปลงล่าสุด</span><ActivityBadge action={latestActivity.action} /></div><p className="mt-1 truncate text-sm font-semibold text-slate-800">{latestActivity.title}</p><p className="mt-0.5 text-xs text-slate-500">{latestActivity.at} · {latestActivity.actor}</p></div></section>}
       <div className="flex flex-col gap-3 sm:flex-row">
         <label className="block min-w-0 flex-1"><span className="sr-only">ค้นหา{title}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`ค้นหา${title}หรือหมวดหมู่...`} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 ${focusRing}`} /></label>
@@ -94,7 +129,7 @@ export function ContentManager({ type, items, latestActivity, onSave, onDelete }
   );
 }
 
-function ContentEditor({ type, item, onChange, onBack, onSaveDraft, onSchedule, onPreview }: { type: ContentType; item: ContentItem; onChange: (patch: Partial<ContentItem>) => void; onBack: () => void; onSaveDraft: () => void; onSchedule: () => void; onPreview: () => void }) {
+function ContentEditor({ type, item, onChange, onBack, onSaveDraft, onSchedule, onPreview, isSaving }: { type: ContentType; item: ContentItem; onChange: (patch: Partial<ContentItem>) => void; onBack: () => void; onSaveDraft: () => void; onSchedule: () => void; onPreview: () => void; isSaving: boolean }) {
   const title = `แก้ไข${contentTypeLabel(type)}`;
   const contentBlocks = item.contentBlocks ?? [];
   const addBlock = () => onChange({ contentBlocks: [...contentBlocks, { id: `block-${Date.now()}`, kind: "ข้อความ", title: "", content: "" }] });
@@ -187,15 +222,34 @@ function ContentEditor({ type, item, onChange, onBack, onSaveDraft, onSchedule, 
                 {!contentBlocks.length && <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">ยังไม่มีส่วนเพิ่มเติม กด “เพิ่มส่วน” เมื่อต้องการแทรกเนื้อหาประเภทอื่น</div>}
               </div>
             </section>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"><h3 className="text-sm font-semibold text-slate-800">รูปภาพ เอกสาร และสื่อ</h3><p className="mt-1 text-xs leading-5 text-slate-500">ลิงก์เหล่านี้ใช้แสดงภาพหน้าปก แกลเลอรี วิดีโอ และเอกสารประกอบในหน้าที่กำลังแก้ไข</p><div className="mt-4 grid gap-4"><label><span className="mb-2 block text-sm font-medium text-slate-700">ลิงก์ภาพหน้าปก</span><input value={item.coverImage ?? ""} onChange={(event) => onChange({ coverImage: event.target.value })} placeholder="https://..." className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">ลิงก์รูปภาพเพิ่มเติม (1 บรรทัดต่อภาพ)</span><textarea rows={4} value={item.gallery ?? ""} onChange={(event) => onChange({ gallery: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label><div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-medium text-slate-700">ลิงก์วิดีโอ</span><input value={item.videoUrl ?? ""} onChange={(event) => onChange({ videoUrl: event.target.value })} placeholder="YouTube หรือ Vimeo" className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">ลิงก์เอกสารแนบ</span><input value={item.documentUrl ?? ""} onChange={(event) => onChange({ documentUrl: event.target.value })} placeholder="PDF หรือเอกสารประกอบ" className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label></div></div></div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"><h3 className="text-sm font-semibold text-slate-800">ภาพหน้าปก</h3><p className="mt-1 text-xs leading-5 text-slate-500">อัปโหลดภาพเข้าสู่คลังสื่อของหลังบ้าน ระบบจะบันทึก media ID ที่ใช้กับเนื้อหานี้</p><div className="mt-4"><CoverImageField item={item} onChange={onChange} /></div></div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"><h3 className="text-sm font-semibold text-slate-800">ข้อมูลช่วยจัดหมวดและปุ่มปลายทาง</h3><div className="mt-4 grid gap-4"><label><span className="mb-2 block text-sm font-medium text-slate-700">แท็ก (คั่นด้วยเครื่องหมายจุลภาค)</span><input value={item.tags ?? ""} onChange={(event) => onChange({ tags: event.target.value })} placeholder="เช่น Gasifier, ชีวมวล, 1.5 MW" className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-medium text-slate-700">ข้อความบนปุ่ม</span><input value={item.ctaLabel ?? ""} onChange={(event) => onChange({ ctaLabel: event.target.value })} placeholder="เช่น ขอใบเสนอราคา" className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">ลิงก์ของปุ่ม</span><input value={item.ctaUrl ?? ""} onChange={(event) => onChange({ ctaUrl: event.target.value })} placeholder="/contact หรือ https://..." className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label></div></div></div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"><h3 className="text-sm font-semibold text-slate-800">ข้อมูลของหน้านี้ในผลการค้นหา</h3><p className="mt-1 text-xs leading-5 text-slate-500">ช่วยให้คนเข้าใจว่าหน้านี้เกี่ยวกับอะไร ก่อนกดเข้าจาก Google หรือบริการค้นหาอื่น ข้อความที่แสดงจริงอาจถูกระบบค้นหาปรับให้เหมาะกับคำค้น</p><div className="mt-4 grid gap-4"><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">ชื่อที่ต้องการให้เห็น</span><input value={item.seoTitle} onChange={(event) => onChange({ seoTitle: event.target.value })} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 ${focusRing}`} /><span className="mt-1.5 block text-xs leading-5 text-slate-500">สรุปชื่อหน้าและหัวข้อสำคัญให้ชัดเจน โดยไม่ใส่คำซ้ำเกินจำเป็น</span></label><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">ข้อความอธิบายใต้ชื่อ</span><textarea rows={3} value={item.seoDescription} onChange={(event) => onChange({ seoDescription: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 ${focusRing}`} /><span className="mt-1.5 block text-xs leading-5 text-slate-500">สรุปประโยชน์หรือสาระของหน้านี้ให้ผู้อ่านตัดสินใจก่อนเปิดดู</span></label></div></div>
           </div>
-          <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-4"><h3 className="text-sm font-semibold text-slate-800">ขั้นตอนเผยแพร่</h3><dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-500">สถานะ</dt><dd className="font-medium text-slate-700">{item.status}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">ผู้แก้ไข</dt><dd className="font-medium text-slate-700">ผู้ดูแลระบบ</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">แก้ไขล่าสุด</dt><dd className="font-medium text-slate-700">{item.updatedAt}</dd></div></dl><label className="mt-5 block"><span className="mb-2 block text-xs font-medium text-slate-600">วันและเวลาที่ต้องการเผยแพร่</span><input type="datetime-local" value={item.scheduledAt ?? ""} onChange={(event) => onChange({ scheduledAt: event.target.value })} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><label className="mt-4 flex items-start gap-2.5"><input type="checkbox" checked={item.featured ?? false} onChange={(event) => onChange({ featured: event.target.checked })} className="mt-0.5 h-4 w-4 accent-brand-700" /><span className="text-xs leading-5 text-slate-600">แสดงเป็นรายการเด่นบนหน้าแรก</span></label><div className="mt-6 space-y-2"><button type="button" onClick={onPreview} className={`w-full rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white ${focusRing}`}>ดูตัวอย่างก่อนเผยแพร่</button><button type="button" onClick={onSchedule} disabled={!item.scheduledAt} className={`w-full rounded-xl border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}>กำหนดเวลาเผยแพร่</button><button type="submit" className={`w-full rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-900 ${focusRing}`}>บันทึกเป็นร่าง</button></div></aside>
+          <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-4"><h3 className="text-sm font-semibold text-slate-800">ขั้นตอนเผยแพร่</h3><dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-500">สถานะ</dt><dd className="font-medium text-slate-700">{item.status}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">ผู้แก้ไข</dt><dd className="font-medium text-slate-700">ผู้ดูแลระบบ</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">แก้ไขล่าสุด</dt><dd className="font-medium text-slate-700">{item.updatedAt}</dd></div></dl><label className="mt-5 block"><span className="mb-2 block text-xs font-medium text-slate-600">วันและเวลาที่ต้องการเผยแพร่</span><input type="datetime-local" value={item.scheduledAt ?? ""} onChange={(event) => onChange({ scheduledAt: event.target.value })} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><label className="mt-4 flex items-start gap-2.5"><input type="checkbox" checked={item.featured ?? false} onChange={(event) => onChange({ featured: event.target.checked })} className="mt-0.5 h-4 w-4 accent-brand-700" /><span className="text-xs leading-5 text-slate-600">แสดงเป็นรายการเด่นบนหน้าแรก</span></label><div className="mt-6 space-y-2"><button type="button" onClick={onPreview} disabled={isSaving} className={`w-full rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white disabled:opacity-50 ${focusRing}`}>ดูตัวอย่างก่อนเผยแพร่</button><button type="button" onClick={onSchedule} disabled={!item.scheduledAt || isSaving} className={`w-full rounded-xl border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}>{isSaving ? "กำลังบันทึก..." : "กำหนดเวลาเผยแพร่"}</button><button type="submit" disabled={isSaving} className={`w-full rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-900 disabled:opacity-50 ${focusRing}`}>{isSaving ? "กำลังบันทึก..." : "บันทึกเป็นร่าง"}</button></div></aside>
         </div>
       </form>
     </section>
   );
+}
+
+function CoverImageField({ item, onChange }: { item: ContentItem; onChange: (patch: Partial<ContentItem>) => void }) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState("");
+  const upload = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await postFormData<{ data: { id: string; url: string } }>("/api/v1/admin/media/upload", formData);
+      onChange({ coverImage: response.data.url, coverImageId: response.data.id });
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "ไม่สามารถอัปโหลดภาพได้");
+    } finally { setIsUploading(false); }
+  };
+  return <div className="space-y-3"><div className="flex flex-col gap-3 sm:flex-row sm:items-center">{item.coverImage ? <img src={item.coverImage} alt="" className="h-20 w-32 rounded-lg object-cover" /> : <div className="grid h-20 w-32 place-items-center rounded-lg border border-dashed border-slate-300 text-xs text-slate-500">ยังไม่มีภาพ</div>}<label className={`inline-flex w-fit cursor-pointer rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-700 hover:text-white ${focusRing}`}><span>{isUploading ? "กำลังอัปโหลด..." : "เลือกภาพ"}</span><input disabled={isUploading} accept="image/jpeg,image/png,image/webp,image/gif" type="file" className="sr-only" onChange={(event) => void upload(event.target.files?.[0])} /></label></div>{item.coverImageId && <p className="text-xs text-emerald-700">บันทึกในคลังสื่อแล้ว</p>}{error && <p role="alert" className="text-xs text-rose-700">{error}</p>}</div>;
 }
 
 function ContentPreview({ type, item, onClose, onPublish }: { type: ContentType; item: ContentItem; onClose: () => void; onPublish: () => void }) {
@@ -205,7 +259,7 @@ function ContentPreview({ type, item, onClose, onPublish }: { type: ContentType;
       <button type="button" onClick={onClose} className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" aria-label="ปิดตัวอย่าง" />
       <section className="relative max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-7"><div><p className="text-xs font-bold tracking-[0.14em] text-brand-700 uppercase">ตัวอย่างก่อนเผยแพร่</p><h2 className="mt-0.5 font-semibold text-slate-900">มุมมองหน้าเว็บไซต์</h2></div><button type="button" onClick={onClose} className={`rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 ${focusRing}`}>กลับไปแก้ไข</button></div>
-        <article className="mx-auto max-w-3xl px-5 py-8 sm:px-10 sm:py-12"><p className="text-sm font-medium text-brand-700">{item.category}</p><h1 className="mt-3 font-heading text-3xl font-bold leading-tight text-ink-950 sm:text-4xl">{item.title}</h1><p className="mt-4 text-sm text-slate-500">{contentLabel} · อัปเดต {item.updatedAt}</p>{item.coverImage ? <img src={item.coverImage} alt="" className="mt-7 aspect-[16/8] w-full rounded-2xl object-cover" /> : <div className="mt-7 grid aspect-[16/8] place-items-center rounded-2xl bg-brand-900/10 text-sm text-brand-700">พื้นที่ภาพหน้าปก</div>}{type === "portfolio" && <dl className="mt-6 grid gap-3 rounded-2xl bg-ink-100 p-5 text-sm sm:grid-cols-3"><div><dt className="text-slate-500">จังหวัด</dt><dd className="mt-1 font-semibold text-slate-800">{item.province || "ยังไม่ระบุ"}</dd></div><div><dt className="text-slate-500">ปีที่ติดตั้ง</dt><dd className="mt-1 font-semibold text-slate-800">{item.installedYear || "ยังไม่ระบุ"}</dd></div><div><dt className="text-slate-500">ระบบ</dt><dd className="mt-1 font-semibold text-slate-800">{item.system || "ยังไม่ระบุ"}</dd></div></dl>}<p className="mt-8 text-lg leading-8 text-slate-700">{item.summary}</p><div className="mt-6 space-y-4 text-base leading-8 text-slate-700">{item.body.split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>{type === "portfolio" && <div className="mt-8 grid gap-4 sm:grid-cols-2"><section className="rounded-2xl border border-slate-200 p-5"><h2 className="font-semibold text-slate-900">โจทย์ของโครงการ</h2><p className="mt-2 text-sm leading-6 text-slate-600">{item.challenge || "รอกรอกข้อมูล"}</p></section><section className="rounded-2xl border border-slate-200 p-5"><h2 className="font-semibold text-slate-900">แนวทางที่ออกแบบ</h2><p className="mt-2 text-sm leading-6 text-slate-600">{item.solution || "รอกรอกข้อมูล"}</p></section></div>}{item.contentBlocks && item.contentBlocks.length > 0 && <div className="mt-9 space-y-8 border-t border-slate-200 pt-8">{item.contentBlocks.map((block) => <FlexibleBlockPreview key={block.id} block={block} />)}</div>}<section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5"><p className="text-xs font-bold tracking-[0.14em] text-slate-500 uppercase">ตัวอย่างผลการค้นหา</p><p className="mt-3 text-lg font-medium text-brand-700">{item.seoTitle}</p><p className="mt-1 text-sm leading-6 text-slate-600">{item.seoDescription}</p></section></article>
+        <article className="mx-auto max-w-3xl px-5 py-8 sm:px-10 sm:py-12"><p className="text-sm font-medium text-brand-700">{item.category}</p><h1 className="mt-3 font-heading text-3xl font-bold leading-tight text-ink-950 sm:text-4xl">{item.title}</h1><p className="mt-4 text-sm text-slate-500">{contentLabel} · อัปเดต {item.updatedAt}</p>{item.coverImage ? <img src={item.coverImage} alt="" className="mt-7 aspect-[16/8] w-full rounded-2xl object-cover" /> : <div className="mt-7 grid aspect-[16/8] place-items-center rounded-2xl bg-brand-900/10 text-sm text-brand-700">พื้นที่ภาพหน้าปก</div>}{type === "portfolio" && <dl className="mt-6 grid gap-3 rounded-2xl bg-ink-100 p-5 text-sm sm:grid-cols-3"><div><dt className="text-slate-500">จังหวัด</dt><dd className="mt-1 font-semibold text-slate-800">{item.province || "ยังไม่ระบุ"}</dd></div><div><dt className="text-slate-500">ปีที่ติดตั้ง</dt><dd className="mt-1 font-semibold text-slate-800">{item.installedYear || "ยังไม่ระบุ"}</dd></div><div><dt className="text-slate-500">ระบบ</dt><dd className="mt-1 font-semibold text-slate-800">{item.system || "ยังไม่ระบุ"}</dd></div></dl>}<p className="mt-8 text-lg leading-8 text-slate-700">{item.summary}</p><div className="mt-6 space-y-4 text-base leading-8 text-slate-700">{(item.body || "").split("\n\n").filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>{type === "portfolio" && <div className="mt-8 grid gap-4 sm:grid-cols-2"><section className="rounded-2xl border border-slate-200 p-5"><h2 className="font-semibold text-slate-900">โจทย์ของโครงการ</h2><p className="mt-2 text-sm leading-6 text-slate-600">{item.challenge || "รอกรอกข้อมูล"}</p></section><section className="rounded-2xl border border-slate-200 p-5"><h2 className="font-semibold text-slate-900">แนวทางที่ออกแบบ</h2><p className="mt-2 text-sm leading-6 text-slate-600">{item.solution || "รอกรอกข้อมูล"}</p></section></div>}{item.contentBlocks && item.contentBlocks.length > 0 && <div className="mt-9 space-y-8 border-t border-slate-200 pt-8">{item.contentBlocks.map((block) => <FlexibleBlockPreview key={block.id} block={block} />)}</div>}<section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5"><p className="text-xs font-bold tracking-[0.14em] text-slate-500 uppercase">ตัวอย่างผลการค้นหา</p><p className="mt-3 text-lg font-medium text-brand-700">{item.seoTitle}</p><p className="mt-1 text-sm leading-6 text-slate-600">{item.seoDescription}</p></section></article>
         <div className="sticky bottom-0 flex flex-col gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-7"><button type="button" onClick={onClose} className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 ${focusRing}`}>แก้ไขต่อ</button><button type="button" onClick={onPublish} className={`rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-900 ${focusRing}`}>{item.status === "เผยแพร่" ? "อัปเดตและเผยแพร่" : "เผยแพร่เนื้อหา"}</button></div>
       </section>
     </div>

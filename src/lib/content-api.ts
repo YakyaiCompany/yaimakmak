@@ -73,7 +73,7 @@ export interface HomeContent {
 const fallbackHomeContent: HomeContent = {
   hero: {
     image: {
-      url: "/assets/company/hero-yakyai-installation.jpg",
+      url: "/assets/data/LINE_ALBUM_2025.6.4_250604_54.jpg",
       alt: "งานติดตั้งระบบอบแห้งอุตสาหกรรมของ YAKYAI 2015",
     },
     headingLines: [

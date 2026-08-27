@@ -51,6 +51,9 @@ export type ContentItem = {
   specifications?: string;
   fuelTypes?: string;
   coverImage?: string;
+  coverImageId?: string | null;
+  highlights?: string[];
+  displayOrder?: number;
   gallery?: string;
   videoUrl?: string;
   publishDate?: string;
@@ -83,14 +86,19 @@ export type DemoMessage = {
   desiredTimeline: string;
   preferredContact: string;
   assignedTo: string;
+  assignedToUserId?: string | null;
   followUpAt: string;
   internalNote: string;
 };
 
 export type DownloadItem = {
   id: string;
+  slug?: string;
   name: string;
   category: string;
+  description?: string;
+  fileId?: string | null;
+  fileUrl?: string | null;
   updatedAt: string;
   status: ContentStatus;
 };

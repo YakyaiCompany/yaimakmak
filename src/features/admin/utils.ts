@@ -1,17 +1,23 @@
 import { ContentItem, ContentType, DemoMessage, MessageStatus, DownloadItem, DiscoverySettings } from "./types";
 import { COMPANY } from "../../config/company";
 
+function safeDateLabel(value: unknown, fallback = "ไม่ทราบวันที่"): string {
+  if (!value) return fallback;
+  const date = new Date(value as string);
+  return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString("th-TH");
+}
+
 export function mapProjectToContentItem(project: any): ContentItem {
   return {
     id: project.id,
     title: project.title,
     category: project.industry || "",
     summary: project.summary || "",
-    body: project.summary ? `${project.summary}\n\n${project.solution || ""}` : (project.solution || ""),
+    body: project.description || "",
     seoTitle: project.title,
     seoDescription: project.summary || "",
     status: project.status === "PUBLISHED" ? "เผยแพร่" : project.status === "SCHEDULED" ? "กำหนดเผยแพร่" : "ร่าง",
-    updatedAt: new Date(project.updatedAt).toLocaleDateString("th-TH"),
+    updatedAt: safeDateLabel(project.updatedAt),
     author: "ผู้ดูแลระบบ",
     slug: project.slug,
     province: project.province || "",
@@ -22,6 +28,10 @@ export function mapProjectToContentItem(project: any): ContentItem {
     scope: (project.scope || []).join("\n"),
     result: project.result || "",
     coverImage: project.coverImage?.url || "",
+    coverImageId: project.coverImageId ?? null,
+    featured: Boolean(project.featured),
+    displayOrder: project.displayOrder ?? 0,
+    scheduledAt: project.publishedAt ? new Date(project.publishedAt).toISOString().slice(0, 16) : "",
     gallery: (project.gallery || []).map((g: any) => g.url).join("\n"),
     tags: [project.industry, project.system, project.province].filter(Boolean).join(", "),
     contentBlocks: [],
@@ -34,15 +44,19 @@ export function mapArticleToContentItem(article: any): ContentItem {
     title: article.title,
     category: article.category || "ข่าวสาร",
     summary: article.excerpt || "",
-    body: (article.body || []).join("\n\n"),
+    body: Array.isArray(article.body) ? article.body.join("\n\n") : article.body || "",
     seoTitle: article.title,
     seoDescription: article.excerpt || "",
     status: article.status === "PUBLISHED" ? "เผยแพร่" : article.status === "SCHEDULED" ? "กำหนดเผยแพร่" : "ร่าง",
-    updatedAt: new Date(article.updatedAt).toLocaleDateString("th-TH"),
+    updatedAt: safeDateLabel(article.updatedAt),
     author: article.authorName || "ผู้ดูแลระบบ",
     slug: article.slug,
     coverImage: article.coverImage?.url || "",
+    coverImageId: article.coverImageId ?? null,
     publishDate: article.publishedAt ? new Date(article.publishedAt).toISOString().split("T")[0] : "",
+    scheduledAt: article.publishedAt ? new Date(article.publishedAt).toISOString().slice(0, 16) : "",
+    featured: Boolean(article.featured),
+    displayOrder: article.displayOrder ?? 0,
     tags: (article.tags || []).join(", "),
     contentBlocks: [],
   };
@@ -54,16 +68,22 @@ export function mapProductToContentItem(product: any): ContentItem {
     title: product.title,
     category: product.category || "",
     summary: product.description || "",
-    body: product.description || "",
+    body: (product.highlights || []).join("\n") || product.description || "",
     seoTitle: product.title,
     seoDescription: product.description || "",
     status: product.status === "PUBLISHED" ? "เผยแพร่" : product.status === "SCHEDULED" ? "กำหนดเผยแพร่" : "ร่าง",
-    updatedAt: new Date(product.updatedAt).toLocaleDateString("th-TH"),
+    updatedAt: safeDateLabel(product.updatedAt),
     author: "ผู้ดูแลระบบ",
     slug: product.slug,
     subtitle: product.subtitle || "",
     specifications: (product.specifications || []).map((s: any) => `${s.label}: ${s.value}`).join("\n"),
+    highlights: product.highlights || [],
+    fuelTypes: (product.supportItems || []).join("\n"),
     coverImage: product.coverImage?.url || "",
+    coverImageId: product.coverImageId ?? null,
+    featured: Boolean(product.featured),
+    displayOrder: product.displayOrder ?? 0,
+    scheduledAt: product.publishedAt ? new Date(product.publishedAt).toISOString().slice(0, 16) : "",
     tags: [product.category, product.suitableFor].filter(Boolean).join(", "),
     contentBlocks: [],
   };
@@ -94,17 +114,22 @@ export function mapLeadToMessage(lead: any): DemoMessage {
     budgetRange: "-",
     desiredTimeline: "-",
     preferredContact: "-",
-    assignedTo: "-",
-    followUpAt: "-",
+    assignedTo: lead.assignedTo?.email || "-",
+    assignedToUserId: lead.assignedToUserId ?? null,
+    followUpAt: lead.followUpAt ? new Date(lead.followUpAt).toISOString().slice(0, 16) : "",
     internalNote: lead.notes || "",
   };
 }
 
 export function mapDownloadToDownloadItem(download: any): DownloadItem {
   return {
-    id: download.slug || download.id,
+    id: download.id,
+    slug: download.slug,
     name: download.title || "ไม่มีชื่อ",
     category: download.category || "เอกสารทั่วไป",
+    description: download.description || "",
+    fileId: download.fileId ?? download.file?.id ?? null,
+    fileUrl: download.file?.url ?? null,
     updatedAt: download.updatedAt ? new Date(download.updatedAt).toLocaleDateString("th-TH") : "เมื่อสักครู่",
     status: download.status === "PUBLISHED" ? "เผยแพร่" : "ร่าง",
   };

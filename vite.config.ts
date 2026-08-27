@@ -43,6 +43,17 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
           cookieDomainRewrite: 'localhost',
+          configure: (proxy) => {
+            proxy.on('proxyRes', (_proxyRes, _req, res) => {
+              const raw = _proxyRes.headers['set-cookie']
+              if (!raw) return
+              // Strip Secure flag so http://localhost browser accepts the cookie
+              const patched = (Array.isArray(raw) ? raw : [raw]).map((c) =>
+                c.replace(/;\s*Secure/gi, '').replace(/;\s*SameSite=None/gi, '; SameSite=Lax')
+              )
+              _proxyRes.headers['set-cookie'] = patched
+            })
+          },
         }
       }
     },

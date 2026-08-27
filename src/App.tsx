@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { NotFoundPage, PrivacyPolicyPage } from './LegalPages'
 import { environment } from './config/environment'
 import { postJson } from './lib/api'
+import { trackAnalyticsEvent, trackPageView } from './lib/analytics'
 import {
   fallbackSiteContent,
   loadArticleDetail,
@@ -794,6 +795,15 @@ function GasifierStory() {
             <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-ink-700">ทีมงานเริ่มจากสำรวจหน้างานและเก็บข้อมูลการใช้พลังงาน จากนั้นจึงออกแบบ ผลิต ติดตั้ง ทดสอบการเดินระบบ และอบรมผู้ปฏิบัติงาน ปัจจุบันบริษัทมีผลงานอ้างอิงใน 7 จังหวัด รวม 15 เครื่อง และกำลังผลิตติดตั้งรวม 21 MW</p>
             <GasifierFigure image={{ src: "/assets/data/รูปพื้นที่ที่ใช้ติดตั้งให้ลูกค้า.jpg", alt: "แผนที่ประเทศไทยแสดงจังหวัดที่มีผลงานติดตั้ง Gasifier", caption: "แผนที่ผลงานติดตั้งอ้างอิงในหลายจังหวัดทั่วประเทศไทย" }} onOpen={setSelectedImage} />
           </article>
+
+          <article>
+            <h3 className="font-heading text-lg font-semibold text-ink-950">สรุปเนื้อหาทั้งหมด</h3>
+            <div className="mt-3 max-w-3xl space-y-3 font-body text-sm leading-relaxed text-ink-700">
+              <p>ระบบ Gasifier เปลี่ยนชีวมวลเป็น Producer Gas เพื่อจ่ายความร้อนให้กระบวนการผลิต โดยครอบคลุมตั้งแต่การเตรียมเชื้อเพลิง การลำเลียง การทำความสะอาดก๊าซ ไปจนถึงหัวเผาและการควบคุมระบบ</p>
+              <p>การออกแบบต้องสัมพันธ์กับชนิดและความชื้นของเชื้อเพลิง กำลังความร้อนที่ต้องการ พื้นที่ติดตั้ง และกระบวนการเดิมของโรงงาน ส่วนการประเมินความคุ้มค่าควรพิจารณาพลังงานความร้อนที่ใช้งานได้และต้นทุนการเดินระบบทั้งหมด ไม่ใช่ราคาเชื้อเพลิงเพียงอย่างเดียว</p>
+              <p>เมื่อได้ข้อมูลหน้างาน ทีมงานจึงนำไปสู่การออกแบบ ผลิต ติดตั้ง ทดสอบเดินระบบ และอบรมผู้ปฏิบัติงาน เพื่อให้ระบบเหมาะกับเงื่อนไขของแต่ละโครงการ</p>
+            </div>
+          </article>
         </div>
       </div>
       {selectedImage && <GasifierImageModal image={selectedImage} onClose={() => setSelectedImage(null)} />}
@@ -801,7 +811,31 @@ function GasifierStory() {
   )
 }
 
-function GasifierPage({ setPage }: { setPage: (page: Page) => void }) {
+function GasifierClosingCTA({ onViewProjects, onQuote }: { onViewProjects: () => void; onQuote: () => void }) {
+  return (
+    <section className="bg-white py-12 md:py-16" aria-labelledby="gasifier-closing-cta-heading">
+      <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+        <div className="flex flex-col items-center justify-between gap-7 rounded-2xl bg-brand-900 px-6 py-8 text-center md:flex-row md:px-10 md:py-10 md:text-left">
+          <div className="max-w-2xl">
+            <p className="font-body text-xs font-medium uppercase tracking-[0.16em] text-brand-500">Next step</p>
+            <h2 id="gasifier-closing-cta-heading" className="mt-3 font-heading text-2xl font-bold leading-snug text-white md:text-3xl">กำลังพิจารณาระบบ Gasifier สำหรับโรงงานของคุณ?</h2>
+            <p className="mt-3 font-body text-sm leading-relaxed text-white/70">ส่งข้อมูลเบื้องต้นให้ทีมวิศวกรช่วยประเมินความเหมาะสมของเชื้อเพลิง กำลังความร้อน พื้นที่ติดตั้ง และแนวทางลดต้นทุนตามการใช้งานจริง</p>
+          </div>
+          <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row">
+            <button type="button" onClick={onQuote} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-energy-600 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-energy-400 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white">
+              ให้ทีมงานประเมินโครงการของคุณ <IcoArrowRight />
+            </button>
+            <button type="button" onClick={onViewProjects} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white">
+              ดูผลงานติดตั้งทั้งหมด <IcoArrowRight />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function GasifierPage({ setPage, onQuote }: { setPage: (page: Page) => void; onQuote: () => void }) {
   return (
     <main className="min-h-screen pt-16 md:pt-18">
       <section className="bg-brand-900 py-16 text-white md:py-20">
@@ -819,6 +853,7 @@ function GasifierPage({ setPage }: { setPage: (page: Page) => void }) {
         </div>
       </section>
       <GasifierStory />
+      <GasifierClosingCTA onViewProjects={() => setPage({ t: 'projects' })} onQuote={onQuote} />
     </main>
   )
 }
@@ -1277,6 +1312,7 @@ function Contact({ onPrivacy }: { onPrivacy: () => void }) {
     try {
       await submitLead('contact', { ...form, website: undefined })
       setStatus('success')
+      trackAnalyticsEvent('generate_lead')
     } catch (error) {
       setStatus('error')
       setRequestError(error instanceof Error ? error.message : 'ไม่สามารถส่งข้อมูลได้ในขณะนี้')
@@ -1517,6 +1553,7 @@ function QuoteModal({ onClose, context, onPrivacy }: { onClose: () => void; cont
     try {
       await submitLead('quote', { ...form, website: undefined })
       setStatus('success')
+      trackAnalyticsEvent('generate_lead')
     } catch (error) {
       setStatus('error')
       setRequestError(error instanceof Error ? error.message : 'ไม่สามารถส่งข้อมูลได้ในขณะนี้')
@@ -2125,11 +2162,25 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    const trackExternalContact = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href]')
+      if (!link) return
+      const href = link.href
+      if (href.startsWith('tel:')) trackAnalyticsEvent('click_phone')
+      else if (href.includes('line.me')) trackAnalyticsEvent('click_line')
+      else if (href.includes('facebook.com')) trackAnalyticsEvent('click_facebook')
+    }
+    document.addEventListener('click', trackExternalContact)
+    return () => document.removeEventListener('click', trackExternalContact)
+  }, [])
+
+  useEffect(() => {
     window.scrollTo(0, 0)
     const title = titleForPage(page)
     const description = descriptionForPage(page)
     const pageUrl = new URL(pathForPage(page), SITE_URL).toString()
     document.title = title
+    if (page.t !== 'admin') trackPageView(pathForPage(page))
 
     const setMetaContent = (selector: string, attributes: Record<string, string>) => {
       let element = document.head.querySelector<HTMLMetaElement>(selector)
@@ -2211,7 +2262,7 @@ export default function App() {
         <TrustBar /><About onLearnMore={() => navigate({ t: 'about' })} /><Products onProduct={setSelectedProduct} onQuote={() => openQuote()} onViewAll={() => navigate({ t: 'products' })} /><Industries /><WhyUs /><FeaturedProjects setPage={navigate} /><LatestNews setPage={navigate} /><QuoteCTA onQuote={() => openQuote()} /><Contact onPrivacy={() => navigate({ t: 'privacy' })} />
       </>}
       {page.t === 'about' && <AboutPage setPage={navigate} />}
-      {page.t === 'gasifier' && <GasifierPage setPage={navigate} />}
+      {page.t === 'gasifier' && <GasifierPage setPage={navigate} onQuote={() => openQuote({ product: 'Gasifier System' })} />}
       {page.t === 'products' && <ProductsPage setPage={navigate} onProduct={setSelectedProduct} onQuote={product => openQuote(product ? { product: product.name } : undefined)} />}
       {page.t === 'projects' && <ProjectsPage setPage={navigate} onQuote={() => openQuote()} />}
       {page.t === 'project' && <ProjectDetailPage p={page.p} setPage={navigate} onQuote={() => openQuote({ project: page.p.name })} />}

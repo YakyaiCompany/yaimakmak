@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { postJson, getJson, patchJson, putJson, deleteJson, ApiRequestError } from "./lib/api";
+import { postFormData, postJson, getJson, patchJson, putJson, deleteJson, ApiRequestError } from "./lib/api";
 import { COMPANY } from "./config/company";
 import { Screen, ContentItem, ContentActivity, ContentType, ActivityAction, ActivityContentType, DemoMessage, MessageStatus, DownloadItem, DiscoverySettings } from "./features/admin/types";
 import { navItems, initialDiscoverySettings } from "./features/admin/data";
@@ -29,6 +29,8 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
   const [documents, setDocuments] = useState<DownloadItem[]>([]);
   const [discoverySettings, setDiscoverySettings] = useState(initialDiscoverySettings);
   const [activities, setActivities] = useState<ContentActivity[]>([]);
+  const [assignees, setAssignees] = useState<Array<{ id: string; email: string; role: string }>>([]);
+  const [dataError, setDataError] = useState("");
 
   useEffect(() => {
     getJson("/api/v1/admin/auth/me")
@@ -38,15 +40,17 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
   }, []);
 
   const fetchDashboardData = async () => {
+    setDataError("");
     try {
-      const [projectsRes, articlesRes, productsRes, leadsRes, downloadsRes, siteSettingsRes, activitiesRes] = await Promise.all([
-        getJson<any>("/api/v1/admin/projects").catch(() => ({ data: [] })),
-        getJson<any>("/api/v1/admin/articles").catch(() => ({ data: [] })),
-        getJson<any>("/api/v1/admin/products").catch(() => ({ data: [] })),
-        getJson<any>("/api/v1/admin/leads").catch(() => ({ data: [] })),
-        getJson<any>("/api/v1/admin/downloads").catch(() => ({ data: [] })),
-        getJson<any>("/api/v1/admin/site-settings").catch(() => ({ data: [] })),
-        getJson<any>("/api/v1/admin/activities").catch(() => ({ data: [] })),
+      const [projectsRes, articlesRes, productsRes, leadsRes, downloadsRes, siteSettingsRes, activitiesRes, usersRes] = await Promise.all([
+        getJson<any>("/api/v1/admin/projects?pageSize=100"),
+        getJson<any>("/api/v1/admin/articles?pageSize=100"),
+        getJson<any>("/api/v1/admin/products?pageSize=100"),
+        getJson<any>("/api/v1/admin/leads?pageSize=100"),
+        getJson<any>("/api/v1/admin/downloads?pageSize=100"),
+        getJson<any>("/api/v1/admin/site-settings?pageSize=100"),
+        getJson<any>("/api/v1/admin/activities"),
+        getJson<any>("/api/v1/users"),
       ]);
       
       if (projectsRes.data) setPortfolio(projectsRes.data.map(mapProjectToContentItem));
@@ -56,8 +60,10 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
       if (downloadsRes.data) setDocuments(downloadsRes.data.map(mapDownloadToDownloadItem));
       if (siteSettingsRes.data) setDiscoverySettings(mapSiteSettingsToDiscoverySettings(siteSettingsRes.data));
       if (activitiesRes.data && activitiesRes.data.length > 0) setActivities(activitiesRes.data);
+      if (usersRes.data) setAssignees(usersRes.data);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
+      setDataError(error instanceof ApiRequestError ? error.message : "ไม่สามารถโหลดข้อมูลผู้ดูแลระบบได้");
     }
   };
 
@@ -87,28 +93,49 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
     const isNew = item.id.startsWith("new-");
     const endpoint = type === "news" ? "/api/v1/admin/articles" : type === "products" ? "/api/v1/admin/products" : "/api/v1/admin/projects";
     const statusMap: Record<string, string> = {"ร่าง": "DRAFT", "กำหนดเผยแพร่": "SCHEDULED", "เผยแพร่": "PUBLISHED"};
-    
-    let payload: any = {
-      title: item.title,
-      slug: item.slug || `slug-${Date.now()}`,
-      status: statusMap[item.status] || "DRAFT",
-    };
-    
-    if (type === "news") {
-      payload = { ...payload, excerpt: item.summary, body: item.body, category: item.category, tags: item.tags ? item.tags.split(',').map(s=>s.trim()) : [], authorName: item.author };
-    } else if (type === "products") {
-      payload = { ...payload, category: item.category, subtitle: item.subtitle, description: item.body, highlights: [], specifications: [], supportItems: [] };
-    } else {
-      payload = { ...payload, province: item.province, industry: item.category, completedYear: item.installedYear ? parseInt(item.installedYear) : undefined, system: item.system, summary: item.summary, description: item.body, challenge: item.challenge, solution: item.solution, scope: item.scope ? item.scope.split('\n') : [], result: item.result };
+
+    const splitValues = (value: string | undefined) => (value || "").split(/[\n,]/).map((part) => part.trim()).filter(Boolean);
+    const specifications = (item.specifications || "").split("\n").map((line) => {
+      const separator = line.indexOf(":");
+      return separator > 0 ? { label: line.slice(0, separator).trim(), value: line.slice(separator + 1).trim() } : null;
+    }).filter((specification): specification is { label: string; value: string } => Boolean(specification?.label && specification.value));
+    const selectedDate = item.scheduledAt || item.publishDate;
+    const parsedDate = selectedDate ? new Date(selectedDate) : null;
+    if (parsedDate && Number.isNaN(parsedDate.getTime())) {
+      throw new Error("วันที่เผยแพร่ไม่ถูกต้อง กรุณาเลือกวันในปฏิทินหรือใช้รูปแบบ YYYY-MM-DD");
     }
-    
+    const publishedAt = parsedDate?.toISOString() ?? null;
+    const common = {
+      title: item.title.trim(),
+      slug: item.slug?.trim(),
+      status: statusMap[item.status] || "DRAFT",
+      featured: Boolean(item.featured),
+      displayOrder: item.displayOrder ?? 0,
+      publishedAt,
+      coverImageId: item.coverImageId || null,
+    };
+
+    let payload: Record<string, unknown>;
+    if (type === "news") {
+      payload = { ...common, excerpt: item.summary, body: item.body, category: item.category, tags: splitValues(item.tags), authorName: item.author };
+    } else if (type === "products") {
+      payload = { ...common, category: item.category, subtitle: item.subtitle || null, description: item.body, highlights: item.highlights || [], specifications, supportItems: splitValues(item.fuelTypes) };
+    } else {
+      payload = { ...common, province: item.province || null, industry: item.category || null, completedYear: item.installedYear ? Number.parseInt(item.installedYear, 10) : null, system: item.system || null, summary: item.summary || null, description: item.body || null, challenge: item.challenge || null, solution: item.solution || null, scope: splitValues(item.scope), result: item.result || null };
+    }
+
+    if (!common.slug) throw new Error("กรุณากรอก URL ของหน้านี้เป็นภาษาอังกฤษ เช่น gasifier-15mw");
+
     try {
-      if (isNew) {
-        await postJson(endpoint, payload);
-      } else {
-        await patchJson(`${endpoint}/${item.id}`, payload);
-      }
-      
+      const resourceId = item.id;
+      const response = isNew
+        ? await postJson<any, Record<string, unknown>>(endpoint, payload)
+        : await patchJson<any, Record<string, unknown>>(`${endpoint}/${resourceId}`, payload);
+      const saved = type === "news"
+        ? mapArticleToContentItem(response.data)
+        : type === "products"
+          ? mapProductToContentItem(response.data)
+          : mapProjectToContentItem(response.data);
       const setItems = type === "news" ? setNews : type === "products" ? setProducts : setPortfolio;
       const currentItems = type === "news" ? news : type === "products" ? products : portfolio;
       const existing = currentItems.find((entry) => entry.id === item.id);
@@ -122,27 +149,30 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
               ? "กำหนดเผยแพร่"
               : "แก้ไข";
               
-      setItems((current) => current.some((entry) => entry.id === item.id) ? current.map((entry) => entry.id === item.id ? item : entry) : [item, ...current]);
+      setItems((current) => current.some((entry) => entry.id === item.id) ? current.map((entry) => entry.id === item.id ? saved : entry) : [saved, ...current]);
       recordActivity({
-        contentId: item.id,
+        contentId: saved.id,
         action,
         contentType: contentTypeLabel(type) as ActivityContentType,
-        title: item.title,
+        title: saved.title,
         screen: type,
       });
+      return saved;
     } catch(err) {
-      alert("Error saving: " + (err instanceof ApiRequestError ? err.message : String(err)));
+      throw err;
     }
   };
 
   const deleteContent = async (type: ContentType, id: string) => {
     if (id.startsWith("new-")) return;
     const endpoint = type === "news" ? "/api/v1/admin/articles" : type === "products" ? "/api/v1/admin/products" : "/api/v1/admin/projects";
+    const setItems = type === "news" ? setNews : type === "products" ? setProducts : setPortfolio;
+    const currentItems = type === "news" ? news : type === "products" ? products : portfolio;
     
     try {
-      await deleteJson(`${endpoint}/${id}`);
-      const setItems = type === "news" ? setNews : type === "products" ? setProducts : setPortfolio;
-      const currentItems = type === "news" ? news : type === "products" ? products : portfolio;
+      const resourceId = type === "news" ? currentItems.find((entry) => entry.id === id)?.slug : id;
+      if (!resourceId) throw new Error("ไม่พบ URL ของข่าวสารที่ต้องการลบ");
+      await deleteJson(`${endpoint}/${resourceId}`);
       const item = currentItems.find((entry) => entry.id === id);
       setItems((current) => current.filter((item) => item.id !== id));
       if (item) {
@@ -156,6 +186,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
       }
     } catch(err) {
       alert("Error deleting: " + (err instanceof ApiRequestError ? err.message : String(err)));
+      throw err;
     }
   };
 
@@ -167,6 +198,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
         setMessages((current) => current.map((m) => m.id === id ? { ...m, status: "กำลังดำเนินการ" } : m));
       } catch (err) {
         console.error("Failed to open message:", err);
+        throw err;
       }
     } else {
       // Just trigger re-render / selection in Messages
@@ -187,40 +219,46 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
       setMessages((current) => current.map((message) => message.id === id ? { ...message, status } : message));
     } catch (err) {
       console.error("Failed to change message status:", err);
+      throw err;
     }
   };
 
   const updateMessage = async (id: string, patch: Partial<DemoMessage>) => {
-    // Local state only since 'notes' and 'assignedTo' strings aren't mapped directly to backend payload right now
-    setMessages((current) => current.map((message) => message.id === id ? { ...message, ...patch } : message));
+    const payload: Record<string, string | null> = {};
+    if (patch.internalNote !== undefined) payload.notes = patch.internalNote;
+    if (patch.followUpAt !== undefined) payload.followUpAt = patch.followUpAt ? new Date(patch.followUpAt).toISOString() : null;
+    if (patch.assignedToUserId !== undefined) payload.assignedToUserId = patch.assignedToUserId;
+    if (!Object.keys(payload).length) return;
+    const response = await patchJson<any, Record<string, string | null>>(`/api/v1/admin/leads/${id}`, payload);
+    const saved = mapLeadToMessage(response.data);
+    setMessages((current) => current.map((message) => message.id === id ? saved : message));
   };
 
-  const addDocument = async () => {
+  const addDocument = async ({ title, slug, category, description, file }: { title: string; slug: string; category: string; description: string; file: File }) => {
     try {
-      const payload = {
-        title: "เอกสารใหม่.pdf",
-        category: "เอกสารประกอบ",
-        status: "DRAFT"
-      };
-      const res = await postJson<any, any>("/api/v1/admin/downloads", payload);
+      const formData = new FormData();
+      formData.append("file", file);
+      const mediaResponse = await postFormData<any>("/api/v1/admin/media/upload", formData);
+      const res = await postJson<any, any>("/api/v1/admin/downloads", { title, slug, category, description, fileId: mediaResponse.data.id, status: "DRAFT" });
       const document = mapDownloadToDownloadItem(res.data);
       setDocuments((current) => [document, ...current]);
       recordActivity({ contentId: document.id, action: "เพิ่ม", contentType: "เอกสาร", title: document.name, screen: "downloads" });
     } catch (err) {
       console.error("Failed to add document:", err);
+      throw err;
     }
   };
 
-  const toggleDocumentStatus = async (id: string) => {
-    const document = documents.find((item) => item.id === id);
-    if (!document) return;
+  const toggleDocumentStatus = async (document: DownloadItem) => {
+    if (!document.slug) throw new Error("ไม่พบ URL ของเอกสาร");
     
     const newStatus = document.status === "เผยแพร่" ? "ร่าง" : "เผยแพร่";
     const backendStatus = newStatus === "เผยแพร่" ? "PUBLISHED" : "DRAFT";
     
     try {
-      await patchJson(`/api/v1/admin/downloads/${id}`, { status: backendStatus });
-      setDocuments((current) => current.map((doc) => doc.id === id ? { ...doc, status: newStatus, updatedAt: "เมื่อสักครู่" } : doc));
+      const response = await patchJson<any, { status: string }>(`/api/v1/admin/downloads/${document.slug}`, { status: backendStatus });
+      const saved = mapDownloadToDownloadItem(response.data);
+      setDocuments((current) => current.map((doc) => doc.id === document.id ? saved : doc));
       recordActivity({
         contentId: document.id,
         action: newStatus === "เผยแพร่" ? "เผยแพร่" : "ยกเลิกเผยแพร่",
@@ -230,6 +268,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
       });
     } catch (err) {
       console.error("Failed to toggle document status:", err);
+      throw err;
     }
   };
 
@@ -239,8 +278,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
       setDiscoverySettings(settings);
     } catch (err) {
       console.error("Failed to save discovery settings:", err);
-      // Update UI anyway for demo/fallback purposes
-      setDiscoverySettings(settings);
+      throw err;
     }
   };
 
@@ -263,7 +301,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
           : screen === "products"
             ? <ContentManager type="products" items={products} latestActivity={activities.find((activity) => activity.contentType === "สินค้า")} onSave={(item) => saveContent("products", item)} onDelete={(id) => deleteContent("products", id)} />
             : screen === "messages"
-              ? <Messages messages={messages} onOpenMessage={openMessage} onStatusChange={changeMessageStatus} onUpdateMessage={updateMessage} />
+              ? <Messages messages={messages} assignees={assignees} onOpenMessage={openMessage} onStatusChange={changeMessageStatus} onUpdateMessage={updateMessage} />
               : screen === "downloads"
                 ? <Downloads documents={documents} latestActivity={activities.find((activity) => activity.contentType === "เอกสาร")} onAddDocument={addDocument} onToggleStatus={toggleDocumentStatus} />
                 : <DiscoverySettingsPage settings={discoverySettings} onChange={handleDiscoverySettingsChange} />;
@@ -279,7 +317,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
           }} className={`w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 ${focusRing}`}>ออกจากระบบ</button><button type="button" onClick={onExit} className={`w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 ${focusRing}`}>กลับสู่เว็บไซต์</button></div>
         </aside>
         {mobileNavOpen && <button type="button" aria-label="ปิดเมนูนำทาง" onClick={() => setMobileNavOpen(false)} className="fixed inset-0 z-20 bg-slate-950/20 lg:hidden" />}
-        <main className="min-w-0 flex-1 px-4 py-7 sm:px-6 lg:px-10 lg:py-9"><div className="mx-auto max-w-7xl"><button type="button" onClick={() => setMobileNavOpen(true)} className={`mb-5 inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 lg:hidden ${focusRing}`}>เมนูผู้ดูแล</button>{page}</div></main>
+        <main className="min-w-0 flex-1 px-4 py-7 sm:px-6 lg:px-10 lg:py-9"><div className="mx-auto max-w-7xl"><button type="button" onClick={() => setMobileNavOpen(true)} className={`mb-5 inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 lg:hidden ${focusRing}`}>เมนูผู้ดูแล</button>{dataError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{dataError}</p>}{page}</div></main>
       </div>
     </div>
   );

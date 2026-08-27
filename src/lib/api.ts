@@ -290,6 +290,40 @@ export async function postJson<TResponse, TPayload>(
   }
 }
 
+/** Uploads multipart form data while retaining the same timeout and error semantics as JSON requests. */
+export async function postFormData<TResponse>(
+  endpoint: string,
+  formData: FormData,
+  options: JsonPostOptions = {},
+): Promise<TResponse> {
+  const requestUrl = normalizeEndpoint(endpoint)
+  const abortContext = createAbortContext(normalizeTimeout(options.timeoutMs), options.signal)
+
+  try {
+    const response = await fetch(requestUrl, {
+      method: "POST",
+      credentials: "include",
+      headers: { Accept: "application/json" },
+      body: formData,
+      signal: abortContext.signal,
+    })
+    const responseBody = await response.text()
+    if (!response.ok) throw errorForStatus(response.status)
+    return parseJsonResponse<TResponse>(responseBody)
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    if (abortContext.didTimeout()) {
+      throw new ApiRequestError("การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่", { code: "timeout", cause: error })
+    }
+    if (abortContext.signal.aborted) {
+      throw new ApiRequestError("ยกเลิกการส่งคำขอแล้ว", { code: "aborted", cause: error })
+    }
+    throw new ApiRequestError("ไม่สามารถเชื่อมต่อกับบริการได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่", { code: "network", cause: error })
+  } finally {
+    abortContext.cleanup()
+  }
+}
+
 export async function getJson<TResponse>(
   endpoint: string,
   options: JsonPostOptions = {},
