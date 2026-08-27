@@ -97,7 +97,11 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
     const splitValues = (value: string | undefined) => (value || "").split(/[\n,]/).map((part) => part.trim()).filter(Boolean);
     const specifications = (item.specifications || "").split("\n").map((line) => {
       const separator = line.indexOf(":");
-      return separator > 0 ? { label: line.slice(0, separator).trim(), value: line.slice(separator + 1).trim() } : null;
+      if (separator > 0) {
+        return { label: line.slice(0, separator).trim(), value: line.slice(separator + 1).trim() || "-" };
+      }
+      const trimmed = line.trim();
+      return trimmed ? { label: trimmed, value: "-" } : null;
     }).filter((specification): specification is { label: string; value: string } => Boolean(specification?.label && specification.value));
     const selectedDate = item.scheduledAt || item.publishDate;
     const parsedDate = selectedDate ? new Date(selectedDate) : null;

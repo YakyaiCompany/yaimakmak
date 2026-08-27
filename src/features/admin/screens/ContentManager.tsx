@@ -173,7 +173,7 @@ function ContentEditor({ type, item, onChange, onBack, onSaveDraft, onSchedule, 
                 </label>
               </div>
             )}
-            {type === "products" && <div className="rounded-2xl border border-brand-700/15 bg-brand-900/5 p-4 sm:p-5"><h3 className="text-sm font-semibold text-brand-900">ข้อมูลสินค้า</h3><div className="mt-4 space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">ข้อความรอง</span><input value={item.subtitle ?? ""} onChange={(event) => onChange({ subtitle: event.target.value })} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-medium text-slate-700">รายละเอียดทางเทคนิค</span><textarea rows={6} value={item.specifications ?? ""} onChange={(event) => onChange({ specifications: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-medium text-slate-700">เชื้อเพลิงหรือการใช้งานที่รองรับ</span><textarea rows={6} value={item.fuelTypes ?? ""} onChange={(event) => onChange({ fuelTypes: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label></div></div></div>}
+            {type === "products" && <div className="rounded-2xl border border-brand-700/15 bg-brand-900/5 p-4 sm:p-5"><h3 className="text-sm font-semibold text-brand-900">ข้อมูลสินค้า</h3><div className="mt-4 space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">ข้อความรอง</span><input value={item.subtitle ?? ""} onChange={(event) => onChange({ subtitle: event.target.value })} className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`} /></label><div className="grid gap-4 sm:grid-cols-2"><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">รายละเอียดทางเทคนิค</span><textarea rows={6} value={item.specifications ?? ""} onChange={(event) => onChange({ specifications: event.target.value })} placeholder="เช่น&#10;กำลังการผลิต: 1.5 MW&#10;พื้นที่ติดตั้ง: 3x4 เมตร" className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /><span className="mt-1.5 block text-xs leading-5 text-slate-500">กรุณาพิมพ์หัวข้อและรายละเอียดคั่นด้วยเครื่องหมายโคลอน (:) 1 รายการต่อบรรทัด</span></label><label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">เชื้อเพลิงหรือการใช้งานที่รองรับ</span><textarea rows={6} value={item.fuelTypes ?? ""} onChange={(event) => onChange({ fuelTypes: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 ${focusRing}`} /></label></div></div></div>}
             {type === "news" && <div className="grid gap-4 sm:grid-cols-2"><label><span className="mb-2 block text-sm font-semibold text-slate-700">ผู้เขียน</span><input value={item.author} onChange={(event) => onChange({ author: event.target.value })} className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label><label><span className="mb-2 block text-sm font-semibold text-slate-700">วันที่เผยแพร่</span><input value={item.publishDate ?? ""} onChange={(event) => onChange({ publishDate: event.target.value })} placeholder="เช่น 20 กรกฎาคม 2568" className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`} /></label></div>}
             <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">รายละเอียดโดยย่อ</span><textarea rows={3} value={item.summary} onChange={(event) => onChange({ summary: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-800 ${focusRing}`} /></label>
             <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">เนื้อหาหลัก</span><textarea rows={9} value={item.body} onChange={(event) => onChange({ body: event.target.value })} className={`w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm leading-6 text-slate-800 ${focusRing}`} /></label>
@@ -249,7 +249,32 @@ function CoverImageField({ item, onChange }: { item: ContentItem; onChange: (pat
       setError(uploadError instanceof Error ? uploadError.message : "ไม่สามารถอัปโหลดภาพได้");
     } finally { setIsUploading(false); }
   };
-  return <div className="space-y-3"><div className="flex flex-col gap-3 sm:flex-row sm:items-center">{item.coverImage ? <img src={item.coverImage} alt="" className="h-20 w-32 rounded-lg object-cover" /> : <div className="grid h-20 w-32 place-items-center rounded-lg border border-dashed border-slate-300 text-xs text-slate-500">ยังไม่มีภาพ</div>}<label className={`inline-flex w-fit cursor-pointer rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-700 hover:text-white ${focusRing}`}><span>{isUploading ? "กำลังอัปโหลด..." : "เลือกภาพ"}</span><input disabled={isUploading} accept="image/jpeg,image/png,image/webp,image/gif" type="file" className="sr-only" onChange={(event) => void upload(event.target.files?.[0])} /></label></div>{item.coverImageId && <p className="text-xs text-emerald-700">บันทึกในคลังสื่อแล้ว</p>}{error && <p role="alert" className="text-xs text-rose-700">{error}</p>}</div>;
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        {item.coverImage ? <img src={item.coverImage} alt="" className="h-20 w-32 rounded-lg object-cover" /> : <div className="grid h-20 w-32 place-items-center rounded-lg border border-dashed border-slate-300 text-xs text-slate-500">ยังไม่มีภาพ</div>}
+        
+        {item.coverImage ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <label className={`inline-flex w-fit cursor-pointer rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 ${focusRing}`}>
+              <span>{isUploading ? "กำลังอัปโหลด..." : "เปลี่ยนภาพ"}</span>
+              <input disabled={isUploading} accept="image/jpeg,image/png,image/webp,image/gif" type="file" className="sr-only" onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = ''; }} />
+            </label>
+            <button type="button" onClick={() => onChange({ coverImage: "", coverImageId: null })} disabled={isUploading} className={`rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 hover:border-rose-300 disabled:opacity-50 ${focusRing}`}>
+              ลบภาพ
+            </button>
+          </div>
+        ) : (
+          <label className={`inline-flex w-fit cursor-pointer rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-700 hover:text-white ${focusRing}`}>
+            <span>{isUploading ? "กำลังอัปโหลด..." : "เลือกภาพ"}</span>
+            <input disabled={isUploading} accept="image/jpeg,image/png,image/webp,image/gif" type="file" className="sr-only" onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = ''; }} />
+          </label>
+        )}
+      </div>
+      {item.coverImageId && <p className="text-xs text-emerald-700">บันทึกในคลังสื่อแล้ว</p>}
+      {error && <p role="alert" className="text-xs text-rose-700">{error}</p>}
+    </div>
+  );
 }
 
 function ContentPreview({ type, item, onClose, onPublish }: { type: ContentType; item: ContentItem; onClose: () => void; onPublish: () => void }) {
