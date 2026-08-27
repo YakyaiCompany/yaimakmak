@@ -1,5 +1,13 @@
 // Shared content models for frontend mock data. CMS integration should replace the mock source.
 
+export type ContentBlockKind = "ข้อความ" | "รูปภาพ" | "ปุ่ม/ลิงก์"
+export interface ContentBlock {
+  id: string
+  kind: ContentBlockKind
+  title: string
+  content: string
+}
+
 export interface ProductSpecification {
   label: string
   value: string
@@ -20,6 +28,7 @@ export interface Product {
   catalogNote: string
   suitableFor: string
   workingPrinciple: string
+  contentBlocks?: ContentBlock[]
 }
 
 export interface Project {
@@ -38,6 +47,7 @@ export interface Project {
   scope: string[]
   result: string
   relatedProductId: string | number
+  contentBlocks?: ContentBlock[]
 }
 
 export interface Article {
@@ -50,6 +60,7 @@ export interface Article {
   excerpt: string
   image: string
   body: string[]
+  contentBlocks?: ContentBlock[]
 }
 
 export type IndustryIconName =

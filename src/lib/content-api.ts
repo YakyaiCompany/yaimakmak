@@ -23,6 +23,7 @@ import type {
   Project,
   Service,
   WhyUsItem,
+  ContentBlock,
 } from "../types/content"
 
 export interface FrontendDownload {
@@ -367,6 +368,22 @@ function productSpecifications(
   })
 }
 
+function mapContentBlocks(value: unknown): ContentBlock[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item) => {
+    const block = asRecord(item)
+    if (!block || typeof block.id !== "string" || typeof block.kind !== "string" || typeof block.title !== "string" || typeof block.content !== "string") {
+      return []
+    }
+    return [{
+      id: block.id,
+      kind: block.kind as ContentBlock["kind"],
+      title: block.title,
+      content: block.content,
+    }]
+  })
+}
+
 function mapProduct(value: unknown, index: number): Product {
   const source = asRecord(value)
 
@@ -413,6 +430,8 @@ function mapProduct(value: unknown, index: number): Product {
 
       fallback.workingPrinciple,
     ),
+
+    contentBlocks: mapContentBlocks(source.contentBlocks),
   }
 }
 
@@ -505,6 +524,8 @@ function mapProject(value: unknown, index: number): Project {
     result: stringValue(source.result, fallback.result),
 
     relatedProductId: frontendId(relatedProduct?.id, fallback.relatedProductId),
+
+    contentBlocks: mapContentBlocks(source.contentBlocks),
   }
 }
 
@@ -576,6 +597,8 @@ function mapArticle(value: unknown, index: number): Article {
     image: mediaUrl(source.coverImage, fallback.image),
 
     body: articleBody(source.body, fallback.body),
+
+    contentBlocks: mapContentBlocks(source.contentBlocks),
   }
 }
 

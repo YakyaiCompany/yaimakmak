@@ -50,9 +50,10 @@ export type ContentItem = {
   subtitle?: string;
   specifications?: string;
   fuelTypes?: string;
+  suitableFor?: string;
+  workingPrinciple?: string;
   coverImage?: string;
   coverImageId?: string | null;
-  highlights?: string[];
   displayOrder?: number;
   gallery?: string;
   videoUrl?: string;

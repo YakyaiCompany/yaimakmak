@@ -13,7 +13,7 @@ import {
 } from './lib/content-api'
 import DownloadsPage from './pages/DownloadsPage'
 import AdminPortal from './AdminPortal'
-import type { Article, IndustryIconName, Product, Project } from './types/content'
+import type { Article, IndustryIconName, Product, Project, ContentBlock } from './types/content'
 
 /* ─── ROUTE TYPES ─────────────────────────── */
 type Page =
@@ -389,7 +389,6 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
     { label: 'เกี่ยวกับเรา', page: { t: 'about' } },
     { label: 'ระบบ Gasifier', page: { t: 'gasifier' } },
     { label: 'สินค้า', page: { t: 'products' } },
-    { label: 'บริการ', id: 'services' },
     { label: 'ผลงาน', page: { t: 'projects' } },
     { label: 'ข่าวสาร', page: { t: 'news' } },
     { label: 'เอกสาร', page: { t: 'downloads' } },
@@ -1079,24 +1078,17 @@ function Products({ onProduct, onQuote, onViewAll }: { onProduct: (p: Product) =
           <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">ผลิตภัณฑ์</div>
           <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25]">ระบบและเครื่องจักรที่ออกแบบ<br className="hidden md:block" />ตามการใช้งานจริง</h2>
         </div>
-        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="flex flex-wrap justify-center gap-6">
           {PRODUCTS.map(p => (
-            <div key={p.id} className="bg-white rounded-2xl overflow-hidden border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col">
+            <div key={p.id} className="w-full sm:w-[calc(50%-12px)] xl:w-[calc(25%-18px)] bg-white rounded-2xl overflow-hidden border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col">
               <div className="aspect-[3/2] bg-ink-100 overflow-hidden">
                 <img src={p.image} alt={p.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
               </div>
               <div className="p-5 flex flex-col flex-1">
-                <div className="mb-3">
+                <div className="mb-5 flex-1">
                   <h3 className="font-heading font-semibold text-ink-950 text-lg leading-tight">{p.name}</h3>
-                  <p className="text-brand-700 text-sm font-body mt-0.5">{p.subtitle}</p>
+                  <p className="text-brand-700 text-sm font-body mt-1">{p.subtitle}</p>
                 </div>
-                <ul className="space-y-1.5 mb-5 flex-1">
-                  {p.highlights.map((h, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm font-body text-ink-700">
-                      <span className="text-brand-700 mt-0.5 shrink-0"><IcoCheck /></span>{h}
-                    </li>
-                  ))}
-                </ul>
                 <div className="flex gap-2 pt-4 border-t border-ink-300/60">
                   <button onClick={() => onProduct(p)} className="flex-1 text-brand-700 border border-brand-700 hover:bg-brand-700 hover:text-white text-sm font-body py-2.5 rounded-lg transition-colors duration-200">ดูรายละเอียด</button>
                   <button onClick={onQuote} className="flex-1 bg-energy-600 hover:bg-energy-400 text-white text-sm font-body py-2.5 rounded-lg transition-colors duration-200">ขอใบเสนอราคา</button>
@@ -1591,6 +1583,35 @@ function QuoteModal({ onClose, context, onPrivacy }: { onClose: () => void; cont
   )
 }
 
+/* ─── PUBLIC CONTENT BLOCKS ──────────────────────── */
+function PublicContentBlocks({ blocks }: { blocks?: ContentBlock[] }) {
+  if (!blocks || blocks.length === 0) return null
+  return (
+    <div className="mt-8 space-y-8">
+      {blocks.map(b => (
+        <div key={b.id}>
+          {b.title && <h3 className="font-heading font-semibold text-ink-950 text-lg mb-3">{b.title}</h3>}
+          {b.kind === 'ข้อความ' && <div className="whitespace-pre-wrap font-body text-sm text-ink-700 leading-relaxed">{b.content}</div>}
+          {b.kind === 'รูปภาพ' && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {b.content.split('\n').filter(Boolean).map((url: string, i: number) => (
+                <img key={i} src={url.trim()} alt="" className="w-full rounded-xl" />
+              ))}
+            </div>
+          )}
+          {b.kind === 'ปุ่ม/ลิงก์' && (
+            <div className="mt-4">
+              <a href={b.content} target="_blank" rel="noopener noreferrer" className="inline-block bg-brand-700 text-white font-body text-sm px-6 py-2.5 rounded-lg hover:bg-brand-800 transition-colors">
+                {b.title || 'คลิกที่นี่'}
+              </a>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 /* ─── PRODUCT MODAL ──────────────────────────────── */
 function ProductModal({ product: p, onClose, onQuote }: { product: Product; onClose: () => void; onQuote: () => void }) {
   const dialogRef = useDialogFocus(onClose)
@@ -1607,40 +1628,70 @@ function ProductModal({ product: p, onClose, onQuote }: { product: Product; onCl
           <div className="aspect-video rounded-xl overflow-hidden bg-ink-100 mb-6">
             <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
           </div>
-          <p className="text-brand-700 text-sm font-body font-medium mb-2">{p.subtitle}</p>
-          <p className="text-ink-700 text-sm font-body leading-relaxed mb-6">{p.desc}</p>
-
-          <div className="mb-6">
-            <h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">จุดเด่น</h4>
-            <ul className="space-y-2">
-              {p.highlights.map((h, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-sm font-body text-ink-700">
-                  <span className="w-5 h-5 rounded-full bg-brand-700/10 text-brand-700 flex items-center justify-center shrink-0 mt-0.5"><IcoCheck /></span>{h}
-                </li>
-              ))}
-            </ul>
+          <p className="text-brand-700 text-sm font-body font-medium mb-4">{p.subtitle}</p>
+          <div className="text-ink-700 text-sm font-body leading-relaxed mb-6 space-y-4">
+            {(p.desc || '').split('\n').map((line, i) => (
+              line.trim() ? <p key={i}>{line}</p> : null
+            ))}
           </div>
+          <PublicContentBlocks blocks={p.contentBlocks} />
 
-          <div className="mb-6">
-            <h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">Specification</h4>
-            <div className="rounded-xl border border-ink-300/60 overflow-hidden">
-              {p.specs.map((s, i) => (
-                <div key={i} className={`flex justify-between px-4 py-3 text-sm font-body ${i % 2 === 0 ? 'bg-white' : 'bg-ink-100/60'}`}>
-                  <span className="text-ink-700">{s.label}</span>
-                  <span className="font-medium text-ink-950">{s.value}</span>
-                </div>
-              ))}
+          {p.highlights && p.highlights.length > 0 && (
+            <div className="mb-6">
+              <h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">จุดเด่น</h4>
+              <ul className="space-y-2">
+                {p.highlights.map((h, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm font-body text-ink-700">
+                    <span className="w-5 h-5 rounded-full bg-brand-700/10 text-brand-700 flex items-center justify-center shrink-0 mt-0.5"><IcoCheck /></span>{h}
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          )}
 
-          <div className="grid sm:grid-cols-2 gap-6 mb-8">
-            <div><h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">{p.supportLabel}</h4><div className="flex flex-wrap gap-2">{p.supportItems.map(item => <span key={item} className="bg-brand-900/5 text-brand-700 text-xs font-body px-3 py-1.5 rounded-full">{item}</span>)}</div></div>
-            <div><h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">เหมาะกับ</h4><p className="text-ink-700 text-sm font-body leading-relaxed">{p.suitableFor}</p></div>
-          </div>
-          <div className="mb-8 rounded-xl bg-ink-100 p-4"><h4 className="font-heading font-semibold text-ink-950 text-sm mb-2">หลักการทำงาน</h4><p className="text-ink-700 text-sm font-body leading-relaxed">{p.workingPrinciple}</p></div>
+          {p.specs && p.specs.length > 0 && (
+            <div className="mb-6">
+              <h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">รายละเอียดทางเทคนิค</h4>
+              <div className="rounded-xl border border-ink-300/60 overflow-hidden">
+                {p.specs.map((s, i) => (
+                  <div key={i} className={`flex justify-between px-4 py-3 text-sm font-body ${i % 2 === 0 ? 'bg-white' : 'bg-ink-100/60'}`}>
+                    <span className="text-ink-700">{s.label}</span>
+                    <span className="font-medium text-ink-950">{s.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(p.supportItems?.length > 0 || p.suitableFor) && (
+            <div className="grid sm:grid-cols-2 gap-6 mb-8">
+              {p.supportItems?.length > 0 && (
+                <div>
+                  <h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">{p.supportLabel || 'เชื้อเพลิงหรือการใช้งานที่รองรับ'}</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {p.supportItems.map(item => (
+                      <span key={item} className="bg-brand-900/5 text-brand-700 text-xs font-body px-3 py-1.5 rounded-full">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {p.suitableFor && (
+                <div>
+                  <h4 className="font-heading font-semibold text-ink-950 text-sm mb-3">เหมาะกับ</h4>
+                  <p className="text-ink-700 text-sm font-body leading-relaxed">{p.suitableFor}</p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {p.workingPrinciple && (
+            <div className="mb-8 rounded-xl bg-ink-100 p-4">
+              <h4 className="font-heading font-semibold text-ink-950 text-sm mb-2">หลักการทำงาน</h4>
+              <p className="text-ink-700 text-sm font-body leading-relaxed">{p.workingPrinciple}</p>
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-ink-300/60">
             <button onClick={onQuote} className="flex-1 bg-energy-600 hover:bg-energy-400 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">ขอใบเสนอราคาสำหรับสินค้านี้</button>
-            <span title="รออัปโหลดเอกสารที่ผ่านการตรวจสอบ" className="inline-flex items-center justify-center gap-1.5 border border-ink-300 text-ink-700/60 px-4 py-3 rounded-lg font-body text-sm cursor-not-allowed"><IcoDownload />PDF รออัปโหลด</span>
           </div>
         </div>
       </div>
@@ -1659,7 +1710,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
   const normalizedQuery = query.trim().toLocaleLowerCase('th')
   const filteredProducts = PRODUCTS
     .filter(product => {
-      const searchable = `${product.name} ${product.subtitle} ${product.desc} ${product.category} ${product.supportItems.join(' ')} ${product.highlights.join(' ')}`.toLocaleLowerCase('th')
+      const searchable = `${product.name} ${product.subtitle} ${product.desc} ${product.category} ${(product.supportItems || []).join(' ')} ${(product.highlights || []).join(' ')}`.toLocaleLowerCase('th')
       return (category === 'ทั้งหมด' || product.category === category) && (!normalizedQuery || searchable.includes(normalizedQuery))
     })
     .sort((a, b) => {
