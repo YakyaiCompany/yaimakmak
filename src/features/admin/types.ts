@@ -20,7 +20,7 @@ export type ContentActivity = {
   screen: Screen;
 };
 
-export type ContentBlockKind = "ข้อความ" | "รายการ" | "รูปภาพ" | "วิดีโอ" | "ปุ่ม/ลิงก์";
+export type ContentBlockKind = "ข้อความ" | "รูปภาพ" | "ปุ่ม/ลิงก์";
 export type ContentBlock = {
   id: string;
   kind: ContentBlockKind;
