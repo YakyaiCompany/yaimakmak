@@ -124,9 +124,9 @@ function pathForPage(page: Page) {
 function titleForPage(page: Page) {
   const siteName = 'yakyai2015'
   switch (page.t) {
-    case 'home': return `ระบบพลังงานชีวมวลอุตสาหกรรม | ${siteName}`
+    case 'home': return `Gasifier System Thailand | ระบบแก๊สซิไฟเออร์อุตสาหกรรม | ${siteName}`
     case 'about': return `เกี่ยวกับเรา | ${siteName}`
-    case 'gasifier': return `ระบบ Gasifier และความคุ้มค่า | ${siteName}`
+    case 'gasifier': return `Gasifier System คืออะไร | ระบบแก๊สซิไฟเออร์โรงงาน | ${siteName}`
     case 'products': return `ผลิตภัณฑ์ | ${siteName}`
     case 'projects': return `ผลงาน | ${siteName}`
     case 'project': return `${page.p.name} | ${siteName}`
@@ -142,11 +142,11 @@ function titleForPage(page: Page) {
 function descriptionForPage(page: Page) {
   switch (page.t) {
     case 'home':
-      return 'ออกแบบ ผลิต และติดตั้งระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม พร้อมทดสอบเดินระบบและอบรมผู้ใช้งาน'
+      return 'ผู้เชี่ยวชาญ Gasifier System ในประเทศไทย ออกแบบ ผลิต และติดตั้งระบบแก๊สซิไฟเออร์ชีวมวลเพื่อผลิต Producer Gas สำหรับโรงงานอุตสาหกรรม'
     case 'about':
       return `รู้จัก ${COMPANY.legalNameEn} ผู้เชี่ยวชาญด้านระบบผลิตความร้อนจากชีวมวลและเครื่องจักรอบแห้งสำหรับภาคอุตสาหกรรม`
     case 'gasifier':
-      return 'ทำความเข้าใจระบบ Gasifier กระบวนการผลิต Producer Gas ข้อมูลทางเทคนิค และแนวทางประเมินความคุ้มค่าสำหรับโรงงานอุตสาหกรรม'
+      return 'Gasifier System คือระบบเปลี่ยนชีวมวลเป็น Producer Gas สำหรับโรงงาน เรียนรู้กระบวนการ ข้อมูลทางเทคนิค และแนวทางประเมินความคุ้มค่า'
     case 'products':
       return 'ผลิตภัณฑ์ระบบแก๊สซิไฟเออร์ 1.5 MW, 750 kW และเครื่องอบกากแป้งมันสำปะหลังสำหรับโรงงานอุตสาหกรรม'
     case 'projects':
@@ -165,6 +165,47 @@ function descriptionForPage(page: Page) {
       return 'ไม่พบหน้าที่คุณกำลังค้นหา'
     case 'admin':
       return 'เข้าสู่ระบบการจัดการเนื้อหา'
+  }
+}
+
+function structuredDataForPage(page: Page) {
+  const pageUrl = new URL(pathForPage(page), SITE_URL).toString()
+  const organization = {
+    '@type': 'Organization',
+    '@id': `${SITE_URL}/#organization`,
+    name: 'YAKYAI 2015',
+    url: SITE_URL,
+    logo: `${SITE_URL}/assets/brand/yakyai-2015-logo.png`,
+  }
+
+  const pageData = {
+    '@type': 'WebPage',
+    '@id': `${pageUrl}#webpage`,
+    url: pageUrl,
+    name: titleForPage(page),
+    description: descriptionForPage(page),
+    inLanguage: 'th-TH',
+  }
+
+  if (page.t !== 'gasifier') return { '@context': 'https://schema.org', '@graph': [organization, pageData] }
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      organization,
+      pageData,
+      {
+        '@type': 'Service',
+        '@id': `${pageUrl}#service`,
+        name: 'Gasifier System สำหรับโรงงานอุตสาหกรรม',
+        alternateName: 'ระบบแก๊สซิไฟเออร์ชีวมวล',
+        description: descriptionForPage(page),
+        url: pageUrl,
+        provider: { '@id': `${SITE_URL}/#organization` },
+        areaServed: { '@type': 'Country', name: 'Thailand' },
+        serviceType: 'Biomass gasification system design, manufacturing and installation',
+      },
+    ],
   }
 }
 
@@ -2257,6 +2298,15 @@ export default function App() {
     setMetaContent('meta[property="og:url"]', { property: 'og:url', content: pageUrl })
     setMetaContent('meta[name="twitter:title"]', { name: 'twitter:title', content: title })
     setMetaContent('meta[name="twitter:description"]', { name: 'twitter:description', content: description })
+
+    let structuredData = document.head.querySelector<HTMLScriptElement>('script[data-page-structured-data]')
+    if (!structuredData) {
+      structuredData = document.createElement('script')
+      structuredData.type = 'application/ld+json'
+      structuredData.dataset.pageStructuredData = 'true'
+      document.head.appendChild(structuredData)
+    }
+    structuredData.textContent = JSON.stringify(structuredDataForPage(page))
   }, [page, siteContent])
 
   useEffect(() => {
