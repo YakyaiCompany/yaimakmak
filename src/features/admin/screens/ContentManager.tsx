@@ -124,11 +124,7 @@ export function ContentManager({
         author: "ผู้ดูแลระบบ",
       });
       setNotice(
-        status === "เผยแพร่"
-          ? "เผยแพร่เนื้อหาแล้ว"
-          : status === "กำหนดเผยแพร่"
-            ? "กำหนดเวลาเผยแพร่แล้ว"
-            : "บันทึกเนื้อหาเป็นร่างแล้ว",
+        status === "เผยแพร่" ? "เผยแพร่เนื้อหาแล้ว" : "บันทึกเนื้อหาเป็นร่างแล้ว",
       );
       setPreviewOpen(false);
       setDraft(null);
@@ -167,7 +163,6 @@ export function ContentManager({
             setDraft(null);
           }}
           onSaveDraft={() => void save("ร่าง")}
-          onSchedule={() => void save("กำหนดเผยแพร่")}
           onPreview={() => setPreviewOpen(true)}
           isSaving={isSaving}
         />
@@ -250,7 +245,6 @@ export function ContentManager({
           >
             <option>ทั้งหมด</option>
             <option>เผยแพร่</option>
-            <option>กำหนดเผยแพร่</option>
             <option>ร่าง</option>
           </select>
         </label>
@@ -365,7 +359,6 @@ function ContentEditor({
   onChange,
   onBack,
   onSaveDraft,
-  onSchedule,
   onPreview,
   isSaving,
 }: {
@@ -374,7 +367,6 @@ function ContentEditor({
   onChange: (patch: Partial<ContentItem>) => void;
   onBack: () => void;
   onSaveDraft: () => void;
-  onSchedule: () => void;
   onPreview: () => void;
   isSaving: boolean;
 }) {
@@ -631,33 +623,16 @@ function ContentEditor({
               </div>
             )}
             {type === "news" && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label>
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">
-                    ผู้เขียน
-                  </span>
-                  <input
-                    value={item.author}
-                    onChange={(event) =>
-                      onChange({ author: event.target.value })
-                    }
-                    className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`}
-                  />
-                </label>
-                <label>
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">
-                    วันที่เผยแพร่
-                  </span>
-                  <input
-                    value={item.publishDate ?? ""}
-                    onChange={(event) =>
-                      onChange({ publishDate: event.target.value })
-                    }
-                    placeholder="เช่น 20 กรกฎาคม 2568"
-                    className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`}
-                  />
-                </label>
-              </div>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-slate-700">
+                  ผู้เขียน
+                </span>
+                <input
+                  value={item.author}
+                  onChange={(event) => onChange({ author: event.target.value })}
+                  className={`w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm ${focusRing}`}
+                />
+              </label>
             )}
             {type !== "products" && (
               <>
@@ -978,52 +953,6 @@ function ContentEditor({
                 )}
               </div>
             </section>
-
-            {type !== 'products' && (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
-                <h3 className="text-sm font-semibold text-slate-800">
-                  ข้อมูลของหน้านี้ในผลการค้นหา
-                </h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  ช่วยให้คนเข้าใจว่าหน้านี้เกี่ยวกับอะไร ก่อนกดเข้าจาก Google
-                  หรือบริการค้นหาอื่น
-                  ข้อความที่แสดงจริงอาจถูกระบบค้นหาปรับให้เหมาะกับคำค้น
-                </p>
-                <div className="mt-4 grid gap-4">
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-medium text-slate-700">
-                      ชื่อที่ต้องการให้เห็น
-                    </span>
-                    <input
-                      value={item.seoTitle}
-                      onChange={(event) =>
-                        onChange({ seoTitle: event.target.value })
-                      }
-                      className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 ${focusRing}`}
-                    />
-                    <span className="mt-1.5 block text-xs leading-5 text-slate-500">
-                      สรุปชื่อหน้าและหัวข้อสำคัญให้ชัดเจน โดยไม่ใส่คำซ้ำเกินจำเป็น
-                    </span>
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-medium text-slate-700">
-                      ข้อความอธิบายใต้ชื่อ
-                    </span>
-                    <textarea
-                      rows={3}
-                      value={item.seoDescription}
-                      onChange={(event) =>
-                        onChange({ seoDescription: event.target.value })
-                      }
-                      className={`w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 ${focusRing}`}
-                    />
-                    <span className="mt-1.5 block text-xs leading-5 text-slate-500">
-                      สรุปประโยชน์หรือสาระของหน้านี้ให้ผู้อ่านตัดสินใจก่อนเปิดดู
-                    </span>
-                  </label>
-                </div>
-              </div>
-            )}
           </div>
           <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <h3 className="text-sm font-semibold text-slate-800">
@@ -1043,20 +972,7 @@ function ContentEditor({
                 <dd className="font-medium text-slate-700">{item.updatedAt}</dd>
               </div>
             </dl>
-            <label className="mt-5 block">
-              <span className="mb-2 block text-xs font-medium text-slate-600">
-                วันและเวลาที่ต้องการเผยแพร่
-              </span>
-              <input
-                type="datetime-local"
-                value={item.scheduledAt ?? ""}
-                onChange={(event) =>
-                  onChange({ scheduledAt: event.target.value })
-                }
-                className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm ${focusRing}`}
-              />
-            </label>
-            <label className="mt-4 flex items-start gap-2.5">
+            <label className="mt-5 flex items-start gap-2.5">
               <input
                 type="checkbox"
                 checked={item.featured ?? false}
@@ -1077,14 +993,6 @@ function ContentEditor({
                 className={`w-full rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-700 hover:text-white disabled:opacity-50 ${focusRing}`}
               >
                 ดูตัวอย่างก่อนเผยแพร่
-              </button>
-              <button
-                type="button"
-                onClick={onSchedule}
-                disabled={!item.scheduledAt || isSaving}
-                className={`w-full rounded-xl border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
-              >
-                {isSaving ? "กำลังบันทึก..." : "กำหนดเวลาเผยแพร่"}
               </button>
               <button
                 type="submit"
@@ -1283,7 +1191,7 @@ function ContentPreview({
                   {item.category || "หมวดหมู่"}
                 </span>
                 <span className="text-ink-700/60 text-sm font-body">
-                  {item.publishDate || item.updatedAt}
+                  {item.updatedAt}
                 </span>
                 <span className="text-ink-700/60 text-sm font-body">
                   · {item.author || "แอดมิน"}
@@ -1475,19 +1383,6 @@ function ContentPreview({
             </div>
           )}
 
-          {!isProduct && (
-            <section className="mt-10 mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-slate-50 p-6 md:p-8">
-              <p className="text-xs font-bold tracking-[0.14em] text-slate-500 uppercase">
-                ตัวอย่างผลการค้นหาบน Google (SEO)
-              </p>
-              <p className="mt-4 text-lg font-medium text-brand-700">
-                {item.seoTitle || "ชื่อผลการค้นหา (SEO Title)"}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {item.seoDescription || "รายละเอียดเพิ่มเติมผลการค้นหา (SEO Description)"}
-              </p>
-            </section>
-          )}
         </div>
 
         {/* ADMIN ACTION FOOTER */}

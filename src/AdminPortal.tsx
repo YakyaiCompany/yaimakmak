@@ -4,7 +4,6 @@ import {
   postJson,
   getJson,
   patchJson,
-  putJson,
   deleteJson,
   ApiRequestError,
 } from "./lib/api";
@@ -19,16 +18,14 @@ import {
   DemoMessage,
   MessageStatus,
   DownloadItem,
-  DiscoverySettings,
 } from "./features/admin/types";
-import { navItems, initialDiscoverySettings } from "./features/admin/data";
+import { navItems } from "./features/admin/data";
 import {
   mapProjectToContentItem,
   mapArticleToContentItem,
   mapProductToContentItem,
   mapLeadToMessage,
   mapDownloadToDownloadItem,
-  mapSiteSettingsToDiscoverySettings,
   contentTypeLabel,
   focusRing,
 } from "./features/admin/utils";
@@ -38,7 +35,6 @@ import { ActivityLog } from "./features/admin/screens/ActivityLog";
 import { ContentManager } from "./features/admin/screens/ContentManager";
 import { Messages } from "./features/admin/screens/Messages";
 import { Downloads } from "./features/admin/screens/Downloads";
-import { DiscoverySettingsPage } from "./features/admin/screens/DiscoverySettingsPage";
 import { LoginScreen } from "./features/admin/screens/LoginScreen";
 
 type AdminPortalProps = {
@@ -55,9 +51,6 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
   const [products, setProducts] = useState<ContentItem[]>([]);
   const [messages, setMessages] = useState<DemoMessage[]>([]);
   const [documents, setDocuments] = useState<DownloadItem[]>([]);
-  const [discoverySettings, setDiscoverySettings] = useState(
-    initialDiscoverySettings,
-  );
   const [activities, setActivities] = useState<ContentActivity[]>([]);
   const [assignees, setAssignees] = useState<
     Array<{ id: string; email: string; role: string }>
@@ -73,49 +66,61 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
 
   const fetchDashboardData = async () => {
     setDataError("");
-    try {
-      const [
-        projectsRes,
-        articlesRes,
-        productsRes,
-        leadsRes,
-        downloadsRes,
-        siteSettingsRes,
-        activitiesRes,
-        usersRes,
-      ] = await Promise.all([
-        getJson<any>("/api/v1/admin/projects?pageSize=100"),
-        getJson<any>("/api/v1/admin/articles?pageSize=100"),
-        getJson<any>("/api/v1/admin/products?pageSize=100"),
-        getJson<any>("/api/v1/admin/leads?pageSize=100"),
-        getJson<any>("/api/v1/admin/downloads?pageSize=100"),
-        getJson<any>("/api/v1/admin/site-settings"),
-        getJson<any>("/api/v1/admin/activities"),
-        getJson<any>("/api/v1/users"),
-      ]);
 
-      if (projectsRes.data)
-        setPortfolio(projectsRes.data.map(mapProjectToContentItem));
-      if (articlesRes.data)
-        setNews(articlesRes.data.map(mapArticleToContentItem));
-      if (productsRes.data)
-        setProducts(productsRes.data.map(mapProductToContentItem));
-      if (leadsRes.data) setMessages(leadsRes.data.map(mapLeadToMessage));
-      if (downloadsRes.data)
-        setDocuments(downloadsRes.data.map(mapDownloadToDownloadItem));
-      if (siteSettingsRes.data)
-        setDiscoverySettings(
-          mapSiteSettingsToDiscoverySettings(siteSettingsRes.data),
-        );
-      if (activitiesRes.data && activitiesRes.data.length > 0)
-        setActivities(activitiesRes.data);
-      if (usersRes.data) setAssignees(usersRes.data);
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
+    // Each request is independent: one failure (e.g. a permission gap on a
+    // single resource) must not blank out the whole dashboard.
+    const [
+      projectsRes,
+      articlesRes,
+      productsRes,
+      leadsRes,
+      downloadsRes,
+      activitiesRes,
+      usersRes,
+    ] = await Promise.allSettled([
+      getJson<any>("/api/v1/admin/projects?pageSize=100"),
+      getJson<any>("/api/v1/admin/articles?pageSize=100"),
+      getJson<any>("/api/v1/admin/products?pageSize=100"),
+      getJson<any>("/api/v1/admin/leads?pageSize=100"),
+      getJson<any>("/api/v1/admin/downloads?pageSize=100"),
+      getJson<any>("/api/v1/admin/activities"),
+      getJson<any>("/api/v1/users"),
+    ]);
+
+    const failures: unknown[] = [];
+    const pick = <T,>(result: PromiseSettledResult<T>): T | undefined => {
+      if (result.status === "fulfilled") return result.value;
+      failures.push(result.reason);
+      return undefined;
+    };
+
+    const projects = pick(projectsRes);
+    const articles = pick(articlesRes);
+    const products = pick(productsRes);
+    const leads = pick(leadsRes);
+    const downloads = pick(downloadsRes);
+    const activitiesData = pick(activitiesRes);
+    const users = pick(usersRes);
+
+    if (projects?.data)
+      setPortfolio(projects.data.map(mapProjectToContentItem));
+    if (articles?.data) setNews(articles.data.map(mapArticleToContentItem));
+    if (products?.data)
+      setProducts(products.data.map(mapProductToContentItem));
+    if (leads?.data) setMessages(leads.data.map(mapLeadToMessage));
+    if (downloads?.data)
+      setDocuments(downloads.data.map(mapDownloadToDownloadItem));
+    if (activitiesData?.data && activitiesData.data.length > 0)
+      setActivities(activitiesData.data);
+    if (users?.data) setAssignees(users.data);
+
+    if (failures.length > 0) {
+      console.error("Some dashboard data failed to load:", failures);
+      const first = failures[0];
       setDataError(
-        error instanceof ApiRequestError
-          ? error.message
-          : "ไม่สามารถโหลดข้อมูลผู้ดูแลระบบได้",
+        first instanceof ApiRequestError
+          ? `บางส่วนโหลดไม่สำเร็จ: ${first.message}`
+          : "ข้อมูลบางส่วนโหลดไม่สำเร็จ กรุณารีเฟรชอีกครั้ง",
       );
     }
   };
@@ -157,7 +162,6 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
           : "/api/v1/admin/projects";
     const statusMap: Record<string, string> = {
       ร่าง: "DRAFT",
-      กำหนดเผยแพร่: "SCHEDULED",
       เผยแพร่: "PUBLISHED",
     };
 
@@ -183,21 +187,12 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
         (specification): specification is { label: string; value: string } =>
           Boolean(specification?.label && specification.value),
       );
-    const selectedDate = item.scheduledAt || item.publishDate;
-    const parsedDate = selectedDate ? new Date(selectedDate) : null;
-    if (parsedDate && Number.isNaN(parsedDate.getTime())) {
-      throw new Error(
-        "วันที่เผยแพร่ไม่ถูกต้อง กรุณาเลือกวันในปฏิทินหรือใช้รูปแบบ YYYY-MM-DD",
-      );
-    }
-    const publishedAt = parsedDate?.toISOString() ?? null;
     const common = {
       title: item.title.trim(),
       slug: item.slug?.trim(),
       status: statusMap[item.status] || "DRAFT",
       featured: Boolean(item.featured),
       displayOrder: item.displayOrder ?? 0,
-      publishedAt,
       coverImageId: item.coverImageId || null,
       contentBlocks: item.contentBlocks || [],
     };
@@ -247,7 +242,10 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
       );
 
     try {
-      const resourceId = item.id;
+      // Articles are addressed by slug on the admin API; projects and
+      // products by id.
+      const resourceId =
+        type === "news" ? (item.slug?.trim() ?? item.id) : item.id;
       const response = isNew
         ? await postJson<any, Record<string, unknown>>(endpoint, payload)
         : await patchJson<any, Record<string, unknown>>(
@@ -275,10 +273,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
           ? "เผยแพร่"
           : existing.status === "เผยแพร่" && item.status !== "เผยแพร่"
             ? "ยกเลิกเผยแพร่"
-            : existing.status !== "กำหนดเผยแพร่" &&
-                item.status === "กำหนดเผยแพร่"
-              ? "กำหนดเผยแพร่"
-              : "แก้ไข";
+            : "แก้ไข";
 
       setItems((current) =>
         current.some((entry) => entry.id === item.id)
@@ -476,18 +471,6 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
     }
   };
 
-  const handleDiscoverySettingsChange = async (settings: DiscoverySettings) => {
-    try {
-      await putJson("/api/v1/admin/site-settings/discovery_settings", {
-        value: settings,
-      });
-      setDiscoverySettings(settings);
-    } catch (err) {
-      console.error("Failed to save discovery settings:", err);
-      throw err;
-    }
-  };
-
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen grid place-items-center bg-slate-50">
@@ -556,7 +539,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
         onStatusChange={changeMessageStatus}
         onUpdateMessage={updateMessage}
       />
-    ) : screen === "downloads" ? (
+    ) : (
       <Downloads
         documents={documents}
         latestActivity={activities.find(
@@ -564,11 +547,6 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
         )}
         onAddDocument={addDocument}
         onToggleStatus={toggleDocumentStatus}
-      />
-    ) : (
-      <DiscoverySettingsPage
-        settings={discoverySettings}
-        onChange={handleDiscoverySettingsChange}
       />
     );
 

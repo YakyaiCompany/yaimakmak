@@ -2,10 +2,10 @@ export type AdminPortalProps = {
   onExit: () => void;
 };
 
-export type Screen = "dashboard" | "activity" | "portfolio" | "news" | "products" | "messages" | "downloads" | "discovery";
+export type Screen = "dashboard" | "activity" | "portfolio" | "news" | "products" | "messages" | "downloads";
 export type ContentType = "portfolio" | "news" | "products";
-export type ContentStatus = "ร่าง" | "กำหนดเผยแพร่" | "เผยแพร่";
-export type ActivityAction = "เพิ่ม" | "แก้ไข" | "เผยแพร่" | "กำหนดเผยแพร่" | "ยกเลิกเผยแพร่" | "ลบ";
+export type ContentStatus = "ร่าง" | "เผยแพร่";
+export type ActivityAction = "เพิ่ม" | "แก้ไข" | "เผยแพร่" | "ยกเลิกเผยแพร่" | "ลบ";
 export type ActivityContentType = "ผลงาน" | "ข่าวสาร" | "สินค้า" | "เอกสาร";
 
 export type ContentActivity = {
@@ -34,8 +34,6 @@ export type ContentItem = {
   category: string;
   summary: string;
   body: string;
-  seoTitle: string;
-  seoDescription: string;
   status: ContentStatus;
   updatedAt: string;
   author: string;
@@ -56,14 +54,8 @@ export type ContentItem = {
   coverImageId?: string | null;
   displayOrder?: number;
   gallery?: string;
-  videoUrl?: string;
-  publishDate?: string;
-  scheduledAt?: string;
   featured?: boolean;
   tags?: string;
-  ctaLabel?: string;
-  ctaUrl?: string;
-  documentUrl?: string;
   contentBlocks?: ContentBlock[];
 };
 
@@ -78,14 +70,8 @@ export type DemoMessage = {
   receivedAt: string;
   phone: string;
   contact: string;
-  interest: string;
   source: string;
   status: MessageStatus;
-  factoryLocation: string;
-  projectStage: string;
-  budgetRange: string;
-  desiredTimeline: string;
-  preferredContact: string;
   assignedTo: string;
   assignedToUserId?: string | null;
   followUpAt: string;
@@ -104,13 +90,3 @@ export type DownloadItem = {
   status: ContentStatus;
 };
 
-export type DiscoverySettings = {
-  siteTitle: string;
-  siteDescription: string;
-  siteUrl: string;
-  shareTitle: string;
-  shareDescription: string;
-  shareImage: string;
-  googleVerification: string;
-  allowIndexing: boolean;
-};
