@@ -12,3 +12,6 @@ logs/
 *.log
 .claude-replay.*
 .tmp-*
+
+# Local customer data — never commit
+datacustomer/

@@ -71,6 +71,46 @@ function safeVideoUrl(value: string | undefined) {
 
 const HERO_VIDEO_URL = safeVideoUrl(environment.heroVideoUrl)
 const SITE_URL = 'https://yakyai2015.com'
+const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/company/industrial-gasifier-installation.jpg`
+
+// Keep this in sync with the Organization node in index.html.
+const ORGANIZATION_SCHEMA = {
+  '@type': 'Organization',
+  '@id': `${SITE_URL}/#organization`,
+  name: 'YAKYAI 2015 CO., LTD.',
+  alternateName: ['YAKYAI 2015', 'yakyai2015'],
+  url: SITE_URL,
+  logo: `${SITE_URL}/assets/brand/yakyai-2015-logo.png`,
+  image: DEFAULT_OG_IMAGE,
+  email: 'info@yakyai2015.co.th',
+  telephone: '+66896304588',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '199 หมู่ 3',
+    addressLocality: 'อ.โชคชัย',
+    addressRegion: 'นครราชสีมา',
+    postalCode: '30190',
+    addressCountry: 'TH',
+  },
+  areaServed: { '@type': 'Country', name: 'Thailand' },
+  sameAs: ['https://www.facebook.com/tong.yakyai'],
+}
+
+function toAbsoluteUrl(value: string | undefined) {
+  if (!value) return undefined
+  if (/^https?:\/\//i.test(value)) return value
+  try {
+    return new URL(value, SITE_URL).toString()
+  } catch {
+    return undefined
+  }
+}
+
+function ogImageForPage(page: Page) {
+  if (page.t === 'project') return toAbsoluteUrl(page.p.image) ?? DEFAULT_OG_IMAGE
+  if (page.t === 'article') return toAbsoluteUrl(page.a.image) ?? DEFAULT_OG_IMAGE
+  return DEFAULT_OG_IMAGE
+}
 
 function normalizePathname(pathname: string) {
   const normalized = pathname.replace(/\/+$/, '')
@@ -170,13 +210,7 @@ function descriptionForPage(page: Page) {
 
 function structuredDataForPage(page: Page) {
   const pageUrl = new URL(pathForPage(page), SITE_URL).toString()
-  const organization = {
-    '@type': 'Organization',
-    '@id': `${SITE_URL}/#organization`,
-    name: 'YAKYAI 2015',
-    url: SITE_URL,
-    logo: `${SITE_URL}/assets/brand/yakyai-2015-logo.png`,
-  }
+  const organization = ORGANIZATION_SCHEMA
 
   const pageData = {
     '@type': 'WebPage',
@@ -2271,6 +2305,7 @@ export default function App() {
     const title = titleForPage(page)
     const description = descriptionForPage(page)
     const pageUrl = new URL(pathForPage(page), SITE_URL).toString()
+    const ogImage = ogImageForPage(page)
     document.title = title
     if (page.t !== 'admin') trackPageView(pathForPage(page))
 
@@ -2296,8 +2331,10 @@ export default function App() {
     setMetaContent('meta[property="og:title"]', { property: 'og:title', content: title })
     setMetaContent('meta[property="og:description"]', { property: 'og:description', content: description })
     setMetaContent('meta[property="og:url"]', { property: 'og:url', content: pageUrl })
+    setMetaContent('meta[property="og:image"]', { property: 'og:image', content: ogImage })
     setMetaContent('meta[name="twitter:title"]', { name: 'twitter:title', content: title })
     setMetaContent('meta[name="twitter:description"]', { name: 'twitter:description', content: description })
+    setMetaContent('meta[name="twitter:image"]', { name: 'twitter:image', content: ogImage })
 
     let structuredData = document.head.querySelector<HTMLScriptElement>('script[data-page-structured-data]')
     if (!structuredData) {
