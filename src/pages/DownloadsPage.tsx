@@ -22,15 +22,15 @@ export default function DownloadsPage({ documents: allDocuments, onHome, onQuote
 
   return (
     <main className="min-h-screen pt-16 md:pt-18">
-      <section className="bg-brand-900 py-14">
+      <section className="bg-gradient-to-r from-red-500 to-orange-500 py-14">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
-          <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 font-body text-xs text-white/50">
+          <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 font-body text-xs text-white/90">
             <button type="button" onClick={onHome} className="rounded hover:text-white focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400">หน้าแรก</button>
             <span aria-hidden="true">/</span>
             <span className="text-white/80">ดาวน์โหลด</span>
           </nav>
           <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">เอกสารและแคตตาล็อก</h1>
-          <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-white/75">รวบรวมข้อมูลบริษัท แคตตาล็อกสินค้า และเอกสาร specification เพื่อใช้ศึกษาระบบเบื้องต้น</p>
+          <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-white/90">รวบรวมข้อมูลบริษัท แคตตาล็อกสินค้า และเอกสาร specification เพื่อใช้ศึกษาระบบเบื้องต้น</p>
         </div>
       </section>
 

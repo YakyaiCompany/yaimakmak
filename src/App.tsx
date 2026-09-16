@@ -700,7 +700,7 @@ function About({ onLearnMore }: { onLearnMore: () => void }) {
             </div>
             <div className="absolute -bottom-4 -right-4 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-xl p-4 shadow-xl hidden md:block">
               <div className="font-heading font-semibold text-sm">{aboutTeaser.badge.title}</div>
-              <div className="text-white/70 text-xs font-body mt-1">{aboutTeaser.badge.description}</div>
+              <div className="text-white/90 text-xs font-body mt-1">{aboutTeaser.badge.description}</div>
             </div>
           </div>
           <div>
@@ -887,12 +887,12 @@ function GasifierClosingCTA({ onViewProjects, onQuote }: { onViewProjects: () =>
       <div className="mx-auto max-w-[1200px] px-5 md:px-8">
         <div className="flex flex-col items-center justify-between gap-7 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 px-6 py-8 text-center md:flex-row md:px-10 md:py-10 md:text-left">
           <div className="max-w-2xl">
-            <p className="font-body text-xs font-medium uppercase tracking-[0.16em] text-brand-500">Next step</p>
+            <p className="font-body text-xs font-medium uppercase tracking-[0.16em] text-white/80">Next step</p>
             <h2 id="gasifier-closing-cta-heading" className="mt-3 font-heading text-2xl font-bold leading-snug text-white md:text-3xl">กำลังพิจารณาระบบ Gasifier สำหรับโรงงานของคุณ?</h2>
-            <p className="mt-3 font-body text-sm leading-relaxed text-white/70">ส่งข้อมูลเบื้องต้นให้ทีมวิศวกรช่วยประเมินความเหมาะสมของเชื้อเพลิง กำลังความร้อน พื้นที่ติดตั้ง และแนวทางลดต้นทุนตามการใช้งานจริง</p>
+            <p className="mt-3 font-body text-sm leading-relaxed text-white/90">ส่งข้อมูลเบื้องต้นให้ทีมวิศวกรช่วยประเมินความเหมาะสมของเชื้อเพลิง กำลังความร้อน พื้นที่ติดตั้ง และแนวทางลดต้นทุนตามการใช้งานจริง</p>
           </div>
           <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row">
-            <button type="button" onClick={onQuote} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white">
+            <button type="button" onClick={onQuote} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 font-body text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white">
               ให้ทีมงานประเมินโครงการของคุณ <IcoArrowRight />
             </button>
             <button type="button" onClick={onViewProjects} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white">
@@ -910,16 +910,16 @@ function GasifierPage({ setPage, onQuote }: { setPage: (page: Page) => void; onQ
     <main className="min-h-screen pt-16 md:pt-18">
       <section className="bg-gradient-to-r from-red-500 to-orange-500 py-16 text-white md:py-20">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
-          <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 font-body text-xs text-white/50">
+          <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 font-body text-xs text-white/90">
             <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
             <IcoChevron />
             <button onClick={() => setPage({ t: 'about' })} className="transition-colors hover:text-white">เกี่ยวกับเรา</button>
             <IcoChevron />
             <span className="text-white/80">ระบบ Gasifier</span>
           </nav>
-          <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-500">Gasifier System</p>
+          <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-white/80">Gasifier System</p>
           <h1 className="mt-3 max-w-3xl font-heading text-3xl font-bold leading-tight md:text-5xl">ระบบ Gasifier<br className="hidden md:block" /> และแนวทางประเมินความคุ้มค่า</h1>
-          <p className="mt-5 max-w-2xl font-body text-base leading-relaxed text-white/70">ทำความเข้าใจระบบผลิต Producer Gas ข้อมูลทางเทคนิค และสิ่งที่โรงงานควรใช้ประกอบการประเมินก่อนตัดสินใจลงทุน</p>
+          <p className="mt-5 max-w-2xl font-body text-base leading-relaxed text-white/90">ทำความเข้าใจระบบผลิต Producer Gas ข้อมูลทางเทคนิค และสิ่งที่โรงงานควรใช้ประกอบการประเมินก่อนตัดสินใจลงทุน</p>
         </div>
       </section>
       <GasifierStory />
@@ -938,17 +938,17 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
       <section className="relative overflow-hidden bg-gradient-to-r from-red-500 to-orange-500 py-16 text-white md:py-24">
         <div className="absolute -right-20 -top-32 h-80 w-80 rounded-full bg-brand-500/10 blur-3xl" />
         <div className="relative mx-auto max-w-[1200px] px-5 md:px-8">
-          <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 font-body text-xs text-white/50">
+          <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 font-body text-xs text-white/90">
             <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
             <IcoChevron />
             <span className="text-white/80">เกี่ยวกับเรา</span>
           </nav>
           <div className="grid items-end gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
             <div>
-              <p className="mb-3 font-body text-sm font-medium uppercase tracking-[0.18em] text-brand-500">{ABOUT.eyebrow}</p>
+              <p className="mb-3 font-body text-sm font-medium uppercase tracking-[0.18em] text-white/80">{ABOUT.eyebrow}</p>
               <h1 className="max-w-3xl font-heading text-3xl font-bold leading-tight md:text-5xl">{ABOUT.title}</h1>
             </div>
-            <p className="border-l border-white/20 pl-5 font-body text-base leading-relaxed text-white/70 md:text-lg">{ABOUT.summary}</p>
+            <p className="border-l border-white/20 pl-5 font-body text-base leading-relaxed text-white/90 md:text-lg">{ABOUT.summary}</p>
           </div>
         </div>
       </section>
@@ -1038,7 +1038,7 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
       <section className="bg-gradient-to-r from-red-500 to-orange-500 py-14 text-white md:py-20">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <div className="max-w-2xl">
-            <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-500">แนวทางของเรา</p>
+            <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-white/80">แนวทางของเรา</p>
             <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-white md:text-3xl">หลักคิดที่ใช้กับทุกโครงการ</h2>
             <p className="mt-3 font-body text-sm leading-relaxed text-white/65">ระบบที่เหมาะสมไม่ได้เริ่มจากขนาดเครื่องจักรเพียงอย่างเดียว แต่เริ่มจากความเข้าใจเงื่อนไขของโรงงานและเป้าหมายการใช้งาน</p>
           </div>
@@ -1072,12 +1072,12 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
             </div>
 
             <aside className="rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 p-6 text-white md:p-8">
-              <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-brand-500">ขอบเขตผลงานอ้างอิง</p>
+              <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-white/80">ขอบเขตผลงานอ้างอิง</p>
               <h3 className="mt-3 font-heading text-xl font-semibold">ระบบที่บริษัทมีประสบการณ์ดำเนินการ</h3>
               <ul className="mt-6 space-y-3">
                 {ABOUT.projectTypes.map(item => (
-                  <li key={item} className="flex items-start gap-2 font-body text-sm leading-relaxed text-white/75">
-                    <span className="mt-0.5 shrink-0 text-brand-500"><IcoCheck /></span>
+                  <li key={item} className="flex items-start gap-2 font-body text-sm leading-relaxed text-white/90">
+                    <span className="mt-0.5 shrink-0 text-white"><IcoCheck /></span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -1087,7 +1087,7 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
                 <p className="font-heading text-sm font-semibold">พื้นที่ที่มีผลงานอ้างอิง</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {referenceProvinces.map(province => (
-                    <span key={province} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 font-body text-xs text-white/70">{province}</span>
+                    <span key={province} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 font-body text-xs text-white/90">{province}</span>
                   ))}
                 </div>
               </div>
@@ -1114,13 +1114,13 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
               <div aria-hidden="true" className="absolute -right-7 -top-7 h-28 w-28 rounded-full bg-brand-500/10" />
               <div className="relative flex h-full flex-col">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="font-body text-xs font-semibold uppercase tracking-[0.16em] text-brand-500">Custom Design</p>
-                  <span className="font-heading text-xs font-semibold text-white/35">01</span>
+                  <p className="font-body text-xs font-semibold uppercase tracking-[0.16em] text-white/80">Custom Design</p>
+                  <span className="font-heading text-xs font-semibold text-white/60">01</span>
                 </div>
                 <h3 className="mt-3 font-heading text-2xl font-semibold leading-snug">{featuredStrength.title}</h3>
-                <p className="mt-4 max-w-sm font-body text-sm leading-relaxed text-white/70">{featuredStrength.desc}</p>
+                <p className="mt-4 max-w-sm font-body text-sm leading-relaxed text-white/90">{featuredStrength.desc}</p>
                 <div className="mt-10 border-t border-white/15 pt-5 lg:mt-auto">
-                  <p className="font-body text-xs leading-relaxed text-white/55">พิจารณาจากเชื้อเพลิง พื้นที่ติดตั้ง กระบวนการผลิต และเป้าหมายของแต่ละโรงงาน</p>
+                  <p className="font-body text-xs leading-relaxed text-white/80">พิจารณาจากเชื้อเพลิง พื้นที่ติดตั้ง กระบวนการผลิต และเป้าหมายของแต่ละโรงงาน</p>
                 </div>
               </div>
             </article>
@@ -1192,9 +1192,9 @@ function Industries() {
           {INDUSTRIES.map((ind, i) => (
             <div key={i} onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(null)}
               className={`rounded-xl p-5 border transition-all duration-250 cursor-default ${hovered === i ? 'bg-gradient-to-r from-red-500 to-orange-500 border-transparent -translate-y-1 shadow-lg' : 'bg-ink-100 border-ink-300/60 hover:border-brand-700/30'}`}>
-              <div className={`mb-3 transition-colors duration-250 ${hovered === i ? 'text-energy-400' : 'text-brand-700'}`}><IcoIndustry name={ind.icon} /></div>
+              <div className={`mb-3 transition-colors duration-250 ${hovered === i ? 'text-white' : 'text-brand-700'}`}><IcoIndustry name={ind.icon} /></div>
               <h4 className={`font-heading font-semibold text-sm mb-1.5 transition-colors ${hovered === i ? 'text-white' : 'text-ink-950'}`}>{ind.name}</h4>
-              <p className={`text-xs font-body leading-relaxed transition-colors ${hovered === i ? 'text-white/70' : 'text-ink-700'}`}>{ind.desc}</p>
+              <p className={`text-xs font-body leading-relaxed transition-colors ${hovered === i ? 'text-white/90' : 'text-ink-700'}`}>{ind.desc}</p>
             </div>
           ))}
         </div>
@@ -1324,11 +1324,11 @@ function QuoteCTA({ onQuote }: { onQuote: () => void }) {
         <h2 className="font-heading font-bold text-white text-3xl md:text-[40px] leading-[1.25] mb-4">
           {quoteCta.title}
         </h2>
-        <p className="text-white/70 font-body text-base md:text-lg mb-10 max-w-xl mx-auto">
+        <p className="text-white/90 font-body text-base md:text-lg mb-10 max-w-xl mx-auto">
           {quoteCta.description}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
+          <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-white hover:bg-brand-50 text-brand-700 px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
             {primaryAction?.label ?? 'ขอใบเสนอราคา'} <IcoArrowRight />
           </button>
           <a href={COMPANY.phoneHref} className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
@@ -1442,32 +1442,32 @@ function Footer({ scrollTo, setPage, onPrivacy }: { scrollTo: (id: string) => vo
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <Logo />
-            <p className="mt-2 font-body text-[11px] tracking-wide text-white/40">{COMPANY.legalNameEn}</p>
-            <p className="mt-4 font-body text-sm leading-relaxed text-white/60">ผู้เชี่ยวชาญระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม</p>
+            <p className="mt-2 font-body text-[11px] tracking-wide text-white/75">{COMPANY.legalNameEn}</p>
+            <p className="mt-4 font-body text-sm leading-relaxed text-white/85">ผู้เชี่ยวชาญระบบแก๊สซิไฟเออร์ชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม</p>
           </div>
           <div>
             <h5 className="font-heading font-semibold text-sm mb-4">เมนูหลัก</h5>
             <ul className="space-y-2.5">
               {[['หน้าแรก', 'hero'], ['บริการ', 'services']].map(([l, id]) => (
-                <li key={l}><button onClick={() => scrollTo(id)} className="text-white/60 hover:text-white text-sm font-body transition-colors">{l}</button></li>
+                <li key={l}><button onClick={() => scrollTo(id)} className="text-white/85 hover:text-white text-sm font-body transition-colors">{l}</button></li>
               ))}
-              <li><button onClick={() => setPage({ t: 'about' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">เกี่ยวกับเรา</button></li>
-              <li><button onClick={() => setPage({ t: 'products' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">สินค้า</button></li>
+              <li><button onClick={() => setPage({ t: 'about' })} className="text-white/85 hover:text-white text-sm font-body transition-colors">เกี่ยวกับเรา</button></li>
+              <li><button onClick={() => setPage({ t: 'products' })} className="text-white/85 hover:text-white text-sm font-body transition-colors">สินค้า</button></li>
             </ul>
           </div>
           <div>
             <h5 className="font-heading font-semibold text-sm mb-4">ข้อมูลเพิ่มเติม</h5>
             <ul className="space-y-2.5">
-              <li><button onClick={() => setPage({ t: 'projects' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">ผลงาน</button></li>
-              <li><button onClick={() => setPage({ t: 'news' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">ข่าวสาร</button></li>
-              <li><button onClick={() => scrollTo('contact')} className="text-white/60 hover:text-white text-sm font-body transition-colors">ติดต่อเรา</button></li>
-              <li><button onClick={() => setPage({ t: 'downloads' })} className="text-white/60 hover:text-white text-sm font-body transition-colors">ดาวน์โหลด</button></li>
+              <li><button onClick={() => setPage({ t: 'projects' })} className="text-white/85 hover:text-white text-sm font-body transition-colors">ผลงาน</button></li>
+              <li><button onClick={() => setPage({ t: 'news' })} className="text-white/85 hover:text-white text-sm font-body transition-colors">ข่าวสาร</button></li>
+              <li><button onClick={() => scrollTo('contact')} className="text-white/85 hover:text-white text-sm font-body transition-colors">ติดต่อเรา</button></li>
+              <li><button onClick={() => setPage({ t: 'downloads' })} className="text-white/85 hover:text-white text-sm font-body transition-colors">ดาวน์โหลด</button></li>
             </ul>
           </div>
 
           <div className="md:col-span-2 lg:col-span-2">
             <h5 className="font-heading font-semibold text-sm mb-4">แผนที่</h5>
-            <div className="overflow-hidden rounded-xl border border-white/15 bg-brand-900/40">
+            <div className="overflow-hidden rounded-xl border border-white/15 bg-black/20">
               <iframe title={`แผนที่ ${COMPANY.legalNameEn}`} src={COMPANY.map.embedUrl} loading="lazy" referrerPolicy="no-referrer" className="h-52 w-full border-0 md:h-60" />
             </div>
           </div>
@@ -1475,9 +1475,9 @@ function Footer({ scrollTo, setPage, onPrivacy }: { scrollTo: (id: string) => vo
       </div>
       <div className="border-t border-white/10">
         <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
-          <p className="text-white/40 text-xs font-body">© {new Date().getFullYear() + 543} {COMPANY.legalNameEn} สงวนลิขสิทธิ์</p>
+          <p className="text-white/75 text-xs font-body">© {new Date().getFullYear() + 543} {COMPANY.legalNameEn} สงวนลิขสิทธิ์</p>
           <div className="flex gap-4">
-            <button onClick={onPrivacy} className="text-white/40 hover:text-white/70 text-xs font-body transition-colors">นโยบายความเป็นส่วนตัว</button>
+            <button onClick={onPrivacy} className="text-white/75 hover:text-white text-xs font-body transition-colors">นโยบายความเป็นส่วนตัว</button>
           </div>
         </div>
       </div>
@@ -1818,7 +1818,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
     <main className="min-h-screen bg-white pt-16 md:pt-18">
       <section className="bg-gradient-to-r from-red-500 to-orange-500 py-14 md:py-18">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
-          <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 font-body text-xs text-white/50">
+          <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 font-body text-xs text-white/90">
             <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
             <IcoChevron />
             <span className="text-white/80">ผลิตภัณฑ์</span>
@@ -1826,7 +1826,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
           <div className="grid items-end gap-6 md:grid-cols-[1fr_auto]">
             <div>
               <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">ระบบและเครื่องจักรอุตสาหกรรม</h1>
-              <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-white/70">ค้นหาและเปรียบเทียบเตาแก๊สซิไฟเออร์ ระบบอบแห้ง และเครื่องจักรสำหรับโรงงาน พร้อมรองรับการเพิ่มรุ่นสินค้าในอนาคต</p>
+              <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-white/90">ค้นหาและเปรียบเทียบเตาแก๊สซิไฟเออร์ ระบบอบแห้ง และเครื่องจักรสำหรับโรงงาน พร้อมรองรับการเพิ่มรุ่นสินค้าในอนาคต</p>
             </div>
             <button onClick={() => onQuote()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">
               ขอให้ช่วยเลือกระบบ <IcoArrowRight />
@@ -1916,11 +1916,11 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
           </div>
 
           <section className="mt-12 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 p-7 text-center md:p-10">
-            <p className="font-body text-xs font-medium uppercase tracking-widest text-energy-400">Engineering Consultation</p>
+            <p className="font-body text-xs font-medium uppercase tracking-widest text-white/80">Engineering Consultation</p>
             <h2 className="mt-2 font-heading text-2xl font-bold text-white">ยังไม่แน่ใจว่าระบบไหนเหมาะกับโรงงาน?</h2>
-            <p className="mx-auto mt-3 max-w-2xl font-body text-sm leading-relaxed text-white/70">กำลังการผลิต ชนิดเชื้อเพลิง พื้นที่ติดตั้ง และกระบวนการเดิมมีผลต่อการเลือกระบบ ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยประเมินได้</p>
+            <p className="mx-auto mt-3 max-w-2xl font-body text-sm leading-relaxed text-white/90">กำลังการผลิต ชนิดเชื้อเพลิง พื้นที่ติดตั้ง และกระบวนการเดิมมีผลต่อการเลือกระบบ ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยประเมินได้</p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-              <button onClick={() => onQuote()} className="rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">ปรึกษาและขอใบเสนอราคา</button>
+              <button onClick={() => onQuote()} className="rounded-lg bg-white px-6 py-3 font-body text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50">ปรึกษาและขอใบเสนอราคา</button>
               <a href={COMPANY.phoneHref} className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-white/10"><IcoPhone />โทรปรึกษาทีมงาน</a>
             </div>
           </section>
@@ -1936,13 +1936,13 @@ function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
     <main className="min-h-screen bg-white pt-16 md:pt-18">
       <section className="bg-gradient-to-r from-red-500 to-orange-500 py-12 md:py-16">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
-          <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 font-body text-xs text-white/50">
+          <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 font-body text-xs text-white/90">
             <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
             <IcoChevron />
             <span className="text-white/80">ผลงาน</span>
           </nav>
           <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">ผลงานของเรา</h1>
-          <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-white/70">ตัวอย่างงานออกแบบ ผลิต และติดตั้งระบบพลังงานชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม</p>
+          <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-white/90">ตัวอย่างงานออกแบบ ผลิต และติดตั้งระบบพลังงานชีวมวลและเครื่องจักรอบแห้งสำหรับโรงงานอุตสาหกรรม</p>
         </div>
       </section>
 
@@ -1980,10 +1980,10 @@ function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
           <div className="flex flex-col items-center justify-between gap-5 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 px-6 py-8 text-center md:flex-row md:px-8 md:text-left">
             <div>
               <h2 className="font-heading text-xl font-bold text-white">มีโครงการที่ต้องการให้ช่วยประเมิน?</h2>
-              <p className="mt-2 font-body text-sm text-white/65">ส่งข้อมูลเบื้องต้นให้ทีมวิศวกรแนะนำแนวทางที่เหมาะกับหน้างาน</p>
+              <p className="mt-2 font-body text-sm text-white/90">ส่งข้อมูลเบื้องต้นให้ทีมวิศวกรแนะนำแนวทางที่เหมาะกับหน้างาน</p>
             </div>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-              <button onClick={onQuote} className="min-h-11 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-2.5 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">ขอประเมินโครงการ</button>
+              <button onClick={onQuote} className="min-h-11 rounded-lg bg-white px-6 py-2.5 font-body text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50">ขอประเมินโครงการ</button>
               <a href={COMPANY.phoneHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 px-5 py-2.5 font-body text-sm font-medium text-white transition-colors hover:bg-white/10"><IcoPhone />โทรปรึกษา</a>
             </div>
           </div>
@@ -2044,7 +2044,7 @@ function ProjectDetailPage({ p: initialProject, setPage, onQuote }: { p: Project
         <img src={p.image} alt={p.name} className="w-full h-full object-cover opacity-40" />
         <div className="absolute inset-0 flex flex-col justify-end">
           <div className="max-w-[1200px] mx-auto px-5 md:px-8 pb-10 w-full">
-            <div className="flex items-center gap-2 text-white/50 text-xs font-body mb-3">
+            <div className="flex items-center gap-2 text-white/90 text-xs font-body mb-3">
               <button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button>
               <IcoChevron />
               <button onClick={() => setPage({ t: 'projects' })} className="hover:text-white transition-colors">ผลงาน</button>
@@ -2104,7 +2104,7 @@ function NewsListPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
   const featured = NEWS[0]
 
   return (
-    <main className="min-h-screen pt-16 md:pt-18"><div className="bg-gradient-to-r from-red-500 to-orange-500 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจาก {COMPANY.shortName}</p></div></div>
+    <main className="min-h-screen pt-16 md:pt-18"><div className="bg-gradient-to-r from-red-500 to-orange-500 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/90 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/90 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจาก {COMPANY.shortName}</p></div></div>
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
         {featured && (
           <section aria-labelledby="featured-news-heading" className="mb-10"><p className="text-sm font-body font-medium tracking-widest uppercase text-brand-700">บทความแนะนำ</p><button onClick={() => setPage({ t: 'article', a: featured })} className="group mt-3 grid overflow-hidden rounded-2xl border border-ink-300/60 bg-white text-left md:grid-cols-2 hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video overflow-hidden bg-ink-100"><img src={featured.image} alt={featured.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /></div><div className="p-6 md:p-8"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-brand-900/10 px-2.5 py-1 font-body text-xs text-brand-700">{featured.category}</span><span className="font-body text-xs text-ink-700/60">{featured.date}</span></div><h2 id="featured-news-heading" className="mt-4 font-heading text-xl font-semibold leading-snug text-ink-950 group-hover:text-brand-700 md:text-2xl">{featured.title}</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{featured.excerpt}</p><span className="mt-5 inline-flex items-center gap-1 font-body text-sm font-medium text-brand-700">อ่านบทความ <IcoArrowRight /></span></div></button></section>
@@ -2206,8 +2206,8 @@ function ArticleDetailPage({ a: initialArticle, setPage, onQuote }: { a: Article
 
         <section className="mt-12 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 p-6 text-center text-white sm:p-8">
           <h2 className="font-heading text-xl font-semibold">ต้องการประเมินระบบสำหรับโรงงานของคุณ?</h2>
-          <p className="mx-auto mt-2 max-w-xl font-body text-sm leading-relaxed text-white/70">ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยแนะนำแนวทางที่เหมาะกับหน้างาน</p>
-          <button type="button" onClick={onQuote} className="mt-5 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">ขอใบเสนอราคา</button>
+          <p className="mx-auto mt-2 max-w-xl font-body text-sm leading-relaxed text-white/90">ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยแนะนำแนวทางที่เหมาะกับหน้างาน</p>
+          <button type="button" onClick={onQuote} className="mt-5 rounded-lg bg-white px-6 py-3 font-body text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50">ขอใบเสนอราคา</button>
         </section>
 
         <div className="flex gap-3 mt-10 pt-8 border-t border-ink-300">

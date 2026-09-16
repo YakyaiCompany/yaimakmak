@@ -60,13 +60,13 @@ export function PrivacyPolicyPage({ onHome }: LegalPageProps) {
       <SiteHeader onHome={onHome} />
 
       <main id="main-content" className="flex-1">
-        <section className="bg-brand-900 py-12 md:py-16" aria-labelledby="privacy-title">
+        <section className="bg-gradient-to-r from-red-500 to-orange-500 py-12 md:py-16" aria-labelledby="privacy-title">
           <div className="mx-auto max-w-4xl px-5 md:px-8">
-            <p className="font-body text-sm font-medium text-energy-400">ข้อมูลและความเป็นส่วนตัว</p>
+            <p className="font-body text-sm font-medium text-white/80">ข้อมูลและความเป็นส่วนตัว</p>
             <h1 id="privacy-title" className="mt-2 font-heading text-3xl font-bold tracking-tight text-white md:text-4xl">
               นโยบายความเป็นส่วนตัว
             </h1>
-            <p className="mt-4 max-w-2xl font-body leading-relaxed text-white/75">
+            <p className="mt-4 max-w-2xl font-body leading-relaxed text-white/90">
               เอกสารฉบับร่างเพื่ออธิบายแนวทางการจัดการข้อมูลส่วนบุคคลบนเว็บไซต์
             </p>
           </div>
