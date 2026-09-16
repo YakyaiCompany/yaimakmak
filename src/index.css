@@ -57,6 +57,9 @@ html {
     transition-duration: 0.01ms !important;
   }
 
+  .hero-slide-track {
+    transition-duration: 700ms !important;
+  }
 }
 
 body {

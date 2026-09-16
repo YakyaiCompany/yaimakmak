@@ -44,7 +44,7 @@ export interface FrontendDownload {
 
 export interface HomeContent {
   hero: {
-    image: { url: string; alt: string }
+    images: Array<{ url: string; alt: string }>
     headingLines: string[]
     description: string
     benefits: string[]
@@ -73,10 +73,20 @@ export interface HomeContent {
 
 const fallbackHomeContent: HomeContent = {
   hero: {
-    image: {
-      url: "/assets/data/LINE_ALBUM_2025.6.4_250604_54.jpg",
-      alt: "งานติดตั้งระบบอบแห้งอุตสาหกรรมของ YAKYAI 2015",
-    },
+    images: [
+      {
+        url: "/assets/data/LINE_ALBUM_2025.6.4_250604_54.jpg",
+        alt: "งานติดตั้งระบบอบแห้งอุตสาหกรรมของ YAKYAI 2015",
+      },
+      {
+        url: "/assets/data/LINE_ALBUM_2025.6.4_250604_36.jpg",
+        alt: "เปลวไฟภายในเตาเผาแก๊สซิไฟเออร์ของ YAKYAI 2015",
+      },
+      {
+        url: "/assets/data/LINE_ALBUM_2025.6.4_250604_65.jpg",
+        alt: "ระบบแก๊สซิไฟเออร์พร้อมถังป้อนเศษไม้สับของ YAKYAI 2015",
+      },
+    ],
     headingLines: [
       "ผลิตเตาแก๊สซิไฟเออร์",
       "และเครื่องจักรอบแห้ง",

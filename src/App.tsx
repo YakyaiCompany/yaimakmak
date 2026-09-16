@@ -439,10 +439,10 @@ function Logo() {
   return (
     <span className="relative flex h-10 w-auto shrink-0 items-center justify-center transition-transform duration-300 hover:scale-[1.03] md:h-12">
       <img
-        src="/assets/brand/yakyai-mascot-wide.png"
+        src="/assets/brand/yakyai-mascot-face.png"
         alt={`โลโก้ ${COMPANY.shortName}`}
-        width="120"
-        height="52"
+        width="70"
+        height="47"
         className="h-full w-auto object-contain"
       />
     </span>
@@ -598,14 +598,33 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
 /* ─── HERO ───────────────────────────────────────── */
 function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProducts: () => void; onVideo?: () => void }) {
   const { hero } = HOME
+  const images = hero.images
+  const [slide, setSlide] = useState(0)
+
+  useEffect(() => {
+    if (images.length <= 1) return
+    const timer = setInterval(() => setSlide(i => (i + 1) % images.length), 10000)
+    return () => clearInterval(timer)
+  }, [images.length])
+
+  const previousSlide = () => setSlide(i => (i - 1 + images.length) % images.length)
+  const nextSlide = () => setSlide(i => (i + 1) % images.length)
 
   return (
     <section id="hero" className="relative flex min-h-[calc(100svh-4rem)] items-center lg:min-h-[calc(100svh-5rem)]">
-      <div className="absolute inset-0 bg-ink-950">
-        <img src={hero.image.url} alt={hero.image.alt} className="h-full w-full object-cover" />
+      <div className="absolute inset-0 overflow-hidden bg-ink-950">
+        <div className="hero-slide-track flex h-full w-full transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${slide * 100}%)` }}>
+          {images.map(image => (
+            <img key={image.url} src={image.url} alt={image.alt} className="h-full w-full shrink-0 object-cover" />
+          ))}
+        </div>
         <div className="absolute inset-0 bg-linear-to-b from-ink-950/95 via-ink-950/65 to-ink-950/20 md:bg-linear-to-r" />
+        {images.length > 1 && <>
+          <button type="button" onClick={previousSlide} className="absolute inset-y-0 left-0 w-1/2 cursor-pointer" aria-label="ภาพก่อนหน้า" />
+          <button type="button" onClick={nextSlide} className="absolute inset-y-0 right-0 w-1/2 cursor-pointer" aria-label="ภาพถัดไป" />
+        </>}
       </div>
-      <div className="relative z-10 max-w-[1200px] mx-auto px-5 md:px-8 pt-24 pb-20 w-full">
+      <div className="relative z-10 max-w-[1200px] mx-auto px-5 md:px-8 pt-24 pb-20 w-full pointer-events-none">
         <div className="max-w-4xl">
           <h1 className="mb-5 font-heading text-3xl font-bold leading-[1.2] text-white sm:text-4xl md:text-5xl lg:text-[56px]">
             <span className="block lg:whitespace-nowrap">{hero.headingLines[0]}</span>
@@ -616,13 +635,13 @@ function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProduct
             {hero.description}
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-10">
-            <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-all duration-200 hover:scale-[1.02]">
+            <button onClick={onQuote} className="pointer-events-auto flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-all duration-200 hover:scale-[1.02]">
               {hero.actions.primary.label} <IcoArrowRight />
             </button>
-            <button onClick={onProducts} className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-colors duration-200">
+            <button onClick={onProducts} className="pointer-events-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-colors duration-200">
               {hero.actions.secondary.label}
             </button>
-            {onVideo && <button onClick={onVideo} className="flex items-center justify-center gap-2 border border-white/30 hover:bg-white/10 text-white px-5 py-3.5 rounded-lg font-body font-medium text-sm transition-colors" aria-label="เล่นวิดีโอแนะนำระบบ">
+            {onVideo && <button onClick={onVideo} className="pointer-events-auto flex items-center justify-center gap-2 border border-white/30 hover:bg-white/10 text-white px-5 py-3.5 rounded-lg font-body font-medium text-sm transition-colors" aria-label="เล่นวิดีโอแนะนำระบบ">
               <IcoPlay />{hero.actions.video.label}
             </button>}
           </div>
