@@ -475,8 +475,8 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
     return item.page.t === page.t
   }
 
-  const desktopLinkClass = (active: boolean) => `whitespace-nowrap rounded-lg px-3 py-2 font-body text-sm transition-colors ${
-    active ? 'bg-brand-50 text-brand-700' : 'text-ink-700 hover:bg-ink-100 hover:text-brand-700'
+  const desktopLinkClass = (active: boolean) => `whitespace-nowrap rounded-lg px-3 py-2 font-body text-sm font-medium transition-colors ${
+    active ? 'bg-brand-50 text-brand-700' : 'text-ink-950 hover:bg-ink-100 hover:text-brand-700'
   }`
 
   const mobileLinkClass = (active: boolean) => `rounded-lg px-4 py-3 text-left font-body text-sm transition-colors ${
@@ -1149,7 +1149,7 @@ function Products({ onProduct, onQuote, onViewAll }: { onProduct: (p: Product) =
           <div className="text-brand-700 text-sm font-body font-medium uppercase tracking-widest mb-3">ผลิตภัณฑ์</div>
           <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25]">ระบบและเครื่องจักรที่ออกแบบ<br className="hidden md:block" />ตามการใช้งานจริง</h2>
         </div>
-        <div className="flex flex-wrap justify-center gap-6">
+        <div className="flex flex-wrap justify-start gap-6">
           {PRODUCTS.map(p => (
             <div key={p.id} className="w-full sm:w-[calc(50%-12px)] xl:w-[calc(25%-18px)] bg-white rounded-2xl overflow-hidden border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col">
               <div className="aspect-[3/2] bg-ink-100 overflow-hidden">
