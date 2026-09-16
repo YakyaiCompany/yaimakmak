@@ -80,7 +80,7 @@ const ORGANIZATION_SCHEMA = {
   name: 'YAKYAI 2015 CO., LTD.',
   alternateName: ['YAKYAI 2015', 'yakyai2015'],
   url: SITE_URL,
-  logo: `${SITE_URL}/assets/brand/yakyai-2015-logo.png`,
+  logo: `${SITE_URL}/assets/brand/yakyai-mascot-face.png`,
   image: DEFAULT_OG_IMAGE,
   email: 'info@yakyai2015.co.th',
   telephone: '+66896304588',

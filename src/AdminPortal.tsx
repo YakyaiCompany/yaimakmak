@@ -564,7 +564,7 @@ export default function AdminPortal({ onExit }: AdminPortalProps) {
                 alt=""
                 width="44"
                 height="44"
-                className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-700/10 shadow-sm"
+                className="h-10 w-10 object-contain"
               />
               <div>
                 <p className="font-brand text-[17px] font-bold tracking-[0.06em] text-slate-900">

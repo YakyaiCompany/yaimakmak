@@ -7,10 +7,7 @@ interface LegalPageProps {
 function BrandMark() {
   return (
     <div className="flex items-center gap-2.5" aria-label={COMPANY.shortName}>
-      <img src={COMPANY.logoPath} alt="" width="44" height="44" className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-900/10" />
-      <span>
-        <span className="block font-brand text-base font-bold leading-tight tracking-[0.06em] text-brand-900">{COMPANY.shortName}</span>
-      </span>
+      <img src={COMPANY.logoPath} alt="" width="44" height="44" className="h-11 w-11 object-contain" />
     </div>
   )
 }
