@@ -54,7 +54,7 @@ export default function DownloadsPage({ documents: allDocuments, onHome, onQuote
         </div>
       </section>
 
-      <section className="bg-ink-100"><div className="mx-auto max-w-[1200px] px-5 py-12 text-center md:px-8"><h2 className="font-heading text-2xl font-bold text-ink-950">ต้องการข้อมูลที่เฉพาะกับโรงงานของคุณ?</h2><p className="mx-auto mt-3 max-w-2xl font-body text-sm leading-relaxed text-ink-700">ส่งรายละเอียดเบื้องต้นให้ทีมวิศวกรช่วยประเมินระบบ พร้อมแนะนำเอกสารที่เหมาะกับการตัดสินใจ</p><button type="button" onClick={onQuote} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg bg-energy-600 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-energy-400 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-600">ขอใบเสนอราคา <ArrowIcon /></button></div></section>
+      <section className="bg-ink-100"><div className="mx-auto max-w-[1200px] px-5 py-12 text-center md:px-8"><h2 className="font-heading text-2xl font-bold text-ink-950">ต้องการข้อมูลที่เฉพาะกับโรงงานของคุณ?</h2><p className="mx-auto mt-3 max-w-2xl font-body text-sm leading-relaxed text-ink-700">ส่งรายละเอียดเบื้องต้นให้ทีมวิศวกรช่วยประเมินระบบ พร้อมแนะนำเอกสารที่เหมาะกับการตัดสินใจ</p><button type="button" onClick={onQuote} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-500 hover:to-orange-400 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-600">ขอใบเสนอราคา <ArrowIcon /></button></div></section>
     </main>
   )
 }

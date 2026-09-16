@@ -6,12 +6,14 @@
   --font-heading: 'Noto Sans Thai', sans-serif;
   --font-body: 'Noto Sans Thai', sans-serif;
   --font-brand: 'Saira Semi Condensed', sans-serif;
-  --color-brand-900: #143D32;
-  --color-brand-700: #246B50;
-  --color-brand-500: #3E8B68;
-  --color-brand-50: #E8F0EC;
+  --color-brand-900: #7C2D12;
+  --color-brand-700: #C2410C;
+  --color-brand-500: #F97316;
+  --color-brand-50: #FFF7ED;
   --color-energy-600: #D97706;
   --color-energy-400: #F59E0B;
+  --color-cover-900: #143D32;
+  --color-cover-600: #4C8C2B;
   --color-ink-950: #17201C;
   --color-ink-700: #46524C;
   --color-ink-300: #D9E0DC;
