@@ -2077,7 +2077,7 @@ function ProjectDetailPage({ p: initialProject, setPage, onQuote }: { p: Project
 
         <section className="mb-8" aria-labelledby="project-gallery-title">
           <div className="flex items-end justify-between gap-4 mb-4"><div><p className="text-brand-700 text-sm font-body font-medium tracking-widest">ภาพประกอบ</p><h2 id="project-gallery-title" className="font-heading font-semibold text-ink-950 text-xl">แกลเลอรีโครงการ</h2></div><p className="text-xs font-body text-ink-700">กดรูปเพื่อดูขนาดใหญ่</p></div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{p.gallery.map((image, index) => <button type="button" key={`${p.id}-${index}`} onClick={() => setGalleryIndex(index)} className="group aspect-[4/3] overflow-hidden rounded-xl bg-ink-100 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><img src={image} alt={`${p.name} ภาพประกอบ ${index + 1}`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" /></button>)}</div>
+          <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory [scrollbar-width:thin]">{p.gallery.map((image, index) => <button type="button" key={`${p.id}-${index}`} onClick={() => setGalleryIndex(index)} className="group aspect-[4/3] w-56 shrink-0 snap-start overflow-hidden rounded-xl bg-ink-100 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700 sm:w-64 md:w-72"><img src={image} alt={`${p.name} ภาพประกอบ ${index + 1}`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" /></button>)}</div>
         </section>
 
         <section className="mb-8 grid gap-5 lg:grid-cols-2" aria-label="เนื้อหาที่เกี่ยวข้อง">

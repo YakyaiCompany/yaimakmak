@@ -45,8 +45,9 @@ export function LoginScreen({ onLoginSuccess, onBack }: { onLoginSuccess: () => 
     <div className="min-h-screen flex items-center justify-center bg-ink-100 p-4 font-body">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-ink-300/60">
         <div className="bg-brand-900 p-8 text-center">
+          <img src={COMPANY.logoPath} alt="" className="mx-auto mb-3 h-14 w-14 object-contain" />
           <h1 className="text-2xl font-heading font-bold text-white">{COMPANY.shortName} Admin</h1>
-          <p className="text-brand-300 text-sm mt-2">ระบบจัดการเนื้อหาเว็บไซต์</p>
+          <p className="text-white/70 text-sm mt-2">ระบบจัดการเนื้อหาเว็บไซต์</p>
         </div>
         
         <form onSubmit={handleSubmit} className="p-8">
