@@ -437,12 +437,12 @@ function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
 /* ─── LOGO ───────────────────────────────────────── */
 function Logo() {
   return (
-    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center transition-transform duration-300 hover:scale-[1.03]">
+    <span className="relative flex h-16 w-16 shrink-0 items-center justify-center transition-transform duration-300 hover:scale-[1.03]">
       <img
         src="/assets/brand/yakyai-mascot-face.png"
         alt={`โลโก้ ${COMPANY.shortName}`}
-        width="52"
-        height="52"
+        width="68"
+        height="68"
         className="h-full w-full object-contain"
       />
     </span>
@@ -519,7 +519,7 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300">
-        <div className="max-w-[1200px] mx-auto px-5 md:px-8 h-16 md:h-18 flex items-center justify-between">
+        <div className="max-w-[1200px] mx-auto px-5 md:px-8 h-20 md:h-24 flex items-center justify-between">
           <button onClick={() => scrollTo('hero')} className="cursor-pointer rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400" aria-label="กลับสู่หน้าแรก">
             <Logo />
           </button>
@@ -600,7 +600,7 @@ function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProduct
   const { hero } = HOME
 
   return (
-    <section id="hero" className="relative flex min-h-[calc(100svh-4rem)] items-center lg:min-h-[calc(100svh-5rem)]">
+    <section id="hero" className="relative flex min-h-[calc(100svh-5rem)] items-center lg:min-h-[calc(100svh-6rem)]">
       <div className="absolute inset-0 bg-ink-950">
         <img src={hero.image.url} alt={hero.image.alt} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-linear-to-b from-ink-950/90 via-ink-950/45 to-transparent md:bg-linear-to-r" />
@@ -671,7 +671,7 @@ function TrustBar() {
   }, [])
 
   return (
-    <section id="services" className="overflow-hidden bg-brand-700" aria-label="บริการครบวงจรตั้งแต่เริ่มต้นจนส่งมอบ">
+    <section id="services" className="overflow-hidden bg-gradient-to-r from-red-500 to-orange-500" aria-label="บริการครบวงจรตั้งแต่เริ่มต้นจนส่งมอบ">
       <div className="w-full overflow-hidden py-3">
         <p className="sr-only">บริการครบวงจร: {SERVICES.map(service => service.title).join(', ')}</p>
         <div ref={trackRef} aria-hidden="true" className="service-marquee flex w-max items-center">
@@ -1150,7 +1150,7 @@ function Products({ onProduct, onQuote, onViewAll }: { onProduct: (p: Product) =
           <h2 className="font-heading font-bold text-ink-950 text-3xl md:text-[36px] leading-[1.25]">ระบบและเครื่องจักรที่ออกแบบ<br className="hidden md:block" />ตามการใช้งานจริง</h2>
         </div>
         <div className="flex flex-wrap justify-start gap-6">
-          {PRODUCTS.map(p => (
+          {PRODUCTS.slice(0, 4).map(p => (
             <div key={p.id} className="w-full sm:w-[calc(50%-12px)] xl:w-[calc(25%-18px)] bg-white rounded-2xl overflow-hidden border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col">
               <div className="aspect-[3/2] bg-ink-100 overflow-hidden">
                 <img src={p.image} alt={p.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
