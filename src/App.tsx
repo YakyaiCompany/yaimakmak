@@ -435,14 +435,15 @@ function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
 }
 
 /* ─── LOGO ───────────────────────────────────────── */
-function Logo() {
+function Logo({ variant = 'wide' }: { variant?: 'wide' | 'face' }) {
+  const isFace = variant === 'face'
   return (
     <span className="relative flex h-10 w-auto shrink-0 items-center justify-center transition-transform duration-300 hover:scale-[1.03] md:h-12">
       <img
-        src="/assets/brand/yakyai-mascot-face.png"
+        src={isFace ? '/assets/brand/yakyai-mascot-face.png' : '/assets/brand/yakyai-mascot-wide.png'}
         alt={`โลโก้ ${COMPANY.shortName}`}
-        width="70"
-        height="47"
+        width={isFace ? '70' : '120'}
+        height={isFace ? '47' : '52'}
         className="h-full w-auto object-contain"
       />
     </span>
@@ -521,7 +522,7 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300">
         <div className="max-w-[1200px] mx-auto px-5 md:px-8 h-16 md:h-20 flex items-center justify-between">
           <button onClick={() => scrollTo('hero')} className="cursor-pointer rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400" aria-label="กลับสู่หน้าแรก">
-            <Logo />
+            <Logo variant="face" />
           </button>
 
           {/* Desktop nav */}
@@ -561,7 +562,7 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
           <div id="mobile-navigation" role="dialog" aria-modal="true" aria-label="เมนูเว็บไซต์" className="relative ml-auto w-72 bg-white h-full flex flex-col shadow-2xl">
             <div className="flex items-center justify-between p-5 border-b border-ink-300">
-              <Logo />
+              <Logo variant="face" />
               <button ref={closeButtonRef} onClick={() => setMobileOpen(false)} className="min-w-11 min-h-11 p-2 text-ink-700 hover:text-ink-950 rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700" aria-label="ปิดเมนู"><IcoX /></button>
             </div>
             <nav className="flex-1 p-5 flex flex-col gap-1">
