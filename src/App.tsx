@@ -437,7 +437,7 @@ function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
 /* ─── LOGO ───────────────────────────────────────── */
 function Logo() {
   return (
-    <span className="relative flex h-12 w-auto shrink-0 items-center justify-center transition-transform duration-300 hover:scale-[1.03] md:h-14">
+    <span className="relative flex h-10 w-auto shrink-0 items-center justify-center transition-transform duration-300 hover:scale-[1.03] md:h-12">
       <img
         src="/assets/brand/yakyai-mascot-wide.png"
         alt={`โลโก้ ${COMPANY.shortName}`}
@@ -519,7 +519,7 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300">
-        <div className="max-w-[1200px] mx-auto px-5 md:px-8 h-20 md:h-24 flex items-center justify-between">
+        <div className="max-w-[1200px] mx-auto px-5 md:px-8 h-16 md:h-20 flex items-center justify-between">
           <button onClick={() => scrollTo('hero')} className="cursor-pointer rounded-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400" aria-label="กลับสู่หน้าแรก">
             <Logo />
           </button>
@@ -600,7 +600,7 @@ function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProduct
   const { hero } = HOME
 
   return (
-    <section id="hero" className="relative flex min-h-[calc(100svh-5rem)] items-center lg:min-h-[calc(100svh-6rem)]">
+    <section id="hero" className="relative flex min-h-[calc(100svh-4rem)] items-center lg:min-h-[calc(100svh-5rem)]">
       <div className="absolute inset-0 bg-ink-950">
         <img src={hero.image.url} alt={hero.image.alt} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-linear-to-b from-ink-950/90 via-ink-950/45 to-transparent md:bg-linear-to-r" />
