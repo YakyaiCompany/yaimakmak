@@ -437,13 +437,13 @@ function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
 /* ─── LOGO ───────────────────────────────────────── */
 function Logo() {
   return (
-    <span className="relative flex h-16 w-16 shrink-0 items-center justify-center transition-transform duration-300 hover:scale-[1.03]">
+    <span className="relative flex h-12 w-auto shrink-0 items-center justify-center transition-transform duration-300 hover:scale-[1.03] md:h-14">
       <img
-        src="/assets/brand/yakyai-mascot-face.png"
+        src="/assets/brand/yakyai-mascot-wide.png"
         alt={`โลโก้ ${COMPANY.shortName}`}
-        width="68"
-        height="68"
-        className="h-full w-full object-contain"
+        width="120"
+        height="52"
+        className="h-full w-auto object-contain"
       />
     </span>
   )
@@ -476,11 +476,11 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
   }
 
   const desktopLinkClass = (active: boolean) => `whitespace-nowrap rounded-lg px-3 py-2 font-body text-sm font-medium transition-colors ${
-    active ? 'bg-brand-50 text-brand-700' : 'text-ink-950 hover:bg-ink-100 hover:text-brand-700'
+    active ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white' : 'text-ink-950 hover:bg-ink-100 hover:text-brand-700'
   }`
 
   const mobileLinkClass = (active: boolean) => `rounded-lg px-4 py-3 text-left font-body text-sm transition-colors ${
-    active ? 'bg-brand-50 font-medium text-brand-900' : 'text-ink-700 hover:bg-ink-100 hover:text-brand-900'
+    active ? 'bg-gradient-to-r from-red-500 to-orange-500 font-medium text-white' : 'text-ink-700 hover:bg-ink-100 hover:text-brand-900'
   }`
 
   const openNavItem = (item: { id?: string; page?: Page }) => {
@@ -698,7 +698,7 @@ function About({ onLearnMore }: { onLearnMore: () => void }) {
             <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-ink-100">
               <img src={aboutTeaser.image.url} alt={aboutTeaser.image.alt} className="h-full w-full object-cover" />
             </div>
-            <div className="absolute -bottom-4 -right-4 bg-brand-900 text-white rounded-xl p-4 shadow-xl hidden md:block">
+            <div className="absolute -bottom-4 -right-4 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-xl p-4 shadow-xl hidden md:block">
               <div className="font-heading font-semibold text-sm">{aboutTeaser.badge.title}</div>
               <div className="text-white/70 text-xs font-body mt-1">{aboutTeaser.badge.description}</div>
             </div>
@@ -885,7 +885,7 @@ function GasifierClosingCTA({ onViewProjects, onQuote }: { onViewProjects: () =>
   return (
     <section className="bg-white py-12 md:py-16" aria-labelledby="gasifier-closing-cta-heading">
       <div className="mx-auto max-w-[1200px] px-5 md:px-8">
-        <div className="flex flex-col items-center justify-between gap-7 rounded-2xl bg-brand-900 px-6 py-8 text-center md:flex-row md:px-10 md:py-10 md:text-left">
+        <div className="flex flex-col items-center justify-between gap-7 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 px-6 py-8 text-center md:flex-row md:px-10 md:py-10 md:text-left">
           <div className="max-w-2xl">
             <p className="font-body text-xs font-medium uppercase tracking-[0.16em] text-brand-500">Next step</p>
             <h2 id="gasifier-closing-cta-heading" className="mt-3 font-heading text-2xl font-bold leading-snug text-white md:text-3xl">กำลังพิจารณาระบบ Gasifier สำหรับโรงงานของคุณ?</h2>
@@ -908,7 +908,7 @@ function GasifierClosingCTA({ onViewProjects, onQuote }: { onViewProjects: () =>
 function GasifierPage({ setPage, onQuote }: { setPage: (page: Page) => void; onQuote: () => void }) {
   return (
     <main className="min-h-screen pt-16 md:pt-18">
-      <section className="bg-brand-900 py-16 text-white md:py-20">
+      <section className="bg-gradient-to-r from-red-500 to-orange-500 py-16 text-white md:py-20">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 font-body text-xs text-white/50">
             <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
@@ -935,7 +935,7 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
 
   return (
     <main className="min-h-screen pt-16 md:pt-18">
-      <section className="relative overflow-hidden bg-brand-900 py-16 text-white md:py-24">
+      <section className="relative overflow-hidden bg-gradient-to-r from-red-500 to-orange-500 py-16 text-white md:py-24">
         <div className="absolute -right-20 -top-32 h-80 w-80 rounded-full bg-brand-500/10 blur-3xl" />
         <div className="relative mx-auto max-w-[1200px] px-5 md:px-8">
           <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 font-body text-xs text-white/50">
@@ -1035,7 +1035,7 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
         </div>
       </section>
 
-      <section className="bg-brand-900 py-14 text-white md:py-20">
+      <section className="bg-gradient-to-r from-red-500 to-orange-500 py-14 text-white md:py-20">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <div className="max-w-2xl">
             <p className="font-body text-sm font-medium uppercase tracking-[0.16em] text-brand-500">แนวทางของเรา</p>
@@ -1071,7 +1071,7 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
               ))}
             </div>
 
-            <aside className="rounded-2xl bg-brand-900 p-6 text-white md:p-8">
+            <aside className="rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 p-6 text-white md:p-8">
               <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-brand-500">ขอบเขตผลงานอ้างอิง</p>
               <h3 className="mt-3 font-heading text-xl font-semibold">ระบบที่บริษัทมีประสบการณ์ดำเนินการ</h3>
               <ul className="mt-6 space-y-3">
@@ -1109,7 +1109,7 @@ function AboutPage({ setPage }: { setPage: (page: Page) => void }) {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[1.08fr_1fr_1fr]">
-            <article className="relative overflow-hidden rounded-2xl bg-brand-900 p-7 text-white md:col-span-2 lg:col-span-1 lg:row-span-2 lg:min-h-[390px] lg:p-8">
+            <article className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 p-7 text-white md:col-span-2 lg:col-span-1 lg:row-span-2 lg:min-h-[390px] lg:p-8">
               <div aria-hidden="true" className="absolute -right-16 -top-16 h-52 w-52 rounded-full border border-white/10" />
               <div aria-hidden="true" className="absolute -right-7 -top-7 h-28 w-28 rounded-full bg-brand-500/10" />
               <div className="relative flex h-full flex-col">
@@ -1191,7 +1191,7 @@ function Industries() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {INDUSTRIES.map((ind, i) => (
             <div key={i} onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(null)}
-              className={`rounded-xl p-5 border transition-all duration-250 cursor-default ${hovered === i ? 'bg-brand-900 border-brand-900 -translate-y-1 shadow-lg' : 'bg-ink-100 border-ink-300/60 hover:border-brand-700/30'}`}>
+              className={`rounded-xl p-5 border transition-all duration-250 cursor-default ${hovered === i ? 'bg-gradient-to-r from-red-500 to-orange-500 border-transparent -translate-y-1 shadow-lg' : 'bg-ink-100 border-ink-300/60 hover:border-brand-700/30'}`}>
               <div className={`mb-3 transition-colors duration-250 ${hovered === i ? 'text-energy-400' : 'text-brand-700'}`}><IcoIndustry name={ind.icon} /></div>
               <h4 className={`font-heading font-semibold text-sm mb-1.5 transition-colors ${hovered === i ? 'text-white' : 'text-ink-950'}`}>{ind.name}</h4>
               <p className={`text-xs font-body leading-relaxed transition-colors ${hovered === i ? 'text-white/70' : 'text-ink-700'}`}>{ind.desc}</p>
@@ -1316,7 +1316,7 @@ function QuoteCTA({ onQuote }: { onQuote: () => void }) {
   const lineAction = quoteCta.actions.find((action) => action.action === 'line')
 
   return (
-    <section data-scroll-reveal className="py-20 md:py-24 bg-brand-900 relative overflow-hidden">
+    <section data-scroll-reveal className="py-20 md:py-24 bg-gradient-to-r from-red-500 to-orange-500 relative overflow-hidden">
       <div className="absolute inset-0">
         <img src={quoteCta.backgroundImage.url} alt={quoteCta.backgroundImage.alt} className="w-full h-full object-cover opacity-10" />
       </div>
@@ -1437,7 +1437,7 @@ function Contact({ onPrivacy }: { onPrivacy: () => void }) {
 /* ─── FOOTER ─────────────────────────────────────── */
 function Footer({ scrollTo, setPage, onPrivacy }: { scrollTo: (id: string) => void; setPage: (p: Page) => void; onPrivacy: () => void }) {
   return (
-    <footer className="bg-brand-900 text-white">
+    <footer className="bg-gradient-to-r from-red-500 to-orange-500 text-white">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-14">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
@@ -1816,7 +1816,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
 
   return (
     <main className="min-h-screen bg-white pt-16 md:pt-18">
-      <section className="bg-brand-900 py-14 md:py-18">
+      <section className="bg-gradient-to-r from-red-500 to-orange-500 py-14 md:py-18">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 font-body text-xs text-white/50">
             <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
@@ -1915,7 +1915,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
             </div>
           </div>
 
-          <section className="mt-12 rounded-2xl bg-brand-900 p-7 text-center md:p-10">
+          <section className="mt-12 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 p-7 text-center md:p-10">
             <p className="font-body text-xs font-medium uppercase tracking-widest text-energy-400">Engineering Consultation</p>
             <h2 className="mt-2 font-heading text-2xl font-bold text-white">ยังไม่แน่ใจว่าระบบไหนเหมาะกับโรงงาน?</h2>
             <p className="mx-auto mt-3 max-w-2xl font-body text-sm leading-relaxed text-white/70">กำลังการผลิต ชนิดเชื้อเพลิง พื้นที่ติดตั้ง และกระบวนการเดิมมีผลต่อการเลือกระบบ ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยประเมินได้</p>
@@ -1934,7 +1934,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
 function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuote: () => void }) {
   return (
     <main className="min-h-screen bg-white pt-16 md:pt-18">
-      <section className="bg-brand-900 py-12 md:py-16">
+      <section className="bg-gradient-to-r from-red-500 to-orange-500 py-12 md:py-16">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 font-body text-xs text-white/50">
             <button onClick={() => setPage({ t: 'home' })} className="transition-colors hover:text-white">หน้าแรก</button>
@@ -1954,7 +1954,7 @@ function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
           </div>
           <div className="grid gap-5 md:grid-cols-2">
             {PROJECTS.map(project => (
-              <button key={project.id} type="button" onClick={() => setPage({ t: 'project', p: project })} className="group relative min-h-72 overflow-hidden rounded-2xl bg-brand-900 text-left shadow-sm focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700 md:min-h-[350px]">
+              <button key={project.id} type="button" onClick={() => setPage({ t: 'project', p: project })} className="group relative min-h-72 overflow-hidden rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 text-left shadow-sm focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700 md:min-h-[350px]">
                 <img src={project.image} alt={project.name} className="absolute inset-0 h-full w-full object-cover opacity-85 transition-all duration-500 group-hover:scale-105 group-hover:opacity-70" />
                 <div className="absolute inset-0 bg-linear-to-t from-ink-950 via-ink-950/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
@@ -1977,7 +1977,7 @@ function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
 
       <section className="bg-white py-10 md:py-12">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
-          <div className="flex flex-col items-center justify-between gap-5 rounded-2xl bg-brand-900 px-6 py-8 text-center md:flex-row md:px-8 md:text-left">
+          <div className="flex flex-col items-center justify-between gap-5 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 px-6 py-8 text-center md:flex-row md:px-8 md:text-left">
             <div>
               <h2 className="font-heading text-xl font-bold text-white">มีโครงการที่ต้องการให้ช่วยประเมิน?</h2>
               <p className="mt-2 font-body text-sm text-white/65">ส่งข้อมูลเบื้องต้นให้ทีมวิศวกรแนะนำแนวทางที่เหมาะกับหน้างาน</p>
@@ -2040,7 +2040,7 @@ function ProjectDetailPage({ p: initialProject, setPage, onQuote }: { p: Project
 
   return (
     <div className="min-h-screen pt-16 md:pt-18">
-      <div className="relative h-64 md:h-80 bg-brand-900">
+      <div className="relative h-64 md:h-80 bg-gradient-to-r from-red-500 to-orange-500">
         <img src={p.image} alt={p.name} className="w-full h-full object-cover opacity-40" />
         <div className="absolute inset-0 flex flex-col justify-end">
           <div className="max-w-[1200px] mx-auto px-5 md:px-8 pb-10 w-full">
@@ -2072,7 +2072,7 @@ function ProjectDetailPage({ p: initialProject, setPage, onQuote }: { p: Project
           <article className="rounded-2xl border border-ink-300/60 bg-white p-6"><p className="font-body text-xs font-medium uppercase tracking-widest text-brand-700">โจทย์ของโครงการ</p><h2 className="mt-2 font-heading text-lg font-semibold text-ink-950">ความต้องการของหน้างาน</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{p.challenge}</p></article>
           <article className="rounded-2xl border border-ink-300/60 bg-white p-6"><p className="font-body text-xs font-medium uppercase tracking-widest text-brand-700">แนวทางที่ออกแบบ</p><h2 className="mt-2 font-heading text-lg font-semibold text-ink-950">ระบบและการเชื่อมต่อ</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{p.solution}</p></article>
           <article className="rounded-2xl bg-ink-100 p-6"><p className="font-body text-xs font-medium uppercase tracking-widest text-brand-700">ขอบเขตงาน</p><h2 className="mt-2 font-heading text-lg font-semibold text-ink-950">งานที่ดำเนินการ</h2><ul className="mt-4 space-y-2">{p.scope.map(item => <li key={item} className="flex items-start gap-2 font-body text-sm leading-relaxed text-ink-700"><span className="mt-0.5 text-brand-700"><IcoCheck /></span>{item}</li>)}</ul></article>
-          <article className="rounded-2xl bg-brand-900 p-6 text-white"><p className="font-body text-xs font-medium uppercase tracking-widest text-energy-400">สถานะและผลลัพธ์</p><h2 className="mt-2 font-heading text-lg font-semibold">ผลการดำเนินงาน</h2><p className="mt-3 font-body text-sm leading-relaxed text-white/75">{p.result}</p></article>
+          <article className="rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 p-6 text-white"><p className="font-body text-xs font-medium uppercase tracking-widest text-white/80">สถานะและผลลัพธ์</p><h2 className="mt-2 font-heading text-lg font-semibold">ผลการดำเนินงาน</h2><p className="mt-3 font-body text-sm leading-relaxed text-white/75">{p.result}</p></article>
         </section>
 
         <section className="mb-8" aria-labelledby="project-gallery-title">
@@ -2104,7 +2104,7 @@ function NewsListPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
   const featured = NEWS[0]
 
   return (
-    <main className="min-h-screen pt-16 md:pt-18"><div className="bg-brand-900 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจาก {COMPANY.shortName}</p></div></div>
+    <main className="min-h-screen pt-16 md:pt-18"><div className="bg-gradient-to-r from-red-500 to-orange-500 py-14"><div className="max-w-[1200px] mx-auto px-5 md:px-8"><nav aria-label="Breadcrumb" className="flex items-center gap-2 text-white/50 text-xs font-body mb-3"><button onClick={() => setPage({ t: 'home' })} className="hover:text-white transition-colors">หน้าแรก</button><IcoChevron /><span className="text-white/80">ข่าวสาร</span></nav><h1 className="font-heading font-bold text-white text-3xl md:text-4xl">ข่าวสารและบทความ</h1><p className="text-white/70 font-body text-base mt-2">ความรู้ด้านพลังงานชีวมวลและข่าวสารจาก {COMPANY.shortName}</p></div></div>
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-12">
         {featured && (
           <section aria-labelledby="featured-news-heading" className="mb-10"><p className="text-sm font-body font-medium tracking-widest uppercase text-brand-700">บทความแนะนำ</p><button onClick={() => setPage({ t: 'article', a: featured })} className="group mt-3 grid overflow-hidden rounded-2xl border border-ink-300/60 bg-white text-left md:grid-cols-2 hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video overflow-hidden bg-ink-100"><img src={featured.image} alt={featured.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /></div><div className="p-6 md:p-8"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-brand-900/10 px-2.5 py-1 font-body text-xs text-brand-700">{featured.category}</span><span className="font-body text-xs text-ink-700/60">{featured.date}</span></div><h2 id="featured-news-heading" className="mt-4 font-heading text-xl font-semibold leading-snug text-ink-950 group-hover:text-brand-700 md:text-2xl">{featured.title}</h2><p className="mt-3 font-body text-sm leading-relaxed text-ink-700">{featured.excerpt}</p><span className="mt-5 inline-flex items-center gap-1 font-body text-sm font-medium text-brand-700">อ่านบทความ <IcoArrowRight /></span></div></button></section>
@@ -2204,7 +2204,7 @@ function ArticleDetailPage({ a: initialArticle, setPage, onQuote }: { a: Article
           </div>
         </section>
 
-        <section className="mt-12 rounded-2xl bg-brand-900 p-6 text-center text-white sm:p-8">
+        <section className="mt-12 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 p-6 text-center text-white sm:p-8">
           <h2 className="font-heading text-xl font-semibold">ต้องการประเมินระบบสำหรับโรงงานของคุณ?</h2>
           <p className="mx-auto mt-2 max-w-xl font-body text-sm leading-relaxed text-white/70">ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยแนะนำแนวทางที่เหมาะกับหน้างาน</p>
           <button type="button" onClick={onQuote} className="mt-5 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">ขอใบเสนอราคา</button>
