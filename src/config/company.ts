@@ -11,7 +11,7 @@ export const COMPANY = {
   lineUrl: "https://line.me/ti/p/~0896304588",
   lineQrImage: undefined as string | undefined,
   facebookUrl: "https://www.facebook.com/tong.yakyai",
-  facebookLabel: "Facebook ทองคำ ยักไหล่",
+  facebookLabel: "Facebook",
   businessHours: "จันทร์–ศุกร์ 08:00–17:00 น.",
   map: {
     latitude: "14.7312450",
