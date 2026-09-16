@@ -603,7 +603,7 @@ function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProduct
     <section id="hero" className="relative flex min-h-[calc(100svh-4rem)] items-center lg:min-h-[calc(100svh-5rem)]">
       <div className="absolute inset-0 bg-ink-950">
         <img src={hero.image.url} alt={hero.image.alt} className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-linear-to-b from-ink-950/90 via-ink-950/45 to-transparent md:bg-linear-to-r" />
+        <div className="absolute inset-0 bg-linear-to-b from-ink-950/95 via-ink-950/65 to-ink-950/20 md:bg-linear-to-r" />
       </div>
       <div className="relative z-10 max-w-[1200px] mx-auto px-5 md:px-8 pt-24 pb-20 w-full">
         <div className="max-w-4xl">
