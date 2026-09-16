@@ -20,7 +20,7 @@ function HomeButton({ onHome, children = "กลับหน้าแรก" }: 
     <button
       type="button"
       onClick={onHome}
-      className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-5 py-3 font-body text-sm font-semibold text-white transition-colors hover:from-red-500 hover:to-orange-400 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-600"
+      className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-5 py-3 font-body text-sm font-semibold text-white transition-colors hover:from-red-400 hover:to-orange-400 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-600"
     >
       <span aria-hidden="true">←</span>
       {children}

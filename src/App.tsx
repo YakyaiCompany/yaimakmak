@@ -439,7 +439,7 @@ function Logo() {
   return (
     <span className="relative flex h-12 w-12 shrink-0 items-center justify-center transition-transform duration-300 hover:scale-[1.03]">
       <img
-        src="/assets/brand/yakyai2015-favicon.png"
+        src="/assets/brand/yakyai-mascot-face.png"
         alt={`โลโก้ ${COMPANY.shortName}`}
         width="52"
         height="52"
@@ -545,7 +545,7 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
           </nav>
 
           <div className="flex items-center gap-2 xl:ml-4">
-            <button onClick={onQuote} className="hidden xl:flex items-center gap-2 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white text-sm font-body px-4 py-2.5 rounded-lg transition-colors duration-200">
+            <button onClick={onQuote} className="hidden xl:flex items-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white text-sm font-body px-4 py-2.5 rounded-lg transition-colors duration-200">
               ขอใบเสนอราคา
             </button>
             <button ref={menuButtonRef} onClick={() => setMobileOpen(true)} className="xl:hidden min-w-11 min-h-11 rounded-lg p-2 text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-energy-400" aria-label="เปิดเมนู" aria-expanded={mobileOpen} aria-controls="mobile-navigation">
@@ -580,7 +580,7 @@ function Header({ page, setPage, onQuote }: { page: Page; setPage: (p: Page) => 
               ))}
             </nav>
             <div className="p-5 border-t border-ink-300 flex flex-col gap-3">
-              <button onClick={() => { onQuote(); setMobileOpen(false) }} className="w-full bg-gradient-to-r from-red-600 to-orange-500 text-white py-3 rounded-lg text-sm font-body font-medium">ขอใบเสนอราคา</button>
+              <button onClick={() => { onQuote(); setMobileOpen(false) }} className="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white py-3 rounded-lg text-sm font-body font-medium">ขอใบเสนอราคา</button>
               <a href={COMPANY.phoneHref} className="w-full flex items-center justify-center gap-2 border border-brand-700 text-brand-700 py-3 rounded-lg text-sm font-body font-medium hover:bg-brand-700 hover:text-white transition-colors">
                 <IcoPhone />โทรหาเรา
               </a>
@@ -601,10 +601,9 @@ function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProduct
 
   return (
     <section id="hero" className="relative flex min-h-[calc(100svh-4rem)] items-center lg:min-h-[calc(100svh-5rem)]">
-      <div className="absolute inset-0 bg-cover-900">
+      <div className="absolute inset-0 bg-ink-950">
         <img src={hero.image.url} alt={hero.image.alt} className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-cover-600/40" />
-        <div className="absolute inset-0 bg-linear-to-b from-cover-900/90 via-cover-600/55 to-cover-600/30 md:bg-linear-to-r" />
+        <div className="absolute inset-0 bg-linear-to-b from-ink-950/90 via-ink-950/45 to-transparent md:bg-linear-to-r" />
       </div>
       <div className="relative z-10 max-w-[1200px] mx-auto px-5 md:px-8 pt-24 pb-20 w-full">
         <div className="max-w-4xl">
@@ -617,7 +616,7 @@ function Hero({ onQuote, onProducts, onVideo }: { onQuote: () => void; onProduct
             {hero.description}
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-10">
-            <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-all duration-200 hover:scale-[1.02]">
+            <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-all duration-200 hover:scale-[1.02]">
               {hero.actions.primary.label} <IcoArrowRight />
             </button>
             <button onClick={onProducts} className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white px-6 py-3.5 rounded-lg font-body font-medium text-sm transition-colors duration-200">
@@ -893,7 +892,7 @@ function GasifierClosingCTA({ onViewProjects, onQuote }: { onViewProjects: () =>
             <p className="mt-3 font-body text-sm leading-relaxed text-white/70">ส่งข้อมูลเบื้องต้นให้ทีมวิศวกรช่วยประเมินความเหมาะสมของเชื้อเพลิง กำลังความร้อน พื้นที่ติดตั้ง และแนวทางลดต้นทุนตามการใช้งานจริง</p>
           </div>
           <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row">
-            <button type="button" onClick={onQuote} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-500 hover:to-orange-400 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white">
+            <button type="button" onClick={onQuote} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white">
               ให้ทีมงานประเมินโครงการของคุณ <IcoArrowRight />
             </button>
             <button type="button" onClick={onViewProjects} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white">
@@ -1163,7 +1162,7 @@ function Products({ onProduct, onQuote, onViewAll }: { onProduct: (p: Product) =
                 </div>
                 <div className="flex gap-2 pt-4 border-t border-ink-300/60">
                   <button onClick={() => onProduct(p)} className="flex-1 text-brand-700 border border-brand-700 hover:bg-brand-700 hover:text-white text-sm font-body py-2.5 rounded-lg transition-colors duration-200">ดูรายละเอียด</button>
-                  <button onClick={onQuote} className="flex-1 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white text-sm font-body py-2.5 rounded-lg transition-colors duration-200">ขอใบเสนอราคา</button>
+                  <button onClick={onQuote} className="flex-1 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white text-sm font-body py-2.5 rounded-lg transition-colors duration-200">ขอใบเสนอราคา</button>
                 </div>
               </div>
             </div>
@@ -1329,7 +1328,7 @@ function QuoteCTA({ onQuote }: { onQuote: () => void }) {
           {quoteCta.description}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
+          <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
             {primaryAction?.label ?? 'ขอใบเสนอราคา'} <IcoArrowRight />
           </button>
           <a href={COMPANY.phoneHref} className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-7 py-3.5 rounded-lg font-body font-medium text-sm transition-colors">
@@ -1571,7 +1570,7 @@ function FloatingActions({ onQuote, onPhone, onLine }: { onQuote: () => void; on
         {facebookAction}
         <button type="button" onClick={onLine} aria-label="เปิดช่องทางติดต่อผ่าน LINE" className="flex h-14 w-14 items-center justify-center rounded-full bg-[#06C755] font-heading text-sm font-bold text-white shadow-lg transition-all hover:scale-110 hover:bg-[#05b34c]">LINE</button>
         <button type="button" onClick={onPhone} aria-label="แสดงเบอร์โทรศัพท์" className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-700 text-white shadow-lg transition-all hover:scale-110 hover:bg-brand-900"><IcoPhone cls="h-6 w-6" /></button>
-        <button onClick={onQuote} aria-label="ขอใบเสนอราคา" className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-red-600 to-orange-500 font-heading text-sm font-bold leading-tight text-white shadow-lg transition-all hover:scale-110 hover:from-red-500 hover:to-orange-400">ราคา</button>
+        <button onClick={onQuote} aria-label="ขอใบเสนอราคา" className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-orange-500 font-heading text-sm font-bold leading-tight text-white shadow-lg transition-all hover:scale-110 hover:from-red-400 hover:to-orange-400">ราคา</button>
       </div>
       {/* Mobile: sticky bottom bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-ink-300 flex">
@@ -1582,7 +1581,7 @@ function FloatingActions({ onQuote, onPhone, onLine }: { onQuote: () => void; on
         ) : (
           <button type="button" disabled title="รอลิงก์ Facebook จากบริษัท" aria-label="Facebook รอลิงก์จากบริษัท" className="flex flex-1 cursor-not-allowed flex-col items-center justify-center gap-1 py-2.5 font-body text-xs text-[#1877F2]/45"><IcoFacebook /><span>Facebook</span></button>
         )}
-        <button onClick={onQuote} className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-body"><IcoArrowRight />ขอใบเสนอราคา</button>
+        <button onClick={onQuote} className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-body"><IcoArrowRight />ขอใบเสนอราคา</button>
       </div>
     </>
   )
@@ -1646,7 +1645,7 @@ function QuoteModal({ onClose, context, onPrivacy }: { onClose: () => void; cont
               <div className="absolute -left-[10000px]" aria-hidden="true"><label htmlFor="quote-website">Website</label><input id="quote-website" tabIndex={-1} autoComplete="off" value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} /></div>
               <div className="flex items-start gap-2.5"><input type="checkbox" id="quote-agree" checked={form.agree} onChange={e => setForm({ ...form, agree: e.target.checked })} aria-invalid={Boolean(errors.agree)} aria-describedby={errors.agree ? 'quote-agree-error' : undefined} className="mt-0.5 h-5 w-5 accent-brand-700" /><label htmlFor="quote-agree" className="text-xs font-body leading-relaxed text-ink-700">ยอมรับ<a href="/privacy-policy" onClick={event => { event.preventDefault(); onPrivacy() }} className="ml-1 text-brand-700 underline">นโยบายความเป็นส่วนตัว</a> และยินยอมให้ติดต่อกลับ</label></div>
               {errors.agree && <p id="quote-agree-error" className="text-xs text-red-600">{errors.agree}</p>}
-              <button type="submit" disabled={status === 'loading'} className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 disabled:opacity-60 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">{status === 'loading' ? 'กำลังส่ง...' : 'ส่งขอใบเสนอราคา'}</button>
+              <button type="submit" disabled={status === 'loading'} className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 disabled:opacity-60 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">{status === 'loading' ? 'กำลังส่ง...' : 'ส่งขอใบเสนอราคา'}</button>
             </form>
           )}
         </div>
@@ -1763,7 +1762,7 @@ function ProductModal({ product: p, onClose, onQuote }: { product: Product; onCl
             </div>
           )}
           <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-ink-300/60">
-            <button onClick={onQuote} className="flex-1 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">ขอใบเสนอราคาสำหรับสินค้านี้</button>
+            <button onClick={onQuote} className="flex-1 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white py-3 rounded-lg font-body font-medium text-sm transition-colors">ขอใบเสนอราคาสำหรับสินค้านี้</button>
           </div>
         </div>
       </div>
@@ -1829,7 +1828,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
               <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">ระบบและเครื่องจักรอุตสาหกรรม</h1>
               <p className="mt-3 max-w-2xl font-body text-base leading-relaxed text-white/70">ค้นหาและเปรียบเทียบเตาแก๊สซิไฟเออร์ ระบบอบแห้ง และเครื่องจักรสำหรับโรงงาน พร้อมรองรับการเพิ่มรุ่นสินค้าในอนาคต</p>
             </div>
-            <button onClick={() => onQuote()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-500 hover:to-orange-400">
+            <button onClick={() => onQuote()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">
               ขอให้ช่วยเลือกระบบ <IcoArrowRight />
             </button>
           </div>
@@ -1892,7 +1891,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
                         <p className="font-body text-[11px] text-ink-700/60">{product.catalogNote}</p>
                         <button onClick={() => onProduct(product)} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-2 font-body text-xs font-medium text-brand-700 hover:bg-brand-50">ดูรายละเอียด <IcoArrowRight /></button>
                       </div>
-                      <button onClick={() => onQuote(product)} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-5 py-2.5 font-body text-sm font-medium text-white transition-colors hover:from-red-500 hover:to-orange-400">ขอใบเสนอราคา</button>
+                      <button onClick={() => onQuote(product)} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-5 py-2.5 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">ขอใบเสนอราคา</button>
                     </div>
                   </div>
                 </article>
@@ -1921,7 +1920,7 @@ function ProductsPage({ setPage, onProduct, onQuote }: { setPage: (p: Page) => v
             <h2 className="mt-2 font-heading text-2xl font-bold text-white">ยังไม่แน่ใจว่าระบบไหนเหมาะกับโรงงาน?</h2>
             <p className="mx-auto mt-3 max-w-2xl font-body text-sm leading-relaxed text-white/70">กำลังการผลิต ชนิดเชื้อเพลิง พื้นที่ติดตั้ง และกระบวนการเดิมมีผลต่อการเลือกระบบ ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยประเมินได้</p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-              <button onClick={() => onQuote()} className="rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-500 hover:to-orange-400">ปรึกษาและขอใบเสนอราคา</button>
+              <button onClick={() => onQuote()} className="rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">ปรึกษาและขอใบเสนอราคา</button>
               <a href={COMPANY.phoneHref} className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:bg-white/10"><IcoPhone />โทรปรึกษาทีมงาน</a>
             </div>
           </section>
@@ -1984,7 +1983,7 @@ function ProjectsPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
               <p className="mt-2 font-body text-sm text-white/65">ส่งข้อมูลเบื้องต้นให้ทีมวิศวกรแนะนำแนวทางที่เหมาะกับหน้างาน</p>
             </div>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-              <button onClick={onQuote} className="min-h-11 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-6 py-2.5 font-body text-sm font-medium text-white transition-colors hover:from-red-500 hover:to-orange-400">ขอประเมินโครงการ</button>
+              <button onClick={onQuote} className="min-h-11 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-2.5 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">ขอประเมินโครงการ</button>
               <a href={COMPANY.phoneHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 px-5 py-2.5 font-body text-sm font-medium text-white transition-colors hover:bg-white/10"><IcoPhone />โทรปรึกษา</a>
             </div>
           </div>
@@ -2087,7 +2086,7 @@ function ProjectDetailPage({ p: initialProject, setPage, onQuote }: { p: Project
         </section>
 
         <div className="flex flex-col sm:flex-row gap-3 mt-8">
-          <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white px-6 py-3 rounded-lg font-body text-sm font-medium transition-colors">สนใจระบบลักษณะนี้ <IcoArrowRight /></button>
+          <button onClick={onQuote} className="flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white px-6 py-3 rounded-lg font-body text-sm font-medium transition-colors">สนใจระบบลักษณะนี้ <IcoArrowRight /></button>
           <a href={COMPANY.phoneHref} className="flex items-center justify-center gap-2 border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white px-6 py-3 rounded-lg font-body text-sm transition-colors"><IcoPhone />โทรปรึกษาทีมงาน</a>
           <button onClick={() => setPage({ t: 'projects' })} className="flex items-center justify-center gap-2 border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white px-6 py-3 rounded-lg font-body text-sm transition-colors"><IcoChevron right={false} />กลับผลงานทั้งหมด</button>
         </div>
@@ -2112,7 +2111,7 @@ function NewsListPage({ setPage, onQuote }: { setPage: (p: Page) => void; onQuot
         )}
         <div className="flex flex-wrap gap-2 mb-8" aria-label="กรองหมวดหมู่">{cats.map(category => <button key={category} onClick={() => setCat(category)} aria-pressed={cat === category} className={`px-4 py-2 rounded-full text-sm font-body transition-colors ${cat === category ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-700 hover:bg-ink-300/60'}`}>{category}</button>)}</div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">{filtered.map(article => <article key={article.id}><button onClick={() => setPage({ t: 'article', a: article })} className="group h-full w-full text-left rounded-2xl overflow-hidden bg-white border border-ink-300/60 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-brand-700"><div className="aspect-video bg-ink-100 overflow-hidden"><img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /></div><div className="p-5"><div className="flex items-center gap-2 mb-3"><span className="bg-brand-500/10 text-brand-700 text-xs font-body px-2.5 py-1 rounded-full">{article.category}</span><span className="text-ink-700/60 text-xs font-body">{article.date}</span></div><h2 className="font-heading font-semibold text-ink-950 text-sm leading-snug mb-2 line-clamp-2 group-hover:text-brand-700 transition-colors">{article.title}</h2><p className="text-ink-700 text-xs font-body leading-relaxed line-clamp-3">{article.excerpt}</p><span className="flex items-center gap-1 text-brand-700 text-xs font-body font-medium mt-4">อ่านเพิ่มเติม <IcoArrowRight /></span></div></button></article>)}</div>
-        <section className="mt-12 rounded-2xl bg-ink-100 p-7 text-center"><h2 className="font-heading text-xl font-bold text-ink-950">ต้องการคำแนะนำสำหรับโรงงานของคุณ?</h2><p className="mx-auto mt-2 max-w-xl font-body text-sm text-ink-700">ส่งข้อมูลเบื้องต้นเพื่อให้ทีมวิศวกรช่วยประเมินแนวทางที่เหมาะสม</p><button onClick={onQuote} className="mt-5 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white hover:from-red-500 hover:to-orange-400">ขอใบเสนอราคา</button></section>
+        <section className="mt-12 rounded-2xl bg-ink-100 p-7 text-center"><h2 className="font-heading text-xl font-bold text-ink-950">ต้องการคำแนะนำสำหรับโรงงานของคุณ?</h2><p className="mx-auto mt-2 max-w-xl font-body text-sm text-ink-700">ส่งข้อมูลเบื้องต้นเพื่อให้ทีมวิศวกรช่วยประเมินแนวทางที่เหมาะสม</p><button onClick={onQuote} className="mt-5 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white hover:from-red-400 hover:to-orange-400">ขอใบเสนอราคา</button></section>
       </div>
     </main>
   )
@@ -2208,7 +2207,7 @@ function ArticleDetailPage({ a: initialArticle, setPage, onQuote }: { a: Article
         <section className="mt-12 rounded-2xl bg-brand-900 p-6 text-center text-white sm:p-8">
           <h2 className="font-heading text-xl font-semibold">ต้องการประเมินระบบสำหรับโรงงานของคุณ?</h2>
           <p className="mx-auto mt-2 max-w-xl font-body text-sm leading-relaxed text-white/70">ส่งข้อมูลเบื้องต้นให้ทีมงานช่วยแนะนำแนวทางที่เหมาะกับหน้างาน</p>
-          <button type="button" onClick={onQuote} className="mt-5 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-500 hover:to-orange-400">ขอใบเสนอราคา</button>
+          <button type="button" onClick={onQuote} className="mt-5 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 px-6 py-3 font-body text-sm font-medium text-white transition-colors hover:from-red-400 hover:to-orange-400">ขอใบเสนอราคา</button>
         </section>
 
         <div className="flex gap-3 mt-10 pt-8 border-t border-ink-300">
