@@ -82,7 +82,7 @@ const ORGANIZATION_SCHEMA = {
   url: SITE_URL,
   logo: `${SITE_URL}/assets/brand/yakyai-mascot-face.png`,
   image: DEFAULT_OG_IMAGE,
-  email: 'info@yakyai2015.co.th',
+  email: 'yyyakyai2015@gmail.com',
   telephone: '+66896304588',
   address: {
     '@type': 'PostalAddress',
@@ -1522,7 +1522,6 @@ export function LineContactModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <a href={COMPANY.lineUrl} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] px-5 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-[#05b34c]"><IcoLine />เปิด LINE อัตโนมัติ</a>
-        <p className="mt-3 font-body text-xs text-ink-700/60">เมื่อได้รับ LINE OA และ QR Code จริง สามารถเปลี่ยนได้จากข้อมูลบริษัทจุดเดียว</p>
       </section>
     </div>
   )
@@ -2427,6 +2426,7 @@ export default function App() {
       {quoteOpen && <QuoteModal context={quoteContext} onClose={() => { setQuoteOpen(false); setQuoteContext(undefined) }} onPrivacy={() => navigate({ t: 'privacy' })} />}
       {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onQuote={() => { setSelectedProduct(null); openQuote({ product: selectedProduct.name }) }} />}
       {videoOpen && HERO_VIDEO_URL && <VideoModal url={HERO_VIDEO_URL} onClose={() => setVideoOpen(false)} />}
+      {contactPopup === 'line' && <LineContactModal onClose={() => setContactPopup(null)} />}
       {contactPopup === 'phone' && <PhoneContactModal onClose={() => setContactPopup(null)} />}
 
       {/* Dev/Debug Badge to show API connection status */}
